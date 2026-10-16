@@ -28,6 +28,7 @@ Route::prefix('employe')->name('employe.')->middleware('role:employe')->group(fu
     Route::get('/commandes/nouvelle', [CommandeController::class, 'create'])->name('commandes.create');
     Route::post('/commandes/nouvelle', [CommandeController::class, 'store'])->name('commandes.store');
     Route::post('/commandes/{commande}/statut', [CommandeController::class, 'updateStatus'])->name('commandes.statut');
+    Route::post('/commandes/{commande}/facture', [CommandeController::class, 'storeFacture'])->name('commandes.facture');
     Route::get('/commandes/{commande}/restitution', [CommandeController::class, 'createRestitution'])->name('commandes.restitution.create');
     Route::post('/commandes/{commande}/restitution', [CommandeController::class, 'storeRestitution'])->name('commandes.restitution.store');
     Route::get('/commandes/{commande}', [CommandeController::class, 'show'])->name('commandes.show');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Employe;
 use App\Http\Controllers\Controller;
 use App\Models\Commande;
 use App\Services\ChangerStatutCommande;
+use App\Services\CreerFacture;
 use App\Services\DefinirPrixArticle;
 use App\Services\EnregistrerCommande;
 use App\Services\EnregistrerRestitution;
@@ -45,7 +46,7 @@ class CommandeController extends Controller
     public function show(Request $request, int $commande): View
     {
         $commande = Commande::query()
-            ->with(['client.utilisateur', 'articles', 'historiques'])
+            ->with(['client.utilisateur', 'articles', 'historiques', 'facture'])
             ->where('idPressing', $this->pressingActif($request))
             ->whereKey($commande)
             ->firstOrFail();
@@ -124,6 +125,20 @@ class CommandeController extends Controller
         } catch (RuntimeException $exception) {
             return redirect()->route('employe.commandes.show', $commande->idCommande)
                 ->withErrors(['statut' => $exception->getMessage()]);
+        }
+
+        return redirect()->route('employe.commandes.show', $commande->idCommande);
+    }
+
+    public function storeFacture(Request $request, int $commande, CreerFacture $creerFacture): RedirectResponse
+    {
+        $commande = $this->commandeDuPressing($request, $commande);
+
+        try {
+            $creerFacture->executer($commande->idCommande);
+        } catch (RuntimeException $exception) {
+            return redirect()->route('employe.commandes.show', $commande->idCommande)
+                ->withErrors(['facturation' => $exception->getMessage()]);
         }
 
         return redirect()->route('employe.commandes.show', $commande->idCommande);

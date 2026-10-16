@@ -31,6 +31,9 @@
         @if ($errors->has('statut'))
             <div class="rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ $errors->first('statut') }}</div>
         @endif
+        @if ($errors->has('facturation'))
+            <div class="rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ $errors->first('facturation') }}</div>
+        @endif
 
         @php($statutsAccessibles = \App\Services\ChangerStatutCommande::TRANSITIONS_AUTORISEES[$commande->statut] ?? [])
         @if ($statutsAccessibles !== [])
@@ -49,6 +52,24 @@
                 </form>
             </section>
         @endif
+
+        <section class="rounded-xl bg-white p-6 shadow">
+            <h2 class="mb-4 text-xl font-semibold">Facturation</h2>
+            @if ($commande->facture)
+                <dl class="grid gap-4 sm:grid-cols-3">
+                    <div><dt class="text-sm text-slate-500">Numéro</dt><dd>{{ $commande->facture->numeroFacture }}</dd></div>
+                    <div><dt class="text-sm text-slate-500">Montant</dt><dd>{{ number_format((float) $commande->facture->montantTotal, 2, '.', ' ') }}</dd></div>
+                    <div><dt class="text-sm text-slate-500">Statut</dt><dd>{{ str_replace('_', ' ', $commande->facture->statut) }}</dd></div>
+                </dl>
+            @elseif ($commande->statut === 'ANNULEE')
+                <p>Une commande annulée ne peut pas être facturée</p>
+            @else
+                <form method="POST" action="{{ route('employe.commandes.facture', $commande->idCommande) }}">
+                    @csrf
+                    <button class="rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white">Émettre la facture</button>
+                </form>
+            @endif
+        </section>
 
         <section class="rounded-xl bg-white p-6 shadow">
             <h2 class="mb-4 text-xl font-semibold">Articles</h2>
