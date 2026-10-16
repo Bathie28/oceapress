@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EspaceController;
 use App\Http\Controllers\Employe\CommandeController;
+use App\Http\Controllers\Client\CommandeController as ClientCommandeController;
+use App\Http\Controllers\Client\FactureController as ClientFactureController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -15,6 +17,9 @@ Route::post('/logout', [AuthController::class, 'deconnecter'])->name('logout');
 
 Route::prefix('client')->name('client.')->middleware('role:client')->group(function () {
     Route::get('/', [EspaceController::class, 'clientAccueil'])->name('accueil');
+    Route::get('/commandes', [ClientCommandeController::class, 'index'])->name('commandes.index');
+    Route::get('/commandes/{commande}', [ClientCommandeController::class, 'show'])->name('commandes.show');
+    Route::post('/factures/{facture}/paiement', [ClientFactureController::class, 'storePaiement'])->name('factures.paiement');
 });
 
 Route::prefix('employe')->name('employe.')->middleware('role:employe')->group(function () {
