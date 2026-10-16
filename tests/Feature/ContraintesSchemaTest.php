@@ -1,0 +1,224 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Article;
+use App\Models\Commande;
+use App\Models\Facture;
+use App\Models\HistoriqueCommande;
+use App\Models\Paiement;
+use App\Models\Pressing;
+use App\Models\QrCode;
+use App\Models\Restitution;
+use App\Models\Utilisateur;
+use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Tests\Support\CreeDonneesTest;
+use Tests\TestCase;
+
+class ContraintesSchemaTest extends TestCase
+{
+    use RefreshDatabase, CreeDonneesTest;
+
+    private function assertDuplicateKey(callable $operation, string $contrainte): void
+    {
+        try {
+            $operation();
+            $this->fail("La contrainte {$contrainte} devait refuser l'insertion.");
+        } catch (QueryException $exception) {
+            $this->assertStringContainsString('1062', $exception->getMessage());
+            $this->assertStringContainsString($contrainte, $exception->getMessage());
+        }
+    }
+
+    private function assertCheckConstraint(callable $operation, string $contrainte): void
+    {
+        try {
+            $operation();
+            $this->fail("La contrainte {$contrainte} devait refuser l'insertion.");
+        } catch (QueryException $exception) {
+            $this->assertStringContainsString('3819', $exception->getMessage());
+            $this->assertStringContainsString($contrainte, $exception->getMessage());
+        }
+    }
+
+    private function creerFactureValide(?Commande $commande = null, ?string $numero = null): Facture
+    {
+        $commande ??= $this->creerCommande();
+
+        return Facture::create([
+            'numeroFacture' => $numero ?? 'FAC-'.strtoupper(bin2hex(random_bytes(6))),
+            'montantTotal' => 1250,
+            'statut' => 'EN_ATTENTE',
+            'idCommande' => $commande->idCommande,
+        ]);
+    }
+
+    private function creerPaiementValide(Facture $facture, ?string $reference = null): Paiement
+    {
+        return Paiement::create([
+            'referencePaiement' => $reference ?? 'PAY-'.strtoupper(bin2hex(random_bytes(6))),
+            'montant' => 1250,
+            'methode' => 'WAVE',
+            'statut' => 'EN_ATTENTE',
+            'idFacture' => $facture->idFacture,
+        ]);
+    }
+
+    public function test_unique_utilisateur_email(): void
+    {
+        $email = 'unique@example.test';
+        $this->creerUtilisateur(['email' => $email]);
+
+        $this->assertDuplicateKey(fn () => $this->creerUtilisateur(['email' => $email]), 'uq_utilisateur_email');
+    }
+
+    public function test_unique_commande_reference(): void
+    {
+        $commande = $this->creerCommande();
+
+        $this->assertDuplicateKey(fn () => Commande::create([
+            'referenceCommande' => $commande->referenceCommande,
+            'statut' => 'EN_ATTENTE', 'montantTotal' => 0,
+            'idPressing' => $commande->idPressing, 'idClient' => $commande->idClient,
+        ]), 'uq_commande_reference');
+    }
+
+    public function test_unique_qr_code_token(): void
+    {
+        $commande = $this->creerCommande();
+        $token = 'token-'.bin2hex(random_bytes(8));
+        QrCode::create(['token' => $token, 'actif' => false, 'idCommande' => $commande->idCommande]);
+
+        $this->assertDuplicateKey(fn () => QrCode::create([
+            'token' => $token, 'actif' => false, 'idCommande' => $commande->idCommande,
+        ]), 'uq_qr_code_token');
+    }
+
+    public function test_unique_qr_code_commande_active_sur_colonne_generee(): void
+    {
+        $commande = $this->creerCommande();
+        QrCode::create(['token' => 'actif-'.bin2hex(random_bytes(8)), 'actif' => true, 'idCommande' => $commande->idCommande]);
+
+        $this->assertDuplicateKey(fn () => QrCode::create([
+            'token' => 'actif-'.bin2hex(random_bytes(8)), 'actif' => true, 'idCommande' => $commande->idCommande,
+        ]), 'uq_qr_code_commande_active');
+    }
+
+    public function test_unique_facture_numero(): void
+    {
+        $numero = 'FAC-'.strtoupper(bin2hex(random_bytes(6)));
+        $this->creerFactureValide(numero: $numero);
+        $commandeSeconde = $this->creerCommande();
+
+        $this->assertDuplicateKey(fn () => $this->creerFactureValide($commandeSeconde, $numero), 'uq_facture_numero');
+    }
+
+    public function test_unique_facture_commande(): void
+    {
+        $commande = $this->creerCommande();
+        $this->creerFactureValide($commande);
+
+        $this->assertDuplicateKey(fn () => $this->creerFactureValide($commande), 'uq_facture_commande');
+    }
+
+    public function test_unique_paiement_reference(): void
+    {
+        $reference = 'PAY-'.strtoupper(bin2hex(random_bytes(6)));
+        $this->creerPaiementValide($this->creerFactureValide(), $reference);
+        $this->creerPaiementValide($this->creerFactureValide());
+        $factureSeconde = Facture::latest('idFacture')->firstOrFail();
+
+        $this->assertDuplicateKey(fn () => $this->creerPaiementValide($factureSeconde, $reference), 'uq_paiement_reference');
+    }
+
+    public function test_unique_restitution_commande(): void
+    {
+        $commande = $this->creerCommande();
+        $employe = $this->creerEmploye();
+        Restitution::create(['statut' => 'CONFORME', 'idCommande' => $commande->idCommande, 'idEmploye' => $employe->idEmploye]);
+
+        $this->assertDuplicateKey(fn () => Restitution::create([
+            'statut' => 'CONFORME', 'idCommande' => $commande->idCommande, 'idEmploye' => $employe->idEmploye,
+        ]), 'uq_restitution_commande');
+    }
+
+    public function test_check_pressing_statut(): void
+    {
+        $this->assertCheckConstraint(fn () => Pressing::create([
+            'nom' => 'Invalid', 'adresse' => '1 rue Test', 'dateCreation' => now()->toDateString(), 'statut' => 'INVALIDE',
+        ]), 'chk_pressing_statut');
+    }
+
+    public function test_check_commande_statut(): void
+    {
+        $commande = $this->creerCommande();
+        $this->assertCheckConstraint(fn () => DB::table('commande')->where('idCommande', $commande->idCommande)->update(['statut' => 'INVALIDE']), 'chk_commande_statut');
+    }
+
+    public function test_check_historique_ancien_statut(): void
+    {
+        $commande = $this->creerCommande();
+        $employe = $this->creerEmploye();
+        $this->assertCheckConstraint(fn () => HistoriqueCommande::create([
+            'ancienStatut' => 'INVALIDE', 'nouveauStatut' => 'EN_ATTENTE',
+            'idCommande' => $commande->idCommande, 'idEmploye' => $employe->idEmploye,
+        ]), 'chk_historique_ancien_statut');
+    }
+
+    public function test_check_historique_nouveau_statut(): void
+    {
+        $commande = $this->creerCommande();
+        $employe = $this->creerEmploye();
+        $this->assertCheckConstraint(fn () => HistoriqueCommande::create([
+            'ancienStatut' => 'EN_ATTENTE', 'nouveauStatut' => 'INVALIDE',
+            'idCommande' => $commande->idCommande, 'idEmploye' => $employe->idEmploye,
+        ]), 'chk_historique_nouveau_statut');
+    }
+
+    public function test_check_facture_statut(): void
+    {
+        $commande = $this->creerCommande();
+        $this->assertCheckConstraint(fn () => Facture::create([
+            'numeroFacture' => 'FAC-'.strtoupper(bin2hex(random_bytes(6))),
+            'montantTotal' => 100, 'statut' => 'INVALIDE', 'idCommande' => $commande->idCommande,
+        ]), 'chk_facture_statut');
+    }
+
+    public function test_check_notification_canal(): void
+    {
+        $client = $this->creerClient();
+        $this->assertCheckConstraint(fn () => DB::table('notification')->insert([
+            'titre' => 'Notification', 'message' => 'Test', 'type' => 'INFO',
+            'canal' => 'INVALIDE', 'idClient' => $client->idClient,
+        ]), 'chk_notification_canal');
+    }
+
+    public function test_check_paiement_methode(): void
+    {
+        $facture = $this->creerFactureValide();
+        $this->assertCheckConstraint(fn () => Paiement::create([
+            'referencePaiement' => 'PAY-'.strtoupper(bin2hex(random_bytes(6))),
+            'montant' => 100, 'methode' => 'INVALIDE', 'statut' => 'EN_ATTENTE', 'idFacture' => $facture->idFacture,
+        ]), 'chk_paiement_methode');
+    }
+
+    public function test_check_paiement_statut(): void
+    {
+        $facture = $this->creerFactureValide();
+        $this->assertCheckConstraint(fn () => Paiement::create([
+            'referencePaiement' => 'PAY-'.strtoupper(bin2hex(random_bytes(6))),
+            'montant' => 100, 'methode' => 'WAVE', 'statut' => 'INVALIDE', 'idFacture' => $facture->idFacture,
+        ]), 'chk_paiement_statut');
+    }
+
+    public function test_check_restitution_statut(): void
+    {
+        $commande = $this->creerCommande();
+        $employe = $this->creerEmploye();
+        $this->assertCheckConstraint(fn () => Restitution::create([
+            'statut' => 'INVALIDE', 'idCommande' => $commande->idCommande, 'idEmploye' => $employe->idEmploye,
+        ]), 'chk_restitution_statut');
+    }
+}
