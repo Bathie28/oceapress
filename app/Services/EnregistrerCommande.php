@@ -8,6 +8,7 @@ use App\Models\Commande;
 use App\Models\HistoriqueCommande;
 use App\Models\Facture;
 use App\Models\Pressing;
+use App\Models\Tarif;
 use App\Models\QrCode;
 use App\Models\Utilisateur;
 use Illuminate\Support\Arr;
@@ -17,7 +18,7 @@ use InvalidArgumentException;
 
 class EnregistrerCommande
 {
-    public function executer(array $client, array $articles, int $idEmploye, int $idPressing, string $formule = 'LAVAGE', ?float $poids = null): Commande
+    public function executer(array $client, array $articles, int $idEmploye, int $idPressing, string $formule = Tarif::FORMULE_LAVAGE, ?float $poids = null): Commande
     {
         return DB::transaction(function () use ($client, $articles, $idEmploye, $idPressing, $formule, $poids): Commande {
             $pressing = Pressing::whereKey($idPressing)->firstOrFail();

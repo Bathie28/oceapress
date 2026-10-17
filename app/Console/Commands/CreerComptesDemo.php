@@ -38,12 +38,12 @@ class CreerComptesDemo extends Command
                 'statut' => 'ACTIF',
                 'modeTarification' => 'PIECE',
             ]);
-            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise', 'formule' => 'LAVAGE', 'unite' => 'PIECE', 'prix' => 15.00]);
-            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Pantalon', 'formule' => 'LAVAGE', 'unite' => 'PIECE', 'prix' => 25.00]);
-            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise', 'formule' => 'LAVAGE_REPASSAGE', 'unite' => 'PIECE', 'prix' => 20.00]);
-            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Pantalon', 'formule' => 'LAVAGE_REPASSAGE', 'unite' => 'PIECE', 'prix' => 30.00]);
-            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => null, 'formule' => 'LAVAGE', 'unite' => 'KG', 'prix' => 8.00]);
-            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => null, 'formule' => 'LAVAGE_REPASSAGE', 'unite' => 'KG', 'prix' => 12.00]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise', 'formule' => Tarif::FORMULE_LAVAGE, 'unite' => 'PIECE', 'prix' => 15.00]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Pantalon', 'formule' => Tarif::FORMULE_LAVAGE, 'unite' => 'PIECE', 'prix' => 25.00]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise', 'formule' => Tarif::FORMULE_LAVAGE_REPASSAGE, 'unite' => 'PIECE', 'prix' => 20.00]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Pantalon', 'formule' => Tarif::FORMULE_LAVAGE_REPASSAGE, 'unite' => 'PIECE', 'prix' => 30.00]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => null, 'formule' => Tarif::FORMULE_LAVAGE, 'unite' => 'KG', 'prix' => 8.00]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => null, 'formule' => Tarif::FORMULE_LAVAGE_REPASSAGE, 'unite' => 'KG', 'prix' => 12.00]);
 
             $motDePasse = Hash::make('Demo2026!');
             $employe = Utilisateur::create([

@@ -165,8 +165,37 @@ class ContraintesSchemaTest extends TestCase
         $pressing = $this->creerPressing();
         $this->assertCheckConstraint(fn () => DB::table('tarif')->insert([
             'idPressing' => $pressing->idPressing, 'typeArticle' => null,
-            'formule' => 'INVALID', 'unite' => 'KG', 'prix' => 10,
+            'formule' => 'INVENTE', 'unite' => 'KG', 'prix' => 10,
         ]), 'chk_tarif_formule');
+    }
+
+    public function test_formule_inventee_reste_refusee_pour_tarif_et_commande(): void
+    {
+        $pressing = $this->creerPressing();
+        $this->assertCheckConstraint(fn () => DB::table('tarif')->insert([
+            'idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise',
+            'formule' => 'INVENTE', 'unite' => 'PIECE', 'prix' => 10,
+        ]), 'chk_tarif_formule');
+
+        $commande = $this->creerCommande(pressing: $pressing);
+        $this->assertCheckConstraint(fn () => DB::table('commande')
+            ->where('idCommande', $commande->idCommande)
+            ->update(['formule' => 'INVENTE']), 'chk_commande_formule');
+    }
+
+    public function test_formule_repassage_est_acceptee_pour_tarif_et_commande(): void
+    {
+        $pressing = $this->creerPressing();
+        DB::table('tarif')->insert([
+            'idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise',
+            'formule' => 'REPASSAGE', 'unite' => 'PIECE', 'prix' => 10,
+        ]);
+
+        $commande = $this->creerCommande(pressing: $pressing);
+        DB::table('commande')->where('idCommande', $commande->idCommande)->update(['formule' => 'REPASSAGE']);
+
+        $this->assertDatabaseHas('tarif', ['idPressing' => $pressing->idPressing, 'formule' => 'REPASSAGE']);
+        $this->assertSame('REPASSAGE', $commande->fresh()->formule);
     }
 
     public function test_check_tarif_unite(): void

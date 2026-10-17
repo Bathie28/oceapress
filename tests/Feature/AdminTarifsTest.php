@@ -105,4 +105,38 @@ class AdminTarifsTest extends TestCase
 
         $this->assertSame('10.00', DB::table('tarif')->where('idTarif', $idTarif)->value('prix'));
     }
+
+    public function test_grille_piece_ne_montre_pas_la_section_kg_et_formulaire_propose_repassage(): void
+    {
+        $this->connecterAdministrateur();
+        $pressing = $this->creerPressing();
+        DB::table('tarif')->insert([
+            ['idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise', 'formule' => 'LAVAGE', 'unite' => 'PIECE', 'prix' => '10.00'],
+            ['idPressing' => $pressing->idPressing, 'typeArticle' => null, 'formule' => 'LAVAGE', 'unite' => 'KG', 'prix' => '8.00'],
+        ]);
+
+        $this->get('/admin/pressings/'.$pressing->idPressing.'/tarifs')
+            ->assertOk()
+            ->assertSee('<h4>PIECE</h4>', false)
+            ->assertDontSee('<h4>KG</h4>', false)
+            ->assertSee('<option value="REPASSAGE"', false)
+            ->assertSee('<option value="PIECE" selected>PIECE</option>', false);
+    }
+
+    public function test_grille_poids_ne_montre_pas_la_section_piece(): void
+    {
+        $this->connecterAdministrateur();
+        $pressing = $this->creerPressing();
+        DB::table('pressing')->where('idPressing', $pressing->idPressing)->update(['modeTarification' => 'POIDS']);
+        DB::table('tarif')->insert([
+            ['idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise', 'formule' => 'LAVAGE', 'unite' => 'PIECE', 'prix' => '10.00'],
+            ['idPressing' => $pressing->idPressing, 'typeArticle' => null, 'formule' => 'LAVAGE', 'unite' => 'KG', 'prix' => '8.00'],
+        ]);
+
+        $this->get('/admin/pressings/'.$pressing->idPressing.'/tarifs')
+            ->assertOk()
+            ->assertSee('<h4>KG</h4>', false)
+            ->assertDontSee('<h4>PIECE</h4>', false)
+            ->assertSee('<option value="KG" selected>KG</option>', false);
+    }
 }

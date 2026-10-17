@@ -10,6 +10,10 @@ class EnregistrerTarif
 {
     public function executer(Pressing $pressing, ?string $typeArticle, string $formule, string $unite, float $prix): Tarif
     {
+        if (! in_array($formule, Tarif::FORMULES, true)) {
+            throw new RuntimeException('Formule de tarification invalide.');
+        }
+
         $doublon = $pressing->tarifs()
             ->where('formule', $formule)
             ->where('unite', $unite)

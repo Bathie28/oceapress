@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Tarif extends Model
 {
+    public const FORMULE_LAVAGE = 'LAVAGE';
+    public const FORMULE_REPASSAGE = 'REPASSAGE';
+    public const FORMULE_LAVAGE_REPASSAGE = 'LAVAGE_REPASSAGE';
+    public const FORMULES = [
+        self::FORMULE_LAVAGE,
+        self::FORMULE_REPASSAGE,
+        self::FORMULE_LAVAGE_REPASSAGE,
+    ];
+
     protected $table = 'tarif';
     protected $primaryKey = 'idTarif';
     public $timestamps = false;

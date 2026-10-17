@@ -4,12 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\Facture;
 use App\Models\Pressing;
-use App\Services\CalculerMontant;
 use App\Services\EnregistrerCommande;
 use App\Services\EnregistrerTarif;
 use App\Services\ModifierTarif;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Tests\Support\CreeDonneesTest;
 use Tests\TestCase;
@@ -40,6 +38,17 @@ class TarifsServicesTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $service->executer($pressing, null, 'LAVAGE', 'KG', 12.00);
+    }
+
+    public function test_refuse_un_tarif_repassage_piece_en_doublon(): void
+    {
+        $pressing = $this->creerPressing();
+        $service = app(EnregistrerTarif::class);
+        $service->executer($pressing, 'Chemise', 'REPASSAGE', 'PIECE', 7.00);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Un tarif existe déjà pour ce type d’article et cette formule');
+        $service->executer($pressing, 'Chemise', 'REPASSAGE', 'PIECE', 8.00);
     }
 
     public function test_modifier_tarif_met_a_jour_le_prix(): void

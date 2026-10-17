@@ -85,4 +85,16 @@ class CalculerMontantTest extends TestCase
 
         $this->assertSame(4.63, $montant);
     }
+
+    public function test_calcule_un_tarif_repassage_a_la_piece(): void
+    {
+        $pressing = $this->pressingEnMode('PIECE');
+        $this->ajouterTarif($pressing, 'Chemise', 'REPASSAGE', 'PIECE', '7.25');
+
+        $montant = app(CalculerMontant::class)->executer($pressing, 'REPASSAGE', [
+            ['type' => 'Chemise', 'quantite' => 2],
+        ], null);
+
+        $this->assertSame(14.50, $montant);
+    }
 }

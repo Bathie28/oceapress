@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Employe;
 
 use App\Http\Controllers\Controller;
 use App\Models\Commande;
+use App\Models\Tarif;
 use App\Services\ChangerStatutCommande;
 use App\Services\EnregistrerCommande;
 use App\Services\EnregistrerRestitution;
@@ -71,7 +72,7 @@ class CommandeController extends Controller
             'articles.*.couleur' => ['nullable', 'string', 'max:60'],
             'articles.*.description' => ['nullable', 'string'],
             'articles.*.quantite' => ['nullable', 'integer', 'min:1'],
-            'formule' => ['required', 'string', 'in:LAVAGE,LAVAGE_REPASSAGE'],
+            'formule' => ['required', 'string', 'in:'.implode(',', Tarif::FORMULES)],
             'poids' => ['nullable', 'numeric', 'gt:0'],
         ]);
 

@@ -32,7 +32,7 @@ class TarifController extends Controller
     {
         $validated = $request->validate([
             'typeArticle' => ['nullable', 'required_if:unite,PIECE', 'string', 'max:100'],
-            'formule' => ['required', 'string', 'in:LAVAGE,LAVAGE_REPASSAGE'],
+            'formule' => ['required', 'string', 'in:'.implode(',', Tarif::FORMULES)],
             'unite' => ['required', 'string', 'in:PIECE,KG'],
             'prix' => ['required', 'numeric', 'min:0'],
         ]);

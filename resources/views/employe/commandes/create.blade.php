@@ -24,7 +24,7 @@
 
             <section class="grid gap-4 rounded-xl bg-white p-6 shadow sm:grid-cols-2">
                 <h2 class="text-xl font-semibold sm:col-span-2">Tarification</h2>
-                <div><label for="formule" class="mb-1 block text-sm font-medium">Formule</label><select id="formule" name="formule" required class="w-full rounded-lg border border-slate-300 px-3 py-2"><option value="LAVAGE" @selected(old('formule', 'LAVAGE') === 'LAVAGE')>Lavage</option><option value="LAVAGE_REPASSAGE" @selected(old('formule') === 'LAVAGE_REPASSAGE')>Lavage et repassage</option></select></div>
+                <div><label for="formule" class="mb-1 block text-sm font-medium">Formule</label><select id="formule" name="formule" required class="w-full rounded-lg border border-slate-300 px-3 py-2">@foreach (\App\Models\Tarif::FORMULES as $formule)<option value="{{ $formule }}" @selected(old('formule', \App\Models\Tarif::FORMULE_LAVAGE) === $formule)>{{ $formule }}</option>@endforeach</select></div>
                 @if ($modeTarification === 'POIDS')
                     <div><label for="poids" class="mb-1 block text-sm font-medium">Poids (kg)</label><input id="poids" name="poids" type="number" min="0.001" step="0.001" value="{{ old('poids') }}" required class="w-full rounded-lg border border-slate-300 px-3 py-2"></div>
                 @endif

@@ -104,6 +104,25 @@ class EnregistrerCommandeTest extends TestCase
         $this->assertSame('12.34', Facture::where('idCommande', $commande->idCommande)->firstOrFail()->montantTotal);
     }
 
+    public function test_commande_en_repassage_est_facturee_au_tarif_repassage(): void
+    {
+        $pressing = $this->creerPressing();
+        $employe = $this->creerEmploye($pressing);
+        $this->ajouterTarifPiece($pressing, 'Chemise', '7.25', 'REPASSAGE');
+
+        $commande = app(EnregistrerCommande::class)->executer(
+            $this->donneesClient('commande-repassage@example.test'),
+            [['typeArticle' => 'Chemise', 'quantite' => 2]],
+            $employe->idEmploye,
+            $pressing->idPressing,
+            'REPASSAGE',
+        );
+
+        $this->assertSame('REPASSAGE', $commande->fresh()->formule);
+        $this->assertSame('14.50', $commande->fresh()->montantTotal);
+        $this->assertSame('14.50', Facture::where('idCommande', $commande->idCommande)->firstOrFail()->montantTotal);
+    }
+
     public function test_refuse_un_email_d_un_employe_ou_administrateur_sans_commande(): void
     {
         $pressing = $this->creerPressing();

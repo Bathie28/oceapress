@@ -22,7 +22,8 @@
     </section>
     <section>
         <h2>Grille tarifaire</h2>
-        @php($groupes = $pressing->tarifs->groupBy('formule')->map(fn ($tarifs) => $tarifs->groupBy('unite')))
+        @php($uniteActive = $pressing->modeTarification === 'PIECE' ? 'PIECE' : 'KG')
+        @php($groupes = $pressing->tarifs->where('unite', $uniteActive)->groupBy('formule')->map(fn ($tarifs) => $tarifs->groupBy('unite')))
         @forelse ($groupes as $formule => $unites)
             <h3>{{ $formule }}</h3>
             @foreach ($unites as $unite => $tarifs)
@@ -60,10 +61,12 @@
             <input id="typeArticle" name="typeArticle" value="{{ old('typeArticle') }}" maxlength="100">
             <label for="formule">Formule</label>
             <select id="formule" name="formule" required>
-                <option value="LAVAGE">LAVAGE</option><option value="LAVAGE_REPASSAGE">LAVAGE_REPASSAGE</option>
+                @foreach (\App\Models\Tarif::FORMULES as $formule)
+                    <option value="{{ $formule }}" @selected(old('formule', \App\Models\Tarif::FORMULE_LAVAGE) === $formule)>{{ $formule }}</option>
+                @endforeach
             </select>
             <label for="unite">Unité</label>
-            <select id="unite" name="unite" required><option value="PIECE">PIECE</option><option value="KG">KG</option></select>
+            <select id="unite" name="unite" required><option value="PIECE" @selected($uniteActive === 'PIECE')>PIECE</option><option value="KG" @selected($uniteActive === 'KG')>KG</option></select>
             <label for="prix">Prix</label>
             <input id="prix" name="prix" type="number" min="0" step="0.01" value="{{ old('prix') }}" required>
             <button type="submit">Ajouter le tarif</button>

@@ -3,12 +3,17 @@
 namespace App\Services;
 
 use App\Models\Pressing;
+use App\Models\Tarif;
 use RuntimeException;
 
 class CalculerMontant
 {
     public function executer(Pressing $pressing, string $formule, array $lignes, ?float $poids): float
     {
+        if (! in_array($formule, Tarif::FORMULES, true)) {
+            throw new RuntimeException('Formule de tarification invalide.');
+        }
+
         if ($pressing->modeTarification === 'PIECE') {
             $totalCentimes = 0;
 

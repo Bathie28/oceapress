@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Commande extends Model
 {
+    public const FORMULE_REPASSAGE = Tarif::FORMULE_REPASSAGE;
+    public const FORMULES = Tarif::FORMULES;
+
     public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
     public const STATUT_EN_TRAITEMENT = 'EN_TRAITEMENT';
     public const STATUT_PRETE = 'PRETE';
