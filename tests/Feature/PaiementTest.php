@@ -4,10 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\Article;
 use App\Models\Commande;
-use App\Services\CreerFacture;
-use App\Services\DefinirPrixArticle;
+use App\Models\Facture;
+use App\Models\Pressing;
+use App\Services\EnregistrerCommande;
 use App\Services\EnregistrerPaiement;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Tests\Support\CreeDonneesTest;
 use Tests\TestCase;
@@ -16,13 +18,25 @@ class PaiementTest extends TestCase
 {
     use RefreshDatabase, CreeDonneesTest;
 
-    private function facture(): \App\Models\Facture
+    private function facture(): Facture
     {
-        $commande = $this->creerCommande();
-        $article = Article::create(['typeArticle' => 'Chemise', 'idCommande' => $commande->idCommande]);
-        app(DefinirPrixArticle::class)->executer($article->idArticle, 1000);
+        $pressing = $this->creerPressing();
+        $employe = $this->creerEmploye($pressing);
+        DB::table('tarif')->insert([
+            'idPressing' => $pressing->idPressing,
+            'typeArticle' => 'Chemise',
+            'formule' => 'LAVAGE',
+            'unite' => 'PIECE',
+            'prix' => '1000.00',
+        ]);
+        $commande = app(EnregistrerCommande::class)->executer(
+            ['nom' => 'Client', 'prenom' => 'Test', 'email' => 'paiement@example.test', 'motDePasse' => 'secret'],
+            [['typeArticle' => 'Chemise']],
+            $employe->idEmploye,
+            $pressing->idPressing,
+        );
 
-        return app(CreerFacture::class)->executer($commande->idCommande);
+        return Facture::where('idCommande', $commande->idCommande)->firstOrFail();
     }
 
     public function test_echec_garde_facture_en_attente_et_confirmation_la_paie(): void

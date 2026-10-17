@@ -151,6 +151,81 @@ class ContraintesSchemaTest extends TestCase
         ]), 'chk_pressing_statut');
     }
 
+    public function test_check_pressing_mode_tarification(): void
+    {
+        $this->assertCheckConstraint(fn () => DB::table('pressing')->insert([
+            'nom' => 'Invalid mode', 'adresse' => '1 rue Test',
+            'dateCreation' => now()->toDateString(), 'statut' => 'ACTIF',
+            'modeTarification' => 'INVALID',
+        ]), 'chk_pressing_mode');
+    }
+
+    public function test_check_tarif_formule(): void
+    {
+        $pressing = $this->creerPressing();
+        $this->assertCheckConstraint(fn () => DB::table('tarif')->insert([
+            'idPressing' => $pressing->idPressing, 'typeArticle' => null,
+            'formule' => 'INVALID', 'unite' => 'KG', 'prix' => 10,
+        ]), 'chk_tarif_formule');
+    }
+
+    public function test_check_tarif_unite(): void
+    {
+        $pressing = $this->creerPressing();
+        try {
+            DB::table('tarif')->insert([
+                'idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise',
+                'formule' => 'LAVAGE', 'unite' => 'INVALIDE', 'prix' => 10,
+            ]);
+            $this->fail('La contrainte chk_tarif_unite devait refuser l\'insertion.');
+        } catch (QueryException $exception) {
+            $this->assertStringContainsString('3819', $exception->getMessage());
+        }
+    }
+
+    public function test_check_tarif_prix(): void
+    {
+        $pressing = $this->creerPressing();
+        $this->assertCheckConstraint(fn () => DB::table('tarif')->insert([
+            'idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise',
+            'formule' => 'LAVAGE', 'unite' => 'PIECE', 'prix' => -1,
+        ]), 'chk_tarif_prix');
+    }
+
+    public function test_check_tarif_coherence_unite_type_article(): void
+    {
+        $pressing = $this->creerPressing();
+        $this->assertCheckConstraint(fn () => DB::table('tarif')->insert([
+            'idPressing' => $pressing->idPressing, 'typeArticle' => null,
+            'formule' => 'LAVAGE', 'unite' => 'PIECE', 'prix' => 10,
+        ]), 'chk_tarif_coherence');
+    }
+
+    public function test_check_commande_formule(): void
+    {
+        $commande = $this->creerCommande();
+        $this->assertCheckConstraint(fn () => DB::table('commande')
+            ->where('idCommande', $commande->idCommande)
+            ->update(['formule' => 'INVALID']), 'chk_commande_formule');
+    }
+
+    public function test_check_commande_poids(): void
+    {
+        $commande = $this->creerCommande();
+        $this->assertCheckConstraint(fn () => DB::table('commande')
+            ->where('idCommande', $commande->idCommande)
+            ->update(['poids' => -0.001]), 'chk_commande_poids');
+    }
+
+    public function test_check_article_quantite(): void
+    {
+        $commande = $this->creerCommande();
+        $article = Article::create(['typeArticle' => 'Chemise', 'idCommande' => $commande->idCommande]);
+        $this->assertCheckConstraint(fn () => DB::table('article')
+            ->where('idArticle', $article->idArticle)
+            ->update(['quantite' => 0]), 'chk_article_quantite');
+    }
+
     public function test_check_commande_statut(): void
     {
         $commande = $this->creerCommande();

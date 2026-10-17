@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Pressing;
+use App\Models\Tarif;
 use App\Models\Utilisateur;
-use App\Services\DefinirPrixArticle;
 use App\Services\EnregistrerCommande;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +36,14 @@ class CreerComptesDemo extends Command
                 'adresse' => 'Dakar',
                 'dateCreation' => now()->toDateString(),
                 'statut' => 'ACTIF',
+                'modeTarification' => 'PIECE',
             ]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise', 'formule' => 'LAVAGE', 'unite' => 'PIECE', 'prix' => 15.00]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Pantalon', 'formule' => 'LAVAGE', 'unite' => 'PIECE', 'prix' => 25.00]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise', 'formule' => 'LAVAGE_REPASSAGE', 'unite' => 'PIECE', 'prix' => 20.00]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Pantalon', 'formule' => 'LAVAGE_REPASSAGE', 'unite' => 'PIECE', 'prix' => 30.00]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => null, 'formule' => 'LAVAGE', 'unite' => 'KG', 'prix' => 8.00]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => null, 'formule' => 'LAVAGE_REPASSAGE', 'unite' => 'KG', 'prix' => 12.00]);
 
             $motDePasse = Hash::make('Demo2026!');
             $employe = Utilisateur::create([
@@ -91,9 +98,6 @@ class CreerComptesDemo extends Command
                     $pressing->idPressing,
                 );
 
-                $articles = $commande->articles()->orderBy('idArticle')->get();
-                app(DefinirPrixArticle::class)->executer($articles[0]->idArticle, 1500 + ($numeroCommande * 100));
-                app(DefinirPrixArticle::class)->executer($articles[1]->idArticle, 2500 + ($numeroCommande * 100));
             }
         });
 

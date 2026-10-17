@@ -25,4 +25,9 @@ class Pressing extends Model
     {
         return $this->hasMany(Commande::class, 'idPressing');
     }
+
+    public function tarifs()
+    {
+        return $this->hasMany(Tarif::class, 'idPressing');
+    }
 }

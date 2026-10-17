@@ -37,14 +37,27 @@ class EspaceEmployeActionsTest extends TestCase
                 'typeArticle' => 'Chemise',
                 'couleur' => 'Bleu',
                 'description' => 'Coton',
-                'prixUnitaire' => 1500,
+                'quantite' => 1,
             ]],
+            'formule' => 'LAVAGE',
         ];
+    }
+
+    private function ajouterTarifPiece(Employe $employe, string $typeArticle, string $prix): void
+    {
+        DB::table('tarif')->insert([
+            'idPressing' => $employe->pressingActif(),
+            'typeArticle' => $typeArticle,
+            'formule' => 'LAVAGE',
+            'unite' => 'PIECE',
+            'prix' => $prix,
+        ]);
     }
 
     public function test_enregistrement_utilise_le_pressing_de_employe_malgre_id_pressing_du_formulaire(): void
     {
         $employe = $this->connecterEmploye();
+        $this->ajouterTarifPiece($employe, 'Chemise', '1500.00');
         $autrePressing = $this->creerPressing();
 
         $response = $this->post('/employe/commandes/nouvelle', array_merge(
@@ -61,6 +74,7 @@ class EspaceEmployeActionsTest extends TestCase
     public function test_email_employe_ou_administrateur_refuse_sans_creer_commande(): void
     {
         $employeConnecte = $this->connecterEmploye();
+        $this->ajouterTarifPiece($employeConnecte, 'Chemise', '1500.00');
         $autreEmploye = $this->creerEmploye($employeConnecte->pressing);
         $before = Commande::count();
 
@@ -91,10 +105,11 @@ class EspaceEmployeActionsTest extends TestCase
         $employe = $this->connecterEmploye();
         $donnees = $this->formulaireCommande();
         $donnees['articles'] = [
-            ['typeArticle' => ' Chemise ', 'couleur' => 'Bleu', 'description' => 'Coton', 'prixUnitaire' => 1500],
-            ['typeArticle' => '   ', 'couleur' => '', 'description' => '', 'prixUnitaire' => ''],
-            ['typeArticle' => '', 'couleur' => '', 'description' => '', 'prixUnitaire' => ''],
+            ['typeArticle' => ' Chemise ', 'couleur' => 'Bleu', 'description' => 'Coton', 'quantite' => 1],
+            ['typeArticle' => '   ', 'couleur' => '', 'description' => '', 'quantite' => ''],
+            ['typeArticle' => '', 'couleur' => '', 'description' => '', 'quantite' => ''],
         ];
+        $this->ajouterTarifPiece($employe, 'Chemise', '1500.00');
 
         $response = $this->post('/employe/commandes/nouvelle', $donnees);
         $commande = Commande::where('idPressing', $employe->pressingActif())->firstOrFail();
@@ -109,9 +124,9 @@ class EspaceEmployeActionsTest extends TestCase
         $this->connecterEmploye();
         $donnees = $this->formulaireCommande();
         $donnees['articles'] = [
-            ['typeArticle' => '', 'couleur' => '', 'description' => '', 'prixUnitaire' => ''],
-            ['typeArticle' => '  ', 'couleur' => '', 'description' => '', 'prixUnitaire' => ''],
-            ['typeArticle' => '', 'couleur' => '', 'description' => '', 'prixUnitaire' => ''],
+            ['typeArticle' => '', 'couleur' => '', 'description' => '', 'quantite' => ''],
+            ['typeArticle' => '  ', 'couleur' => '', 'description' => '', 'quantite' => ''],
+            ['typeArticle' => '', 'couleur' => '', 'description' => '', 'quantite' => ''],
         ];
         $before = Commande::count();
 

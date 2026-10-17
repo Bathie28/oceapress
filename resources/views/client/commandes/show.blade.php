@@ -56,7 +56,7 @@
                 @forelse ($commande->articles as $article)
                     <li class="flex justify-between gap-4 py-3">
                         <span>{{ $article->typeArticle }}@if ($article->couleur) · {{ $article->couleur }}@endif</span>
-                        <span>{{ $article->prixUnitaire === null ? 'Prix non défini' : number_format((float) $article->prixUnitaire, 2, '.', ' ') }}</span>
+                        <span>Quantité : {{ $article->quantite }}</span>
                     </li>
                 @empty
                     <li class="py-3 text-slate-500">Aucun article.</li>

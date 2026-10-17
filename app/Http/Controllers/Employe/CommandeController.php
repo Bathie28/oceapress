@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Employe;
 use App\Http\Controllers\Controller;
 use App\Models\Commande;
 use App\Services\ChangerStatutCommande;
-use App\Services\CreerFacture;
-use App\Services\DefinirPrixArticle;
 use App\Services\EnregistrerCommande;
 use App\Services\EnregistrerRestitution;
 use Illuminate\Http\Request;
@@ -54,12 +52,14 @@ class CommandeController extends Controller
         return view('employe.commandes.show', compact('commande'));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('employe.commandes.create');
+        $pressing = \App\Models\Pressing::findOrFail($this->pressingActif($request));
+
+        return view('employe.commandes.create', ['modeTarification' => $pressing->modeTarification]);
     }
 
-    public function store(Request $request, EnregistrerCommande $enregistrerCommande, DefinirPrixArticle $definirPrixArticle): RedirectResponse
+    public function store(Request $request, EnregistrerCommande $enregistrerCommande): RedirectResponse
     {
         $validated = $request->validate([
             'client.email' => ['required', 'email', 'max:190'],
@@ -70,7 +70,9 @@ class CommandeController extends Controller
             'articles.*.typeArticle' => ['nullable', 'string', 'max:100'],
             'articles.*.couleur' => ['nullable', 'string', 'max:60'],
             'articles.*.description' => ['nullable', 'string'],
-            'articles.*.prixUnitaire' => ['nullable', 'numeric', 'min:0'],
+            'articles.*.quantite' => ['nullable', 'integer', 'min:1'],
+            'formule' => ['required', 'string', 'in:LAVAGE,LAVAGE_REPASSAGE'],
+            'poids' => ['nullable', 'numeric', 'gt:0'],
         ]);
 
         $articles = collect($validated['articles'] ?? [])
@@ -89,17 +91,9 @@ class CommandeController extends Controller
                 $articles,
                 $request->user()->employe->idEmploye,
                 $this->pressingActif($request),
+                $validated['formule'],
+                isset($validated['poids']) ? (float) $validated['poids'] : null,
             );
-
-            $articlesCrees = $commande->articles()->orderBy('idArticle')->get();
-            foreach ($articles as $index => $article) {
-                if (isset($article['prixUnitaire']) && $article['prixUnitaire'] !== '') {
-                    $definirPrixArticle->executer(
-                        $articlesCrees[$index]->idArticle,
-                        (float) $article['prixUnitaire'],
-                    );
-                }
-            }
         } catch (RuntimeException $exception) {
             return back()->withErrors(['commande' => $exception->getMessage()])->withInput();
         }
@@ -125,20 +119,6 @@ class CommandeController extends Controller
         } catch (RuntimeException $exception) {
             return redirect()->route('employe.commandes.show', $commande->idCommande)
                 ->withErrors(['statut' => $exception->getMessage()]);
-        }
-
-        return redirect()->route('employe.commandes.show', $commande->idCommande);
-    }
-
-    public function storeFacture(Request $request, int $commande, CreerFacture $creerFacture): RedirectResponse
-    {
-        $commande = $this->commandeDuPressing($request, $commande);
-
-        try {
-            $creerFacture->executer($commande->idCommande);
-        } catch (RuntimeException $exception) {
-            return redirect()->route('employe.commandes.show', $commande->idCommande)
-                ->withErrors(['facturation' => $exception->getMessage()]);
         }
 
         return redirect()->route('employe.commandes.show', $commande->idCommande);

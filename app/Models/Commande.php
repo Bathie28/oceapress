@@ -23,6 +23,8 @@ class Commande extends Model
         'dateRecuperation',
         'statut',
         'montantTotal',
+        'formule',
+        'poids',
         'idPressing',
         'idClient',
     ];

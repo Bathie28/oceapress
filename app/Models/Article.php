@@ -16,12 +16,12 @@ class Article extends Model
         'couleur',
         'etatInitial',
         'etatFinal',
-        'prixUnitaire',
+        'quantite',
         'idCommande',
     ];
 
     protected function casts(): array
     {
-        return ['prixUnitaire' => 'decimal:2'];
+        return ['quantite' => 'integer'];
     }
 }

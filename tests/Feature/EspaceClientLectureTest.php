@@ -57,7 +57,7 @@ class EspaceClientLectureTest extends TestCase
         $commande->update(['montantTotal' => 1450]);
         Article::create([
             'typeArticle' => 'Chemise',
-            'prixUnitaire' => 1200,
+            'quantite' => 2,
             'idCommande' => $commande->idCommande,
         ]);
         HistoriqueCommande::where('idCommande', $commande->idCommande)
@@ -68,7 +68,7 @@ class EspaceClientLectureTest extends TestCase
             ->assertSee('EN ATTENTE')
             ->assertSee('1 450.00')
             ->assertSee('Chemise')
-            ->assertSee('1 200.00')
+            ->assertSee('Quantité : 2')
             ->assertSee('Commande prise en charge');
     }
 

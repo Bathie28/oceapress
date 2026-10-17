@@ -6,6 +6,8 @@ use App\Models\Article;
 use App\Models\Client;
 use App\Models\Commande;
 use App\Models\HistoriqueCommande;
+use App\Models\Facture;
+use App\Models\Pressing;
 use App\Models\QrCode;
 use App\Models\Utilisateur;
 use Illuminate\Support\Arr;
@@ -15,9 +17,27 @@ use InvalidArgumentException;
 
 class EnregistrerCommande
 {
-    public function executer(array $client, array $articles, int $idEmploye, int $idPressing): Commande
+    public function executer(array $client, array $articles, int $idEmploye, int $idPressing, string $formule = 'LAVAGE', ?float $poids = null): Commande
     {
-        return DB::transaction(function () use ($client, $articles, $idEmploye, $idPressing): Commande {
+        return DB::transaction(function () use ($client, $articles, $idEmploye, $idPressing, $formule, $poids): Commande {
+            $pressing = Pressing::whereKey($idPressing)->firstOrFail();
+            $lignes = [];
+            foreach ($articles as $article) {
+                if (! is_array($article)
+                    || ! isset($article['typeArticle'])
+                    || trim((string) $article['typeArticle']) === '') {
+                    throw new InvalidArgumentException('Chaque article doit avoir un typeArticle non vide.');
+                }
+                $lignes[] = [
+                    'type' => trim((string) $article['typeArticle']),
+                    'quantite' => (int) ($article['quantite'] ?? 1),
+                ];
+            }
+            if ($lignes === []) {
+                throw new InvalidArgumentException('Ajoutez au moins un article.');
+            }
+
+            $montant = app(CalculerMontant::class)->executer($pressing, $formule, $lignes, $poids);
             $utilisateur = Utilisateur::where('email', $client['email'])->first();
 
             if ($utilisateur === null) {
@@ -60,18 +80,14 @@ class EnregistrerCommande
             $commande = Commande::create([
                 'referenceCommande' => $referenceCommande,
                 'statut' => Commande::STATUT_EN_ATTENTE,
-                'montantTotal' => 0,
+                'montantTotal' => $montant,
+                'formule' => $formule,
+                'poids' => $pressing->modeTarification === 'POIDS' ? $poids : null,
                 'idPressing' => $idPressing,
                 'idClient' => $clientCree->idClient,
             ]);
 
             foreach ($articles as $article) {
-                if (! is_array($article)
-                    || ! isset($article['typeArticle'])
-                    || trim((string) $article['typeArticle']) === '') {
-                    throw new InvalidArgumentException('Chaque article doit avoir un typeArticle non vide.');
-                }
-
                 Article::create([
                     ...Arr::only($article, [
                         'typeArticle',
@@ -79,7 +95,9 @@ class EnregistrerCommande
                         'couleur',
                         'etatInitial',
                         'etatFinal',
+                        'quantite',
                     ]),
+                    'quantite' => (int) ($article['quantite'] ?? 1),
                     'idCommande' => $commande->idCommande,
                 ]);
             }
@@ -97,6 +115,14 @@ class EnregistrerCommande
                 'dateChangement' => now(),
                 'idCommande' => $commande->idCommande,
                 'idEmploye' => $idEmploye,
+            ]);
+
+            Facture::create([
+                'numeroFacture' => $this->genererNumeroFacture(),
+                'dateEmission' => now(),
+                'montantTotal' => $montant,
+                'statut' => 'EN_ATTENTE',
+                'idCommande' => $commande->idCommande,
             ]);
 
             return $commande;
@@ -125,5 +151,18 @@ class EnregistrerCommande
         } while (QrCode::where('token', $token)->exists());
 
         return $token;
+    }
+
+    private function genererNumeroFacture(): string
+    {
+        do {
+            $suffixe = '';
+            for ($i = 0; $i < 6; $i++) {
+                $suffixe .= chr(random_int(65, 90));
+            }
+            $numero = 'FAC-'.now()->format('Ymd').'-'.$suffixe;
+        } while (Facture::where('numeroFacture', $numero)->exists());
+
+        return $numero;
     }
 }

@@ -2,11 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\Article;
-use App\Models\Commande;
-use App\Services\CreerFacture;
-use App\Services\DefinirPrixArticle;
+use App\Models\Facture;
+use App\Services\EnregistrerCommande;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Tests\Support\CreeDonneesTest;
 use Tests\TestCase;
@@ -15,53 +14,65 @@ class FactureTest extends TestCase
 {
     use RefreshDatabase, CreeDonneesTest;
 
-    private function ajouterArticle(Commande $commande, string $type = 'Chemise'): Article
+    public function test_la_facture_est_emise_avec_la_commande_et_le_montant_calcule(): void
     {
-        return Article::create(['typeArticle' => $type, 'idCommande' => $commande->idCommande]);
+        $pressing = $this->creerPressing();
+        $employe = $this->creerEmploye($pressing);
+        DB::table('tarif')->insert([
+            'idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise',
+            'formule' => 'LAVAGE', 'unite' => 'PIECE', 'prix' => '15.25',
+        ]);
+
+        $commande = app(EnregistrerCommande::class)->executer(
+            ['nom' => 'Client', 'prenom' => 'Test', 'email' => 'facture-auto@example.test', 'motDePasse' => 'secret'],
+            [['typeArticle' => 'Chemise', 'quantite' => 2]],
+            $employe->idEmploye,
+            $pressing->idPressing,
+        );
+        $facture = Facture::where('idCommande', $commande->idCommande)->firstOrFail();
+
+        $this->assertMatchesRegularExpression('/^FAC-\\d{8}-[A-Z]{6}$/', $facture->numeroFacture);
+        $this->assertSame('30.50', $facture->montantTotal);
+        $this->assertSame('EN_ATTENTE', $facture->statut);
     }
 
-    public function test_cree_une_facture_au_format_attendu_et_refuse_la_seconde(): void
+    public function test_une_erreur_de_tarif_n_ecrit_ni_commande_ni_facture(): void
     {
-        $commande = $this->creerCommande();
-        $article = $this->ajouterArticle($commande);
-        app(DefinirPrixArticle::class)->executer($article->idArticle, 1250.50);
+        $pressing = $this->creerPressing();
+        $employe = $this->creerEmploye($pressing);
 
-        $facture = app(CreerFacture::class)->executer($commande->idCommande);
-        $this->assertMatchesRegularExpression('/^FAC-\d{8}-[A-Z]{6}$/', $facture->numeroFacture);
-
-        $this->expectException(RuntimeException::class);
-        app(CreerFacture::class)->executer($commande->idCommande);
-    }
-
-    public function test_refuse_une_commande_annulee_et_un_article_sans_prix(): void
-    {
-        $annulee = $this->creerCommande(null, null, Commande::STATUT_ANNULEE);
         try {
-            app(CreerFacture::class)->executer($annulee->idCommande);
-            $this->fail('Une commande annulée ne peut pas être facturée.');
+            app(EnregistrerCommande::class)->executer(
+                ['nom' => 'Client', 'prenom' => 'Test', 'email' => 'sans-tarif@example.test', 'motDePasse' => 'secret'],
+                [['typeArticle' => 'Chemise']],
+                $employe->idEmploye,
+                $pressing->idPressing,
+            );
+            $this->fail('Une commande sans tarif devait être refusée.');
         } catch (RuntimeException $exception) {
-            $this->assertStringContainsString('annulée', $exception->getMessage());
+            $this->assertStringContainsString('Pas de tarif pour Chemise', $exception->getMessage());
         }
 
-        $commande = $this->creerCommande();
-        $this->ajouterArticle($commande);
-        try {
-            app(CreerFacture::class)->executer($commande->idCommande);
-            $this->fail('Un article sans prix ne peut pas être facturé.');
-        } catch (RuntimeException $exception) {
-            $this->assertStringContainsString('prix', $exception->getMessage());
-        }
+        $this->assertDatabaseMissing('utilisateur', ['email' => 'sans-tarif@example.test']);
+        $this->assertDatabaseCount('commande', 0);
+        $this->assertDatabaseCount('facture', 0);
     }
 
-    public function test_montant_commande_est_la_somme_des_prix_unitaires(): void
+    public function test_deux_commandes_creent_chacune_une_facture_unique(): void
     {
-        $commande = $this->creerCommande();
-        $premier = $this->ajouterArticle($commande, 'Chemise');
-        $second = $this->ajouterArticle($commande, 'Pantalon');
-        $prix = app(DefinirPrixArticle::class);
-        $prix->executer($premier->idArticle, 1200);
-        $prix->executer($second->idArticle, 2450.75);
+        $pressing = $this->creerPressing();
+        $employe = $this->creerEmploye($pressing);
+        DB::table('tarif')->insert([
+            'idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise',
+            'formule' => 'LAVAGE', 'unite' => 'PIECE', 'prix' => '10.00',
+        ]);
+        $service = app(EnregistrerCommande::class);
+        $client = ['nom' => 'Client', 'prenom' => 'Test', 'email' => 'deux-factures@example.test', 'motDePasse' => 'secret'];
 
-        $this->assertSame('3650.75', $commande->fresh()->montantTotal);
+        $premiere = $service->executer($client, [['typeArticle' => 'Chemise']], $employe->idEmploye, $pressing->idPressing);
+        $seconde = $service->executer($client, [['typeArticle' => 'Chemise']], $employe->idEmploye, $pressing->idPressing);
+
+        $this->assertSame(1, Facture::where('idCommande', $premiere->idCommande)->count());
+        $this->assertSame(1, Facture::where('idCommande', $seconde->idCommande)->count());
     }
 }

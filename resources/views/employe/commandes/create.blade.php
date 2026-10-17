@@ -22,6 +22,14 @@
                 <div><label for="nom" class="mb-1 block text-sm font-medium">Nom</label><input id="nom" name="client[nom]" value="{{ old('client.nom') }}" required class="w-full rounded-lg border border-slate-300 px-3 py-2"></div>
             </section>
 
+            <section class="grid gap-4 rounded-xl bg-white p-6 shadow sm:grid-cols-2">
+                <h2 class="text-xl font-semibold sm:col-span-2">Tarification</h2>
+                <div><label for="formule" class="mb-1 block text-sm font-medium">Formule</label><select id="formule" name="formule" required class="w-full rounded-lg border border-slate-300 px-3 py-2"><option value="LAVAGE" @selected(old('formule', 'LAVAGE') === 'LAVAGE')>Lavage</option><option value="LAVAGE_REPASSAGE" @selected(old('formule') === 'LAVAGE_REPASSAGE')>Lavage et repassage</option></select></div>
+                @if ($modeTarification === 'POIDS')
+                    <div><label for="poids" class="mb-1 block text-sm font-medium">Poids (kg)</label><input id="poids" name="poids" type="number" min="0.001" step="0.001" value="{{ old('poids') }}" required class="w-full rounded-lg border border-slate-300 px-3 py-2"></div>
+                @endif
+            </section>
+
             <section class="space-y-4 rounded-xl bg-white p-6 shadow">
                 <h2 class="text-xl font-semibold">Articles</h2>
                 @for ($index = 0; $index < 3; $index++)
@@ -30,7 +38,9 @@
                         <div><label for="typeArticle{{ $index }}" class="mb-1 block text-sm">Type</label><input id="typeArticle{{ $index }}" name="articles[{{ $index }}][typeArticle]" value="{{ old("articles.{$index}.typeArticle") }}" class="w-full rounded-lg border border-slate-300 px-3 py-2"></div>
                         <div><label for="couleur{{ $index }}" class="mb-1 block text-sm">Couleur</label><input id="couleur{{ $index }}" name="articles[{{ $index }}][couleur]" value="{{ old("articles.{$index}.couleur") }}" class="w-full rounded-lg border border-slate-300 px-3 py-2"></div>
                         <div><label for="description{{ $index }}" class="mb-1 block text-sm">Description</label><input id="description{{ $index }}" name="articles[{{ $index }}][description]" value="{{ old("articles.{$index}.description") }}" class="w-full rounded-lg border border-slate-300 px-3 py-2"></div>
-                        <div><label for="prix{{ $index }}" class="mb-1 block text-sm">Prix unitaire (facultatif)</label><input id="prix{{ $index }}" name="articles[{{ $index }}][prixUnitaire]" type="number" min="0" step="0.01" value="{{ old("articles.{$index}.prixUnitaire") }}" class="w-full rounded-lg border border-slate-300 px-3 py-2"></div>
+                        @if ($modeTarification === 'PIECE')
+                            <div><label for="quantite{{ $index }}" class="mb-1 block text-sm">Quantité</label><input id="quantite{{ $index }}" name="articles[{{ $index }}][quantite]" type="number" min="1" step="1" value="{{ old("articles.{$index}.quantite", 1) }}" class="w-full rounded-lg border border-slate-300 px-3 py-2"></div>
+                        @endif
                     </fieldset>
                 @endfor
             </section>
