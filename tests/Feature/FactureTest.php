@@ -20,7 +20,7 @@ class FactureTest extends TestCase
         $employe = $this->creerEmploye($pressing);
         DB::table('tarif')->insert([
             'idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise',
-            'formule' => 'LAVAGE', 'unite' => 'PIECE', 'prix' => '15.25',
+            'formule' => 'REPASSAGE', 'unite' => 'PIECE', 'prix' => '1525',
         ]);
 
         $commande = app(EnregistrerCommande::class)->executer(
@@ -32,7 +32,7 @@ class FactureTest extends TestCase
         $facture = Facture::where('idCommande', $commande->idCommande)->firstOrFail();
 
         $this->assertMatchesRegularExpression('/^FAC-\\d{8}-[A-Z]{6}$/', $facture->numeroFacture);
-        $this->assertSame('30.50', $facture->montantTotal);
+        $this->assertSame('3050', $facture->montantTotal);
         $this->assertSame('EN_ATTENTE', $facture->statut);
     }
 
@@ -64,7 +64,7 @@ class FactureTest extends TestCase
         $employe = $this->creerEmploye($pressing);
         DB::table('tarif')->insert([
             'idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise',
-            'formule' => 'LAVAGE', 'unite' => 'PIECE', 'prix' => '10.00',
+            'formule' => 'REPASSAGE', 'unite' => 'PIECE', 'prix' => '1000',
         ]);
         $service = app(EnregistrerCommande::class);
         $client = ['nom' => 'Client', 'prenom' => 'Test', 'email' => 'deux-factures@example.test', 'motDePasse' => 'secret'];

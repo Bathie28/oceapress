@@ -36,7 +36,7 @@
                             <td class="p-4">{{ $commande->client?->utilisateur?->prenom }} {{ $commande->client?->utilisateur?->nom }}</td>
                             <td class="p-4">{{ str_replace('_', ' ', $commande->statut) }}</td>
                             <td class="p-4">{{ $commande->dateCreation }}</td>
-                            <td class="p-4">{{ number_format((float) $commande->montantTotal, 2, '.', ' ') }}</td>
+                            <td class="p-4">{{ number_format((float) $commande->montantTotal, 0, '.', ' ') }}</td>
                         </tr>
                     @empty
                         <tr><td colspan="5" class="p-8 text-center text-slate-500">Aucune commande.</td></tr>

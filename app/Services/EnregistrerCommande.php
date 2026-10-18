@@ -18,10 +18,13 @@ use InvalidArgumentException;
 
 class EnregistrerCommande
 {
-    public function executer(array $client, array $articles, int $idEmploye, int $idPressing, string $formule = Tarif::FORMULE_LAVAGE, ?float $poids = null): Commande
+    public function executer(array $client, array $articles, int $idEmploye, int $idPressing, string $modeFacturation = Commande::MODE_FACTURATION_PIECE, string $formule = Tarif::FORMULE_REPASSAGE, ?float $poids = null): Commande
     {
-        return DB::transaction(function () use ($client, $articles, $idEmploye, $idPressing, $formule, $poids): Commande {
+        return DB::transaction(function () use ($client, $articles, $idEmploye, $idPressing, $modeFacturation, $formule, $poids): Commande {
             $pressing = Pressing::whereKey($idPressing)->firstOrFail();
+            if ($modeFacturation === Commande::MODE_FACTURATION_POIDS && ! $pressing->pesee) {
+                throw new \RuntimeException('Ce pressing ne propose pas la facturation au poids.');
+            }
             $lignes = [];
             foreach ($articles as $article) {
                 if (! is_array($article)
@@ -38,7 +41,7 @@ class EnregistrerCommande
                 throw new InvalidArgumentException('Ajoutez au moins un article.');
             }
 
-            $montant = app(CalculerMontant::class)->executer($pressing, $formule, $lignes, $poids);
+            $montant = app(CalculerMontant::class)->executer($pressing, $modeFacturation, $formule, $lignes, $poids);
             $utilisateur = Utilisateur::where('email', $client['email'])->first();
 
             if ($utilisateur === null) {
@@ -83,7 +86,8 @@ class EnregistrerCommande
                 'statut' => Commande::STATUT_EN_ATTENTE,
                 'montantTotal' => $montant,
                 'formule' => $formule,
-                'poids' => $pressing->modeTarification === 'POIDS' ? $poids : null,
+                'modeFacturation' => $modeFacturation,
+                'poids' => $modeFacturation === Commande::MODE_FACTURATION_POIDS ? $poids : null,
                 'idPressing' => $idPressing,
                 'idClient' => $clientCree->idClient,
             ]);

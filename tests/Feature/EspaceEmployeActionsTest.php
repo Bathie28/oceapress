@@ -39,7 +39,8 @@ class EspaceEmployeActionsTest extends TestCase
                 'description' => 'Coton',
                 'quantite' => 1,
             ]],
-            'formule' => 'LAVAGE',
+            'modeFacturation' => 'PIECE',
+            'formule' => 'REPASSAGE',
         ];
     }
 
@@ -48,7 +49,7 @@ class EspaceEmployeActionsTest extends TestCase
         DB::table('tarif')->insert([
             'idPressing' => $employe->pressingActif(),
             'typeArticle' => $typeArticle,
-            'formule' => 'LAVAGE',
+            'formule' => 'REPASSAGE',
             'unite' => 'PIECE',
             'prix' => $prix,
         ]);
@@ -57,7 +58,7 @@ class EspaceEmployeActionsTest extends TestCase
     public function test_enregistrement_utilise_le_pressing_de_employe_malgre_id_pressing_du_formulaire(): void
     {
         $employe = $this->connecterEmploye();
-        $this->ajouterTarifPiece($employe, 'Chemise', '1500.00');
+        $this->ajouterTarifPiece($employe, 'Chemise', '1500');
         $autrePressing = $this->creerPressing();
 
         $response = $this->post('/employe/commandes/nouvelle', array_merge(
@@ -68,13 +69,13 @@ class EspaceEmployeActionsTest extends TestCase
         $commande = Commande::where('idPressing', $employe->pressingActif())->firstOrFail();
         $response->assertRedirect('/employe/commandes/'.$commande->idCommande);
         $this->assertNotSame($autrePressing->idPressing, $commande->idPressing);
-        $this->assertSame('1500.00', $commande->fresh()->montantTotal);
+        $this->assertSame('1500', $commande->fresh()->montantTotal);
     }
 
     public function test_email_employe_ou_administrateur_refuse_sans_creer_commande(): void
     {
         $employeConnecte = $this->connecterEmploye();
-        $this->ajouterTarifPiece($employeConnecte, 'Chemise', '1500.00');
+        $this->ajouterTarifPiece($employeConnecte, 'Chemise', '1500');
         $autreEmploye = $this->creerEmploye($employeConnecte->pressing);
         $before = Commande::count();
 
@@ -109,7 +110,7 @@ class EspaceEmployeActionsTest extends TestCase
             ['typeArticle' => '   ', 'couleur' => '', 'description' => '', 'quantite' => ''],
             ['typeArticle' => '', 'couleur' => '', 'description' => '', 'quantite' => ''],
         ];
-        $this->ajouterTarifPiece($employe, 'Chemise', '1500.00');
+        $this->ajouterTarifPiece($employe, 'Chemise', '1500');
 
         $response = $this->post('/employe/commandes/nouvelle', $donnees);
         $commande = Commande::where('idPressing', $employe->pressingActif())->firstOrFail();
@@ -136,6 +137,22 @@ class EspaceEmployeActionsTest extends TestCase
         $response->assertRedirect('/employe/commandes/nouvelle')
             ->assertSessionHasErrors(['articles' => 'Ajoutez au moins un article']);
         $this->assertSame($before, Commande::count());
+    }
+
+    public function test_formulaire_commande_limite_les_formules_et_le_poids_selon_le_pressing(): void
+    {
+        $employe = $this->connecterEmploye();
+        $this->get('/employe/commandes/nouvelle')->assertOk()
+            ->assertSee('value="PIECE"', false)
+            ->assertDontSee('value="POIDS"', false)
+            ->assertSee('value="REPASSAGE"', false)
+            ->assertDontSee('value="LAVAGE"', false)
+            ->assertSee('step="0.1"', false);
+
+        $employe->pressing->update(['pesee' => true]);
+        $this->get('/employe/commandes/nouvelle')->assertOk()
+            ->assertSee('value="POIDS"', false)
+            ->assertSee('"POIDS":["LAVAGE"', false);
     }
 
     public function test_changement_statut_valide_met_a_jour_commande_et_historique(): void

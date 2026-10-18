@@ -67,10 +67,21 @@ class EspaceEmployeLectureTest extends TestCase
     {
         [$employe] = $this->connexionEmploye();
         $commande = $this->creerCommande(null, $employe->pressing);
-        $commande->update(['montantTotal' => 1234.50]);
+        $commande->update(['montantTotal' => 1235]);
 
         $this->get('/employe/commandes/'.$commande->idCommande)->assertOk()
             ->assertSee($commande->referenceCommande)
-            ->assertSee('1 234.50');
+            ->assertSee('1 235');
+    }
+
+    public function test_accueil_employe_contient_les_liens_vers_les_commandes(): void
+    {
+        $this->connexionEmploye();
+
+        $this->get('/employe')->assertOk()
+            ->assertSee('Commandes')
+            ->assertSee('href="'.route('employe.commandes.index').'"', false)
+            ->assertSee('Nouvelle commande')
+            ->assertSee('href="'.route('employe.commandes.create').'"', false);
     }
 }

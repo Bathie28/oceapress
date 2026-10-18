@@ -13,7 +13,7 @@
             <dl class="mt-5 grid gap-4 sm:grid-cols-2">
                 <div><dt class="text-sm text-slate-500">Statut</dt><dd>{{ str_replace('_', ' ', $commande->statut) }}</dd></div>
                 <div><dt class="text-sm text-slate-500">Date</dt><dd>{{ $commande->dateCreation }}</dd></div>
-                <div><dt class="text-sm text-slate-500">Montant</dt><dd>{{ number_format((float) $commande->montantTotal, 2, '.', ' ') }}</dd></div>
+                <div><dt class="text-sm text-slate-500">Montant</dt><dd>{{ number_format((float) $commande->montantTotal, 0, '.', ' ') }}</dd></div>
             </dl>
         </section>
 
@@ -28,7 +28,7 @@
             @if ($commande->facture)
                 <dl class="grid gap-4 sm:grid-cols-3">
                     <div><dt class="text-sm text-slate-500">Numéro</dt><dd>{{ $commande->facture->numeroFacture }}</dd></div>
-                    <div><dt class="text-sm text-slate-500">Montant</dt><dd>{{ number_format((float) $commande->facture->montantTotal, 2, '.', ' ') }}</dd></div>
+                    <div><dt class="text-sm text-slate-500">Montant</dt><dd>{{ number_format((float) $commande->facture->montantTotal, 0, '.', ' ') }}</dd></div>
                     <div><dt class="text-sm text-slate-500">Statut</dt><dd>{{ str_replace('_', ' ', $commande->facture->statut) }}</dd></div>
                 </dl>
                 @if ($commande->facture->statut === 'EN_ATTENTE')

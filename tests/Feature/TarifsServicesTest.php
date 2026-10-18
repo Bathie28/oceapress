@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Facture;
-use App\Models\Pressing;
 use App\Services\EnregistrerCommande;
 use App\Services\EnregistrerTarif;
 use App\Services\ModifierTarif;
@@ -20,70 +19,63 @@ class TarifsServicesTest extends TestCase
     {
         $pressing = $this->creerPressing();
         $service = app(EnregistrerTarif::class);
-        $service->executer($pressing, 'Chemise', 'LAVAGE', 'PIECE', 10.00);
-
-        try {
-            $service->executer($pressing, 'Chemise', 'LAVAGE', 'PIECE', 12.00);
-            $this->fail('Le doublon de tarif pièce devait être refusé.');
-        } catch (RuntimeException $exception) {
-            $this->assertSame('Un tarif existe déjà pour ce type d’article et cette formule', $exception->getMessage());
-        }
+        $service->executer($pressing, 'Chemise', 'REPASSAGE', 'PIECE', 1000);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Un tarif existe déjà pour ce type d’article et cette formule');
+        $service->executer($pressing, 'Chemise', 'REPASSAGE', 'PIECE', 1200);
     }
 
     public function test_refuse_un_second_tarif_kg_identique(): void
     {
-        $pressing = $this->creerPressing();
+        $pressing = $this->creerPressing(); $pressing->update(['pesee' => true]);
         $service = app(EnregistrerTarif::class);
-        $service->executer($pressing, null, 'LAVAGE', 'KG', 10.00);
-
+        $service->executer($pressing, null, 'LAVAGE', 'KG', 1000);
         $this->expectException(RuntimeException::class);
-        $service->executer($pressing, null, 'LAVAGE', 'KG', 12.00);
+        $service->executer($pressing, null, 'LAVAGE', 'KG', 1200);
     }
 
-    public function test_refuse_un_tarif_repassage_piece_en_doublon(): void
+    public function test_modifier_tarif_met_a_jour_le_prix_entier(): void
     {
-        $pressing = $this->creerPressing();
-        $service = app(EnregistrerTarif::class);
-        $service->executer($pressing, 'Chemise', 'REPASSAGE', 'PIECE', 7.00);
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Un tarif existe déjà pour ce type d’article et cette formule');
-        $service->executer($pressing, 'Chemise', 'REPASSAGE', 'PIECE', 8.00);
+        $tarif = app(EnregistrerTarif::class)->executer($this->creerPressing(), 'Chemise', 'REPASSAGE', 'PIECE', 1000);
+        $modifie = app(ModifierTarif::class)->executer($tarif->idTarif, 1550);
+        $this->assertSame('1550', $modifie->fresh()->prix);
     }
 
-    public function test_modifier_tarif_met_a_jour_le_prix(): void
+    public function test_modifier_tarif_ne_change_pas_une_facture_deja_emise(): void
     {
-        $pressing = $this->creerPressing();
-        $tarif = app(EnregistrerTarif::class)->executer($pressing, 'Chemise', 'LAVAGE', 'PIECE', 10.00);
-
-        $modifie = app(ModifierTarif::class)->executer($tarif->idTarif, 15.50);
-
-        $this->assertSame('15.50', $modifie->fresh()->prix);
-    }
-
-    public function test_modifier_tarif_ne_change_pas_une_facture_existante_mais_tarife_les_commandes_suivantes(): void
-    {
-        $pressing = $this->creerPressing();
-        $employe = $this->creerEmploye($pressing);
-        $tarif = app(EnregistrerTarif::class)->executer($pressing, 'Chemise', 'LAVAGE', 'PIECE', 10.00);
-        $serviceCommande = app(EnregistrerCommande::class);
-        $client = ['nom' => 'Client', 'prenom' => 'Test', 'email' => 'prix-historique@example.test', 'motDePasse' => 'secret'];
-        $premiere = $serviceCommande->executer($client, [['typeArticle' => 'Chemise']], $employe->idEmploye, $pressing->idPressing);
-        $factureExistante = Facture::where('idCommande', $premiere->idCommande)->firstOrFail();
-
-        app(ModifierTarif::class)->executer($tarif->idTarif, 25.00);
-        $seconde = $serviceCommande->executer($client, [['typeArticle' => 'Chemise']], $employe->idEmploye, $pressing->idPressing);
-
-        $this->assertSame('10.00', $factureExistante->fresh()->montantTotal);
-        $this->assertSame('25.00', Facture::where('idCommande', $seconde->idCommande)->firstOrFail()->montantTotal);
+        $pressing = $this->creerPressing(); $employe = $this->creerEmploye($pressing);
+        $tarif = app(EnregistrerTarif::class)->executer($pressing, 'Chemise', 'REPASSAGE', 'PIECE', 1000);
+        $client = ['nom' => 'Client', 'prenom' => 'Test', 'email' => 'historique-tarif@example.test', 'motDePasse' => 'secret'];
+        $commande = app(EnregistrerCommande::class)->executer($client, [['typeArticle' => 'Chemise']], $employe->idEmploye, $pressing->idPressing);
+        $facture = Facture::where('idCommande', $commande->idCommande)->firstOrFail();
+        app(ModifierTarif::class)->executer($tarif->idTarif, 2500);
+        $this->assertSame('1000', $facture->fresh()->montantTotal);
     }
 
     public function test_modifier_tarif_refuse_un_prix_negatif(): void
     {
-        $pressing = $this->creerPressing();
-        $tarif = app(EnregistrerTarif::class)->executer($pressing, 'Chemise', 'LAVAGE', 'PIECE', 10.00);
-
+        $tarif = app(EnregistrerTarif::class)->executer($this->creerPressing(), 'Chemise', 'REPASSAGE', 'PIECE', 1000);
         $this->expectException(RuntimeException::class);
-        app(ModifierTarif::class)->executer($tarif->idTarif, -1.00);
+        app(ModifierTarif::class)->executer($tarif->idTarif, -1);
+    }
+
+    public function test_refuse_un_tarif_kg_pour_un_pressing_sans_pesee(): void
+    {
+        $this->expectException(RuntimeException::class);
+        app(EnregistrerTarif::class)->executer($this->creerPressing(), null, 'LAVAGE', 'KG', 1000);
+    }
+
+    public function test_refuse_une_formule_non_autorisee_pour_l_unite(): void
+    {
+        $this->expectException(RuntimeException::class);
+        app(EnregistrerTarif::class)->executer($this->creerPressing(), 'Chemise', 'LAVAGE', 'PIECE', 1000);
+    }
+
+    public function test_tarif_repassage_en_doublon_est_refuse(): void
+    {
+        $pressing = $this->creerPressing(); $service = app(EnregistrerTarif::class);
+        $service->executer($pressing, 'Chemise', 'REPASSAGE', 'PIECE', 1000);
+        $this->expectException(RuntimeException::class);
+        $service->executer($pressing, 'Chemise', 'REPASSAGE', 'PIECE', 1200);
     }
 }

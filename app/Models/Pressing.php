@@ -14,7 +14,12 @@ class Pressing extends Model
     protected $primaryKey = 'idPressing';
     public $timestamps = false;
 
-    protected $fillable = ['nom', 'adresse', 'telephone', 'email', 'dateCreation', 'statut'];
+    protected $fillable = ['nom', 'adresse', 'telephone', 'email', 'dateCreation', 'statut', 'pesee'];
+
+    protected function casts(): array
+    {
+        return ['pesee' => 'boolean'];
+    }
 
     public function employes()
     {
@@ -29,5 +34,14 @@ class Pressing extends Model
     public function tarifs()
     {
         return $this->hasMany(Tarif::class, 'idPressing');
+    }
+
+    public function tarifsAffiches()
+    {
+        $tarifs = $this->relationLoaded('tarifs')
+            ? $this->getRelation('tarifs')
+            : $this->tarifs()->get();
+
+        return ($this->pesee ? $tarifs : $tarifs->where('unite', 'PIECE'))->values();
     }
 }

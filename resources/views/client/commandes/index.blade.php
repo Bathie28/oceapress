@@ -19,7 +19,7 @@
                             <td class="p-4"><a class="font-medium text-blue-700 hover:underline" href="{{ route('client.commandes.show', $commande->idCommande) }}">{{ $commande->referenceCommande }}</a></td>
                             <td class="p-4">{{ str_replace('_', ' ', $commande->statut) }}</td>
                             <td class="p-4">{{ $commande->dateCreation }}</td>
-                            <td class="p-4">{{ number_format((float) $commande->montantTotal, 2, '.', ' ') }}</td>
+                            <td class="p-4">{{ number_format((float) $commande->montantTotal, 0, '.', ' ') }}</td>
                         </tr>
                     @empty
                         <tr><td colspan="4" class="p-8 text-center text-slate-500">Aucune commande.</td></tr>

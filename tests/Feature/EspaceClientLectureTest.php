@@ -37,7 +37,7 @@ class EspaceClientLectureTest extends TestCase
             ->assertSee($commandePlusAncienne->referenceCommande)
             ->assertSee('EN ATTENTE')
             ->assertSee('2026-10-14 10:00:00')
-            ->assertSee('1 450.00')
+            ->assertSee('1 450')
             ->assertSeeInOrder([$commande->referenceCommande, $commandePlusAncienne->referenceCommande])
             ->assertDontSee($commandeAutreClient->referenceCommande);
     }
@@ -66,7 +66,7 @@ class EspaceClientLectureTest extends TestCase
         $this->get('/client/commandes/'.$commande->idCommande)->assertOk()
             ->assertSee($commande->referenceCommande)
             ->assertSee('EN ATTENTE')
-            ->assertSee('1 450.00')
+            ->assertSee('1 450')
             ->assertSee('Chemise')
             ->assertSee('Quantité : 2')
             ->assertSee('Commande prise en charge');
@@ -94,7 +94,7 @@ class EspaceClientLectureTest extends TestCase
 
         $this->get('/client/commandes/'.$commande->idCommande)->assertOk()
             ->assertSee('FAC-20261016-ABCDEF')
-            ->assertSee('1 450.00')
+            ->assertSee('1 450')
             ->assertSee('EN ATTENTE');
     }
 

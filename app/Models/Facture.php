@@ -17,4 +17,9 @@ class Facture extends Model
         'statut',
         'idCommande',
     ];
+
+    protected function casts(): array
+    {
+        return ['montantTotal' => 'decimal:0'];
+    }
 }

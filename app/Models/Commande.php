@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class Commande extends Model
 {
     public const FORMULE_REPASSAGE = Tarif::FORMULE_REPASSAGE;
-    public const FORMULES = Tarif::FORMULES;
+    public const MODE_FACTURATION_PIECE = 'PIECE';
+    public const MODE_FACTURATION_POIDS = 'POIDS';
 
     public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
     public const STATUT_EN_TRAITEMENT = 'EN_TRAITEMENT';
@@ -27,10 +28,16 @@ class Commande extends Model
         'statut',
         'montantTotal',
         'formule',
+        'modeFacturation',
         'poids',
         'idPressing',
         'idClient',
     ];
+
+    protected function casts(): array
+    {
+        return ['montantTotal' => 'decimal:0', 'poids' => 'decimal:2'];
+    }
 
     public function pressing()
     {

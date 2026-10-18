@@ -10,8 +10,12 @@ class EnregistrerTarif
 {
     public function executer(Pressing $pressing, ?string $typeArticle, string $formule, string $unite, float $prix): Tarif
     {
-        if (! in_array($formule, Tarif::FORMULES, true)) {
-            throw new RuntimeException('Formule de tarification invalide.');
+        $mode = $unite === 'PIECE' ? 'PIECE' : ($unite === 'KG' ? 'POIDS' : '');
+        if (! in_array($formule, Tarif::FORMULES_PAR_MODE[$mode] ?? [], true)) {
+            throw new RuntimeException('Formule non autorisée pour cette unité de tarification.');
+        }
+        if ($unite === 'KG' && ! $pressing->pesee) {
+            throw new RuntimeException('Un tarif au kilo nécessite un pressing avec pesée.');
         }
 
         $doublon = $pressing->tarifs()

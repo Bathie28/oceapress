@@ -20,6 +20,7 @@ class CreerComptesDemoTest extends TestCase
         Artisan::call('demo:creer-comptes');
 
         $pressing = Pressing::where('nom', 'Pressing Démo')->firstOrFail();
+        $this->assertTrue($pressing->pesee);
         $tarifs = DB::table('tarif')->where('idPressing', $pressing->idPressing)->get();
         $this->assertCount(6, $tarifs);
         $this->assertSame(4, $tarifs->where('unite', 'PIECE')->count());
@@ -31,6 +32,24 @@ class CreerComptesDemoTest extends TestCase
             ->orderBy('facture.idFacture')
             ->get(['facture.montantTotal']);
         $this->assertCount(2, $factures);
-        $this->assertSame(['40.00', '40.00'], $factures->pluck('montantTotal')->all());
+        $this->assertSame(['4000', '1600'], $factures->pluck('montantTotal')->all());
+        $this->assertSame(['PIECE', 'POIDS'], DB::table('commande')->where('idPressing', $pressing->idPressing)->orderBy('idCommande')->pluck('modeFacturation')->all());
+    }
+
+    public function test_un_second_lancement_ne_modifie_pas_les_comptes_ou_tarifs_existants(): void
+    {
+        Artisan::call('demo:creer-comptes');
+        $comptes = DB::table('utilisateur')->count();
+        $pressings = DB::table('pressing')->count();
+        $tarifs = DB::table('tarif')->count();
+        $commandes = DB::table('commande')->count();
+
+        Artisan::call('demo:creer-comptes');
+
+        $this->assertSame($comptes, DB::table('utilisateur')->count());
+        $this->assertSame($pressings, DB::table('pressing')->count());
+        $this->assertSame($tarifs, DB::table('tarif')->count());
+        $this->assertSame($commandes, DB::table('commande')->count());
+        $this->assertStringContainsString('Comptes déjà présents', Artisan::output());
     }
 }

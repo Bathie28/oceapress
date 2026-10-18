@@ -24,7 +24,7 @@ class EnregistrerCommandeTest extends TestCase
         return ['nom' => 'Client', 'prenom' => 'Test', 'email' => $email, 'motDePasse' => 'secret'];
     }
 
-    private function ajouterTarifPiece(Pressing $pressing, string $type, string $prix, string $formule = 'LAVAGE'): void
+    private function ajouterTarifPiece(Pressing $pressing, string $type, string $prix, string $formule = 'REPASSAGE'): void
     {
         DB::table('tarif')->insert([
             'idPressing' => $pressing->idPressing,
@@ -39,8 +39,8 @@ class EnregistrerCommandeTest extends TestCase
     {
         $pressing = $this->creerPressing();
         $employe = $this->creerEmploye($pressing);
-        $this->ajouterTarifPiece($pressing, 'Chemise', '10.01');
-        $this->ajouterTarifPiece($pressing, 'Pantalon', '2.35');
+        $this->ajouterTarifPiece($pressing, 'Chemise', '1001');
+        $this->ajouterTarifPiece($pressing, 'Pantalon', '235');
 
         $commande = app(EnregistrerCommande::class)->executer(
             $this->donneesClient('commande@example.test'),
@@ -50,7 +50,7 @@ class EnregistrerCommandeTest extends TestCase
             ],
             $employe->idEmploye,
             $pressing->idPressing,
-            'LAVAGE',
+            'PIECE', 'REPASSAGE',
         );
 
         $this->assertSame(2, Article::where('idCommande', $commande->idCommande)->count());
@@ -58,12 +58,12 @@ class EnregistrerCommandeTest extends TestCase
         $this->assertTrue($commande->qrCodeActif()->exists());
         $this->assertSame(1, HistoriqueCommande::where('idCommande', $commande->idCommande)->count());
         $this->assertSame(Commande::STATUT_EN_ATTENTE, $commande->statut);
-        $this->assertSame('LAVAGE', $commande->fresh()->formule);
+        $this->assertSame('REPASSAGE', $commande->fresh()->formule);
         $this->assertNull($commande->fresh()->poids);
-        $this->assertSame('34.73', $commande->fresh()->montantTotal);
+        $this->assertSame('3473', $commande->fresh()->montantTotal);
         $this->assertDatabaseHas('facture', [
             'idCommande' => $commande->idCommande,
-            'montantTotal' => '34.73',
+            'montantTotal' => '3473',
             'statut' => 'EN_ATTENTE',
         ]);
     }
@@ -89,7 +89,7 @@ class EnregistrerCommandeTest extends TestCase
     {
         $pressing = $this->creerPressing();
         $employe = $this->creerEmploye($pressing);
-        $this->ajouterTarifPiece($pressing, 'Chemise', '12.34');
+        $this->ajouterTarifPiece($pressing, 'Chemise', '1234');
 
         $commande = app(EnregistrerCommande::class)->executer(
             $this->donneesClient('prix-ignore@example.test'),
@@ -100,27 +100,73 @@ class EnregistrerCommandeTest extends TestCase
 
         $article = Article::where('idCommande', $commande->idCommande)->firstOrFail();
         $this->assertNull($article->prixUnitaire);
-        $this->assertSame('12.34', $commande->fresh()->montantTotal);
-        $this->assertSame('12.34', Facture::where('idCommande', $commande->idCommande)->firstOrFail()->montantTotal);
+        $this->assertSame('1234', $commande->fresh()->montantTotal);
+        $this->assertSame('1234', Facture::where('idCommande', $commande->idCommande)->firstOrFail()->montantTotal);
     }
 
     public function test_commande_en_repassage_est_facturee_au_tarif_repassage(): void
     {
         $pressing = $this->creerPressing();
         $employe = $this->creerEmploye($pressing);
-        $this->ajouterTarifPiece($pressing, 'Chemise', '7.25', 'REPASSAGE');
+        $this->ajouterTarifPiece($pressing, 'Chemise', '725', 'REPASSAGE');
 
         $commande = app(EnregistrerCommande::class)->executer(
             $this->donneesClient('commande-repassage@example.test'),
             [['typeArticle' => 'Chemise', 'quantite' => 2]],
             $employe->idEmploye,
             $pressing->idPressing,
-            'REPASSAGE',
+            'PIECE', 'REPASSAGE',
         );
 
         $this->assertSame('REPASSAGE', $commande->fresh()->formule);
-        $this->assertSame('14.50', $commande->fresh()->montantTotal);
-        $this->assertSame('14.50', Facture::where('idCommande', $commande->idCommande)->firstOrFail()->montantTotal);
+        $this->assertSame('1450', $commande->fresh()->montantTotal);
+        $this->assertSame('1450', Facture::where('idCommande', $commande->idCommande)->firstOrFail()->montantTotal);
+    }
+
+    public function test_refuse_une_commande_poids_pour_un_pressing_sans_pesee(): void
+    {
+        $pressing = $this->creerPressing();
+        $employe = $this->creerEmploye($pressing);
+        try {
+            app(EnregistrerCommande::class)->executer($this->donneesClient('poids-refuse@example.test'), [], $employe->idEmploye, $pressing->idPressing, 'POIDS', 'LAVAGE', 2.0);
+            $this->fail('Le mode poids devait être refusé pour ce pressing.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('poids', mb_strtolower($exception->getMessage()));
+        }
+        $this->assertSame(0, Commande::count());
+    }
+
+    public function test_refuse_une_formule_hors_mode(): void
+    {
+        $pressing = $this->creerPressing();
+        $employe = $this->creerEmploye($pressing);
+        try {
+            app(EnregistrerCommande::class)->executer($this->donneesClient('formule-refuse@example.test'), [['typeArticle' => 'Chemise']], $employe->idEmploye, $pressing->idPressing, 'PIECE', 'LAVAGE');
+            $this->fail('La formule ne devait pas être autorisée.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('formule', mb_strtolower($exception->getMessage()));
+        }
+        $this->assertSame(0, Commande::count());
+    }
+
+    public function test_un_client_peut_avoir_une_commande_pesee_et_une_commande_a_la_piece(): void
+    {
+        $pressing = $this->creerPressing();
+        $pressing->update(['pesee' => true]);
+        $employe = $this->creerEmploye($pressing);
+        DB::table('tarif')->insert([
+            ['idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise', 'formule' => 'REPASSAGE', 'unite' => 'PIECE', 'prix' => 1500],
+            ['idPressing' => $pressing->idPressing, 'typeArticle' => null, 'formule' => 'LAVAGE', 'unite' => 'KG', 'prix' => 1200],
+        ]);
+        $service = app(EnregistrerCommande::class);
+        $client = $this->donneesClient('deux-modes@example.test');
+        $piece = $service->executer($client, [['typeArticle' => 'Chemise', 'quantite' => 2]], $employe->idEmploye, $pressing->idPressing, 'PIECE', 'REPASSAGE');
+        $poids = $service->executer($client, [['typeArticle' => 'Sac pesé']], $employe->idEmploye, $pressing->idPressing, 'POIDS', 'LAVAGE', 1.5);
+        $this->assertSame('PIECE', $piece->fresh()->modeFacturation);
+        $this->assertSame('POIDS', $poids->fresh()->modeFacturation);
+        $this->assertSame('3000', $piece->fresh()->montantTotal);
+        $this->assertSame('1800', $poids->fresh()->montantTotal);
+        $this->assertSame(2, Facture::whereIn('idCommande', [$piece->idCommande, $poids->idCommande])->count());
     }
 
     public function test_refuse_un_email_d_un_employe_ou_administrateur_sans_commande(): void

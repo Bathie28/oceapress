@@ -151,15 +151,6 @@ class ContraintesSchemaTest extends TestCase
         ]), 'chk_pressing_statut');
     }
 
-    public function test_check_pressing_mode_tarification(): void
-    {
-        $this->assertCheckConstraint(fn () => DB::table('pressing')->insert([
-            'nom' => 'Invalid mode', 'adresse' => '1 rue Test',
-            'dateCreation' => now()->toDateString(), 'statut' => 'ACTIF',
-            'modeTarification' => 'INVALID',
-        ]), 'chk_pressing_mode');
-    }
-
     public function test_check_tarif_formule(): void
     {
         $pressing = $this->creerPressing();
@@ -244,6 +235,22 @@ class ContraintesSchemaTest extends TestCase
         $this->assertCheckConstraint(fn () => DB::table('commande')
             ->where('idCommande', $commande->idCommande)
             ->update(['poids' => -0.001]), 'chk_commande_poids');
+    }
+
+    public function test_check_commande_mode_facturation(): void
+    {
+        $commande = $this->creerCommande();
+        $this->assertCheckConstraint(fn () => DB::table('commande')
+            ->where('idCommande', $commande->idCommande)
+            ->update(['modeFacturation' => 'INVALIDE']), 'chk_commande_mode_facturation');
+    }
+
+    public function test_check_commande_poids_refuse_plus_d_une_decimale(): void
+    {
+        $commande = $this->creerCommande();
+        $this->assertCheckConstraint(fn () => DB::table('commande')
+            ->where('idCommande', $commande->idCommande)
+            ->update(['poids' => 1.25]), 'chk_commande_poids');
     }
 
     public function test_check_article_quantite(): void

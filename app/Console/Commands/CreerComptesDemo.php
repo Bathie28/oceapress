@@ -36,14 +36,14 @@ class CreerComptesDemo extends Command
                 'adresse' => 'Dakar',
                 'dateCreation' => now()->toDateString(),
                 'statut' => 'ACTIF',
-                'modeTarification' => 'PIECE',
+                'pesee' => true,
             ]);
-            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise', 'formule' => Tarif::FORMULE_LAVAGE, 'unite' => 'PIECE', 'prix' => 15.00]);
-            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Pantalon', 'formule' => Tarif::FORMULE_LAVAGE, 'unite' => 'PIECE', 'prix' => 25.00]);
-            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise', 'formule' => Tarif::FORMULE_LAVAGE_REPASSAGE, 'unite' => 'PIECE', 'prix' => 20.00]);
-            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Pantalon', 'formule' => Tarif::FORMULE_LAVAGE_REPASSAGE, 'unite' => 'PIECE', 'prix' => 30.00]);
-            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => null, 'formule' => Tarif::FORMULE_LAVAGE, 'unite' => 'KG', 'prix' => 8.00]);
-            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => null, 'formule' => Tarif::FORMULE_LAVAGE_REPASSAGE, 'unite' => 'KG', 'prix' => 12.00]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise', 'formule' => Tarif::FORMULE_REPASSAGE, 'unite' => 'PIECE', 'prix' => 1500]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Pantalon', 'formule' => Tarif::FORMULE_REPASSAGE, 'unite' => 'PIECE', 'prix' => 2500]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Chemise', 'formule' => Tarif::FORMULE_LAVAGE_REPASSAGE, 'unite' => 'PIECE', 'prix' => 2000]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => 'Pantalon', 'formule' => Tarif::FORMULE_LAVAGE_REPASSAGE, 'unite' => 'PIECE', 'prix' => 3000]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => null, 'formule' => Tarif::FORMULE_LAVAGE, 'unite' => 'KG', 'prix' => 800]);
+            Tarif::create(['idPressing' => $pressing->idPressing, 'typeArticle' => null, 'formule' => Tarif::FORMULE_LAVAGE_REPASSAGE, 'unite' => 'KG', 'prix' => 1200]);
 
             $motDePasse = Hash::make('Demo2026!');
             $employe = Utilisateur::create([
@@ -87,8 +87,7 @@ class CreerComptesDemo extends Command
                 'telephone' => '770000000',
             ];
 
-            foreach ([1, 2] as $numeroCommande) {
-                $commande = app(EnregistrerCommande::class)->executer(
+            app(EnregistrerCommande::class)->executer(
                     $donneesClient,
                     [
                         ['typeArticle' => 'Chemise', 'couleur' => 'Blanc', 'description' => 'Coton'],
@@ -96,9 +95,18 @@ class CreerComptesDemo extends Command
                     ],
                     $employe->idUtilisateur,
                     $pressing->idPressing,
+                    'PIECE',
+                    Tarif::FORMULE_REPASSAGE,
                 );
-
-            }
+            app(EnregistrerCommande::class)->executer(
+                $donneesClient,
+                [['typeArticle' => 'Sac linge', 'couleur' => 'Mixte', 'description' => 'Linge pesé']],
+                $employe->idUtilisateur,
+                $pressing->idPressing,
+                'POIDS',
+                Tarif::FORMULE_LAVAGE,
+                2.0,
+            );
         });
 
         $this->info('Comptes de démonstration créés.');

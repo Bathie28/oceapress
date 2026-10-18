@@ -8,8 +8,9 @@
         @foreach ($pressings as $pressing)
             <li>
                 <a href="{{ route('admin.pressings.tarifs', $pressing->idPressing) }}">{{ $pressing->nom }}</a>
-                <span>Mode : {{ $pressing->modeTarification }}</span>
-                <span>{{ $pressing->tarifs_count }} {{ $pressing->tarifs_count === 1 ? 'tarif' : 'tarifs' }}</span>
+                <span>Pesée : {{ $pressing->pesee ? 'Oui' : 'Non' }}</span>
+                @php($nombreTarifsAffiches = $pressing->tarifsAffiches()->count())
+                <span>{{ $nombreTarifsAffiches }} {{ $nombreTarifsAffiches === 1 ? 'tarif' : 'tarifs' }}</span>
             </li>
         @endforeach
     </ul>

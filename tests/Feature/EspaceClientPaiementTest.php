@@ -28,7 +28,7 @@ class EspaceClientPaiementTest extends TestCase
 
         return Facture::create([
             'numeroFacture' => 'FAC-'.strtoupper(bin2hex(random_bytes(6))),
-            'montantTotal' => 2750.50,
+            'montantTotal' => 2751,
             'statut' => $statut,
             'idCommande' => $commande->idCommande,
         ]);
@@ -46,7 +46,7 @@ class EspaceClientPaiementTest extends TestCase
             'idFacture' => $facture->idFacture,
             'methode' => 'WAVE',
             'statut' => 'EN_ATTENTE',
-            'montant' => '2750.50',
+            'montant' => '2751',
         ]);
         $this->assertSame('EN_ATTENTE', $facture->fresh()->statut);
     }
@@ -65,7 +65,7 @@ class EspaceClientPaiementTest extends TestCase
             'idFacture' => $facture->idFacture,
             'methode' => 'ORANGE_MONEY',
             'statut' => 'EN_ATTENTE',
-            'montant' => '2750.50',
+            'montant' => '2751',
         ]);
         $this->assertSame('EN_ATTENTE', $facture->fresh()->statut);
     }

@@ -25,9 +25,9 @@ class PaiementTest extends TestCase
         DB::table('tarif')->insert([
             'idPressing' => $pressing->idPressing,
             'typeArticle' => 'Chemise',
-            'formule' => 'LAVAGE',
+            'formule' => 'REPASSAGE',
             'unite' => 'PIECE',
-            'prix' => '1000.00',
+            'prix' => '1000',
         ]);
         $commande = app(EnregistrerCommande::class)->executer(
             ['nom' => 'Client', 'prenom' => 'Test', 'email' => 'paiement@example.test', 'motDePasse' => 'secret'],

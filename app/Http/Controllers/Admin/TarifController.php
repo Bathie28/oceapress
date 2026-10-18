@@ -17,7 +17,7 @@ class TarifController extends Controller
     public function index(): View
     {
         return view('admin.pressings.index', [
-            'pressings' => Pressing::withCount('tarifs')->orderBy('nom')->get(),
+            'pressings' => Pressing::with('tarifs')->orderBy('nom')->get(),
         ]);
     }
 
@@ -32,9 +32,9 @@ class TarifController extends Controller
     {
         $validated = $request->validate([
             'typeArticle' => ['nullable', 'required_if:unite,PIECE', 'string', 'max:100'],
-            'formule' => ['required', 'string', 'in:'.implode(',', Tarif::FORMULES)],
+            'formule' => ['required', 'string', 'in:'.implode(',', Tarif::FORMULES_PAR_MODE[$request->input('unite') === 'KG' ? 'POIDS' : 'PIECE'])],
             'unite' => ['required', 'string', 'in:PIECE,KG'],
-            'prix' => ['required', 'numeric', 'min:0'],
+            'prix' => ['required', 'integer', 'min:0'],
         ]);
 
         try {
@@ -57,7 +57,7 @@ class TarifController extends Controller
         $enregistre = Tarif::findOrFail($tarif);
         $validated = $request->validate([
             'idPressing' => ['required', 'integer', 'exists:pressing,idPressing'],
-            'prix' => ['required', 'numeric'],
+            'prix' => ['required', 'integer', 'min:0'],
         ]);
         abort_unless((int) $validated['idPressing'] === (int) $enregistre->idPressing, 404);
 
@@ -72,8 +72,8 @@ class TarifController extends Controller
 
     public function updateMode(Request $request, Pressing $pressing): RedirectResponse
     {
-        $validated = $request->validate(['modeTarification' => ['required', 'string', 'in:PIECE,POIDS']]);
-        $pressing->modeTarification = $validated['modeTarification'];
+        $validated = $request->validate(['pesee' => ['nullable', 'boolean']]);
+        $pressing->pesee = (bool) ($validated['pesee'] ?? false);
         $pressing->save();
 
         return redirect()->route('admin.pressings.tarifs', $pressing->idPressing);

@@ -19,6 +19,11 @@ class Paiement extends Model
         'idFacture',
     ];
 
+    protected function casts(): array
+    {
+        return ['montant' => 'decimal:0'];
+    }
+
     public function facture()
     {
         return $this->belongsTo(Facture::class, 'idFacture');

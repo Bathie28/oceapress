@@ -57,7 +57,7 @@ class CommandeController extends Controller
     {
         $pressing = \App\Models\Pressing::findOrFail($this->pressingActif($request));
 
-        return view('employe.commandes.create', ['modeTarification' => $pressing->modeTarification]);
+        return view('employe.commandes.create', ['pesee' => $pressing->pesee]);
     }
 
     public function store(Request $request, EnregistrerCommande $enregistrerCommande): RedirectResponse
@@ -72,8 +72,9 @@ class CommandeController extends Controller
             'articles.*.couleur' => ['nullable', 'string', 'max:60'],
             'articles.*.description' => ['nullable', 'string'],
             'articles.*.quantite' => ['nullable', 'integer', 'min:1'],
-            'formule' => ['required', 'string', 'in:'.implode(',', Tarif::FORMULES)],
-            'poids' => ['nullable', 'numeric', 'gt:0'],
+            'modeFacturation' => ['required', 'string', 'in:PIECE,POIDS'],
+            'formule' => ['required', 'string', 'in:'.implode(',', Tarif::FORMULES_PAR_MODE[$request->input('modeFacturation')] ?? [])],
+            'poids' => ['required_if:modeFacturation,POIDS', 'nullable', 'numeric', 'gt:0', 'regex:/^\\d+(?:\\.\\d)?$/'],
         ]);
 
         $articles = collect($validated['articles'] ?? [])
@@ -92,6 +93,7 @@ class CommandeController extends Controller
                 $articles,
                 $request->user()->employe->idEmploye,
                 $this->pressingActif($request),
+                $validated['modeFacturation'],
                 $validated['formule'],
                 isset($validated['poids']) ? (float) $validated['poids'] : null,
             );
