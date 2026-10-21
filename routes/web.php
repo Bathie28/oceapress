@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EspaceController;
 use App\Http\Controllers\Employe\CommandeController;
+use App\Http\Controllers\Employe\ScanController;
 use App\Http\Controllers\Client\CommandeController as ClientCommandeController;
 use App\Http\Controllers\Client\FactureController as ClientFactureController;
 use App\Http\Controllers\Admin\TarifController as AdminTarifController;
@@ -25,6 +26,8 @@ Route::prefix('client')->name('client.')->middleware('role:client')->group(funct
 
 Route::prefix('employe')->name('employe.')->middleware('role:employe')->group(function () {
     Route::get('/', [EspaceController::class, 'employeAccueil'])->name('accueil');
+    Route::get('/scan', [ScanController::class, 'create'])->name('scan');
+    Route::post('/scan', [ScanController::class, 'store'])->middleware('throttle:30,1')->name('scan.store');
     Route::get('/commandes', [CommandeController::class, 'index'])->name('commandes.index');
     Route::get('/commandes/nouvelle', [CommandeController::class, 'create'])->name('commandes.create');
     Route::get('/commandes/types', [CommandeController::class, 'types'])->name('commandes.types');

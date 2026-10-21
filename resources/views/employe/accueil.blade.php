@@ -8,6 +8,7 @@
     <nav>
         <a href="{{ route('employe.commandes.index') }}">Commandes</a>
         <a href="{{ route('employe.commandes.create') }}">Nouvelle commande</a>
+        <a href="{{ route('employe.scan') }}">Scanner un QR code</a>
     </nav>
 </main>
 </body>
