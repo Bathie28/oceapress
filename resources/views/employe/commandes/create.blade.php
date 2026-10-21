@@ -32,7 +32,7 @@
                     <option value="{{ $formule }}" @selected($formuleInitiale === $formule)>{{ $formule }}</option>
                 @endforeach
             </select></div>
-            <div id="poids-wrap" @if($modeInitial !== 'POIDS') hidden @endif><label for="poids">Poids (kg)</label><input id="poids" name="poids" type="number" min="0.1" step="0.1" value="{{ old('poids') }}" @if($modeInitial === 'POIDS') required @endif></div>
+            <div id="poids-wrap" @if($modeInitial !== 'POIDS') hidden @endif><label for="poids">Poids (kg)</label><input id="poids" name="poids" type="number" min="0.1" step="0.1" value="{{ old('poids') }}" @if($modeInitial === 'POIDS') required @endif>@if($modeInitial === 'POIDS')<p id="poids-note" class="mt-2 text-sm text-slate-600">Le montant dépend du poids et de la formule seulement. Les quantités d’articles servent à la restitution.</p>@endif</div>
         </section>
         <section class="space-y-4 rounded-xl bg-white p-6 shadow">
             <h2 class="text-xl font-semibold">Articles</h2>
@@ -116,6 +116,16 @@
         formule.value = allowed.includes(current) ? current : allowed[0];
         poidsWrap.hidden = mode.value !== 'POIDS';
         poids.required = mode.value === 'POIDS';
+        const poidsNote = document.getElementById('poids-note');
+        if (mode.value === 'POIDS' && !poidsNote) {
+            const note = document.createElement('p');
+            note.id = 'poids-note';
+            note.className = 'mt-2 text-sm text-slate-600';
+            note.textContent = 'Le montant dépend du poids et de la formule' + ' seulement. Les quantités d’articles servent à la restitution.';
+            poidsWrap.append(note);
+        } else if (mode.value !== 'POIDS') {
+            poidsNote?.remove();
+        }
         await updateTypes();
     };
 

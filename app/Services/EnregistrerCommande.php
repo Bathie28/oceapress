@@ -68,6 +68,26 @@ class EnregistrerCommande
                 throw new \RuntimeException('Ajoutez au moins un article.');
             }
 
+            if ($modeFacturation === Commande::MODE_FACTURATION_PIECE) {
+                foreach ($lignes as &$ligne) {
+                    $tarif = $pressing->tarifs()
+                        ->where('typeArticle', $ligne['typeArticle'])
+                        ->where('formule', $formule)
+                        ->where('unite', 'PIECE')
+                        ->first();
+                    if ($tarif === null) {
+                        throw new \RuntimeException("Pas de tarif {$ligne['typeArticle']} en {$formule}");
+                    }
+                    $ligne['prixUnitaire'] = (int) $tarif->prix;
+                }
+                unset($ligne);
+            } else {
+                foreach ($lignes as &$ligne) {
+                    $ligne['prixUnitaire'] = null;
+                }
+                unset($ligne);
+            }
+
             $montant = app(CalculerMontant::class)->executer($pressing, $modeFacturation, $formule, $lignes, $poids);
             $utilisateur = Utilisateur::where('email', $client['email'])->first();
 
@@ -126,6 +146,7 @@ class EnregistrerCommande
                         'description',
                         'couleur',
                         'quantite',
+                        'prixUnitaire',
                     ]),
                     'idCommande' => $commande->idCommande,
                 ]);

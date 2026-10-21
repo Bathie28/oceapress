@@ -121,6 +121,41 @@ class EspaceEmployeActionsTest extends TestCase
         $this->assertSame('9000', $commande->fresh()->montantTotal);
     }
 
+    public function test_creation_http_calcule_quantites_et_enregistre_prix_unitaire_pour_deux_chemises_et_un_pantalon(): void
+    {
+        $this->assertCreationHttpAvecQuantitesEtPrix(2, 1, '720');
+    }
+
+    public function test_creation_http_calcule_quantites_et_enregistre_prix_unitaire_pour_une_chemise_et_un_pantalon(): void
+    {
+        $this->assertCreationHttpAvecQuantitesEtPrix(1, 1, '480');
+    }
+
+    private function assertCreationHttpAvecQuantitesEtPrix(int $chemises, int $pantalons, string $montantAttendu): void
+    {
+        $employe = $this->connecterEmploye();
+        $this->ajouterTarifPiece($employe, 'Chemise', '240');
+        $this->ajouterTarifPiece($employe, 'Pantalon', '240');
+        $donnees = $this->formulaireCommande('prix-quantites-'.$chemises.'-'.$pantalons.'@example.test');
+        $donnees['articles'] = [
+            ['type' => 'Chemise', 'quantite' => $chemises],
+            ['type' => 'Pantalon', 'quantite' => $pantalons],
+        ];
+
+        $response = $this->post('/employe/commandes/nouvelle', $donnees);
+        $commande = Commande::where('idPressing', $employe->pressingActif())->firstOrFail();
+        $response->assertRedirect('/employe/commandes/'.$commande->idCommande);
+
+        $this->assertSame($montantAttendu, $commande->fresh()->montantTotal);
+        $this->assertSame([
+            ['Chemise', $chemises, '240'],
+            ['Pantalon', $pantalons, '240'],
+        ], DB::table('article')->where('idCommande', $commande->idCommande)
+            ->orderBy('idArticle')->get(['typeArticle', 'quantite', 'prixUnitaire'])
+            ->map(fn ($article) => [$article->typeArticle, (int) $article->quantite, $article->prixUnitaire])
+            ->all());
+    }
+
     public function test_creation_sans_article_valide_affiche_message_et_ne_cree_rien(): void
     {
         $this->connecterEmploye();
@@ -200,6 +235,20 @@ class EspaceEmployeActionsTest extends TestCase
         $this->get('/employe/commandes/nouvelle')->assertOk()
             ->assertSee('value="POIDS"', false)
             ->assertSee('"POIDS":["LAVAGE"', false);
+    }
+
+    public function test_message_de_tarification_au_poids_est_affiche_uniquement_en_mode_poids(): void
+    {
+        $employe = $this->connecterEmploye();
+        $employe->pressing->update(['pesee' => true]);
+        $message = 'Le montant dépend du poids et de la formule seulement. Les quantités d’articles servent à la restitution.';
+
+        $this->get('/employe/commandes/nouvelle?modeFacturation=POIDS')
+            ->assertOk()
+            ->assertSee($message);
+        $this->get('/employe/commandes/nouvelle?modeFacturation=PIECE')
+            ->assertOk()
+            ->assertDontSee($message);
     }
 
     public function test_changement_statut_valide_met_a_jour_commande_et_historique(): void

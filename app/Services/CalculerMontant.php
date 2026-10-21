@@ -21,11 +21,16 @@ class CalculerMontant
             foreach ($lignes as $ligne) {
                 $type = (string) ($ligne['type'] ?? '');
                 $quantite = (int) ($ligne['quantite'] ?? 1);
-                $tarif = $pressing->tarifs()->where('typeArticle', $type)->where('formule', $formule)->where('unite', 'PIECE')->first();
-                if ($tarif === null) {
-                    throw new RuntimeException("Pas de tarif pour {$type} en {$formule}");
+                if (array_key_exists('prixUnitaire', $ligne) && $ligne['prixUnitaire'] !== null) {
+                    $prixUnitaire = (int) $ligne['prixUnitaire'];
+                } else {
+                    $tarif = $pressing->tarifs()->where('typeArticle', $type)->where('formule', $formule)->where('unite', 'PIECE')->first();
+                    if ($tarif === null) {
+                        throw new RuntimeException("Pas de tarif pour {$type} en {$formule}");
+                    }
+                    $prixUnitaire = (int) $tarif->prix;
                 }
-                $total += (int) $tarif->prix * $quantite;
+                $total += $prixUnitaire * $quantite;
             }
             return $total;
         }

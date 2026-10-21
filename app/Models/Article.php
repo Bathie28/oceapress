@@ -17,11 +17,12 @@ class Article extends Model
         'etatInitial',
         'etatFinal',
         'quantite',
+        'prixUnitaire',
         'idCommande',
     ];
 
     protected function casts(): array
     {
-        return ['quantite' => 'integer'];
+        return ['quantite' => 'integer', 'prixUnitaire' => 'decimal:0'];
     }
 }

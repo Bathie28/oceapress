@@ -172,7 +172,7 @@ class EnregistrerCommandeTest extends TestCase
         );
 
         $article = Article::where('idCommande', $commande->idCommande)->firstOrFail();
-        $this->assertNull($article->prixUnitaire);
+        $this->assertSame('1234', $article->prixUnitaire);
         $this->assertSame('1234', $commande->fresh()->montantTotal);
         $this->assertSame('1234', Facture::where('idCommande', $commande->idCommande)->firstOrFail()->montantTotal);
     }
@@ -240,6 +240,7 @@ class EnregistrerCommandeTest extends TestCase
         $this->assertSame('POIDS', $poids->fresh()->modeFacturation);
         $this->assertSame('3000', $piece->fresh()->montantTotal);
         $this->assertSame('1800', $poids->fresh()->montantTotal);
+        $this->assertNull(Article::where('idCommande', $poids->idCommande)->firstOrFail()->prixUnitaire);
         $this->assertSame(2, Facture::whereIn('idCommande', [$piece->idCommande, $poids->idCommande])->count());
     }
 
