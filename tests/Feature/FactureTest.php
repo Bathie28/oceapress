@@ -50,7 +50,7 @@ class FactureTest extends TestCase
             );
             $this->fail('Une commande sans tarif devait être refusée.');
         } catch (RuntimeException $exception) {
-            $this->assertStringContainsString('Pas de tarif pour Chemise', $exception->getMessage());
+            $this->assertSame('Pas de tarif Chemise en REPASSAGE', $exception->getMessage());
         }
 
         $this->assertDatabaseMissing('utilisateur', ['email' => 'sans-tarif@example.test']);

@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Employe;
 
 use App\Http\Controllers\Controller;
 use App\Models\Commande;
+use App\Models\Pressing;
 use App\Models\Tarif;
 use App\Services\ChangerStatutCommande;
 use App\Services\EnregistrerCommande;
 use App\Services\EnregistrerRestitution;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Illuminate\View\View;
@@ -55,9 +57,52 @@ class CommandeController extends Controller
 
     public function create(Request $request): View
     {
-        $pressing = \App\Models\Pressing::findOrFail($this->pressingActif($request));
+        $pressing = Pressing::findOrFail($this->pressingActif($request));
+        $mode = old('modeFacturation', $request->query('modeFacturation', Commande::MODE_FACTURATION_PIECE));
+        if (! $pressing->pesee && $mode === Commande::MODE_FACTURATION_POIDS) {
+            $mode = Commande::MODE_FACTURATION_PIECE;
+        }
+        $formules = Tarif::FORMULES_PAR_MODE[$mode] ?? Tarif::FORMULES_PAR_MODE[Commande::MODE_FACTURATION_PIECE];
+        $formule = old('formule', $request->query('formule', $formules[0]));
+        if (! in_array($formule, $formules, true)) {
+            $formule = $formules[0];
+        }
+        $typesArticles = $mode === Commande::MODE_FACTURATION_PIECE
+            ? $pressing->typesPourFormule($formule)
+            : collect(Tarif::FORMULES_PAR_MODE[Commande::MODE_FACTURATION_PIECE])
+                ->flatMap(fn (string $formulePiece) => $pressing->typesPourFormule($formulePiece))
+                ->unique()
+                ->sort()
+                ->values()
+                ->all();
 
-        return view('employe.commandes.create', ['pesee' => $pressing->pesee]);
+        return view('employe.commandes.create', [
+            'pesee' => $pressing->pesee,
+            'typesArticles' => $typesArticles,
+            'modeInitial' => $mode,
+            'formuleInitiale' => $formule,
+        ]);
+    }
+
+    public function types(Request $request): JsonResponse
+    {
+        $formulesConnues = collect(Tarif::FORMULES_PAR_MODE)->flatten()->unique()->values()->all();
+        $validated = $request->validate([
+            'formule' => ['required', 'string', 'in:'.implode(',', $formulesConnues)],
+            'modeFacturation' => ['sometimes', 'string', 'in:PIECE,POIDS'],
+        ]);
+        $pressing = Pressing::findOrFail($this->pressingActif($request));
+        $mode = $validated['modeFacturation'] ?? Commande::MODE_FACTURATION_PIECE;
+        $types = $mode === Commande::MODE_FACTURATION_PIECE
+            ? $pressing->typesPourFormule($validated['formule'])
+            : collect(Tarif::FORMULES_PAR_MODE[Commande::MODE_FACTURATION_PIECE])
+                ->flatMap(fn (string $formulePiece) => $pressing->typesPourFormule($formulePiece))
+                ->unique()
+                ->sort()
+                ->values()
+                ->all();
+
+        return response()->json(['types' => $types]);
     }
 
     public function store(Request $request, EnregistrerCommande $enregistrerCommande): RedirectResponse
@@ -68,22 +113,22 @@ class CommandeController extends Controller
             'client.prenom' => ['required', 'string', 'max:100'],
             'client.telephone' => ['nullable', 'string', 'max:30'],
             'articles' => ['nullable', 'array'],
-            'articles.*.typeArticle' => ['nullable', 'string', 'max:100'],
+            'articles.*.type' => ['nullable', 'string', 'max:100'],
             'articles.*.couleur' => ['nullable', 'string', 'max:60'],
             'articles.*.description' => ['nullable', 'string'],
-            'articles.*.quantite' => ['nullable', 'integer', 'min:1'],
+            'articles.*.quantite' => ['nullable', 'integer', 'min:0'],
             'modeFacturation' => ['required', 'string', 'in:PIECE,POIDS'],
             'formule' => ['required', 'string', 'in:'.implode(',', Tarif::FORMULES_PAR_MODE[$request->input('modeFacturation')] ?? [])],
             'poids' => ['required_if:modeFacturation,POIDS', 'nullable', 'numeric', 'gt:0', 'regex:/^\\d+(?:\\.\\d)?$/'],
         ]);
 
         $articles = collect($validated['articles'] ?? [])
-            ->map(fn (array $article) => [...$article, 'typeArticle' => trim((string) ($article['typeArticle'] ?? ''))])
-            ->filter(fn (array $article) => $article['typeArticle'] !== '')
+            ->map(fn (array $article) => [...$article, 'type' => trim((string) ($article['type'] ?? ''))])
+            ->filter(fn (array $article) => $article['type'] !== '' && (int) ($article['quantite'] ?? 0) > 0)
             ->values()
             ->all();
         if ($articles === []) {
-            return back()->withErrors(['articles' => 'Ajoutez au moins un article'])->withInput();
+            return back()->withErrors(['commande' => 'Ajoutez au moins un article avec une quantité supérieure ou égale à 1'])->withInput();
         }
         $client = [...$validated['client'], 'motDePasse' => Str::random(48)];
 
@@ -139,8 +184,8 @@ class CommandeController extends Controller
     {
         $commande = $this->commandeDuPressing($request, $commande);
         $validated = $request->validate([
-            'articles' => ['sometimes', 'array'],
-            'articles.*' => ['integer'],
+            'quantitesPresentees' => ['sometimes', 'array'],
+            'quantitesPresentees.*' => ['integer', 'min:0'],
             'observation' => ['nullable', 'string'],
         ]);
 
@@ -148,7 +193,7 @@ class CommandeController extends Controller
             $resultat = $enregistrerRestitution->executer(
                 $commande->idCommande,
                 $request->user()->employe->idEmploye,
-                $validated['articles'] ?? [],
+                $validated['quantitesPresentees'] ?? [],
                 $validated['observation'] ?? null,
             );
         } catch (RuntimeException $exception) {

@@ -27,6 +27,7 @@ Route::prefix('employe')->name('employe.')->middleware('role:employe')->group(fu
     Route::get('/', [EspaceController::class, 'employeAccueil'])->name('accueil');
     Route::get('/commandes', [CommandeController::class, 'index'])->name('commandes.index');
     Route::get('/commandes/nouvelle', [CommandeController::class, 'create'])->name('commandes.create');
+    Route::get('/commandes/types', [CommandeController::class, 'types'])->name('commandes.types');
     Route::post('/commandes/nouvelle', [CommandeController::class, 'store'])->name('commandes.store');
     Route::post('/commandes/{commande}/statut', [CommandeController::class, 'updateStatus'])->name('commandes.statut');
     Route::get('/commandes/{commande}/restitution', [CommandeController::class, 'createRestitution'])->name('commandes.restitution.create');

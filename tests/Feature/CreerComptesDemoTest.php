@@ -33,7 +33,11 @@ class CreerComptesDemoTest extends TestCase
             ->get(['facture.montantTotal']);
         $this->assertCount(2, $factures);
         $this->assertSame(['4000', '1600'], $factures->pluck('montantTotal')->all());
-        $this->assertSame(['PIECE', 'POIDS'], DB::table('commande')->where('idPressing', $pressing->idPressing)->orderBy('idCommande')->pluck('modeFacturation')->all());
+        $commandes = DB::table('commande')->where('idPressing', $pressing->idPressing)->orderBy('idCommande')->get();
+        $this->assertSame(['PIECE', 'POIDS'], $commandes->pluck('modeFacturation')->all());
+        $this->assertSame(['Chemise', 'Pantalon'], DB::table('article')->where('idCommande', $commandes[0]->idCommande)->orderBy('idArticle')->pluck('typeArticle')->all());
+        $this->assertSame(['Chemise', 'Pantalon'], DB::table('article')->where('idCommande', $commandes[1]->idCommande)->orderBy('idArticle')->pluck('typeArticle')->all());
+        $this->assertSame([1, 1], DB::table('article')->where('idCommande', $commandes[1]->idCommande)->orderBy('idArticle')->pluck('quantite')->all());
     }
 
     public function test_un_second_lancement_ne_modifie_pas_les_comptes_ou_tarifs_existants(): void

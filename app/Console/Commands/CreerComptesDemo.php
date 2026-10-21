@@ -90,8 +90,8 @@ class CreerComptesDemo extends Command
             app(EnregistrerCommande::class)->executer(
                     $donneesClient,
                     [
-                        ['typeArticle' => 'Chemise', 'couleur' => 'Blanc', 'description' => 'Coton'],
-                        ['typeArticle' => 'Pantalon', 'couleur' => 'Bleu', 'description' => 'Jean'],
+                        ['type' => 'Chemise', 'quantite' => 1, 'couleur' => 'Blanc', 'description' => 'Coton'],
+                        ['type' => 'Pantalon', 'quantite' => 1, 'couleur' => 'Bleu', 'description' => 'Jean'],
                     ],
                     $employe->idUtilisateur,
                     $pressing->idPressing,
@@ -100,7 +100,10 @@ class CreerComptesDemo extends Command
                 );
             app(EnregistrerCommande::class)->executer(
                 $donneesClient,
-                [['typeArticle' => 'Sac linge', 'couleur' => 'Mixte', 'description' => 'Linge pesé']],
+                [
+                    ['type' => 'Chemise', 'quantite' => 1, 'couleur' => 'Mixte', 'description' => 'Linge pesé'],
+                    ['type' => 'Pantalon', 'quantite' => 1, 'couleur' => 'Mixte', 'description' => 'Linge pesé'],
+                ],
                 $employe->idUtilisateur,
                 $pressing->idPressing,
                 'POIDS',

@@ -34,7 +34,7 @@ class EspaceEmployeActionsTest extends TestCase
                 'telephone' => '770000001',
             ],
             'articles' => [[
-                'typeArticle' => 'Chemise',
+                'type' => 'Chemise',
                 'couleur' => 'Bleu',
                 'description' => 'Coton',
                 'quantite' => 1,
@@ -101,47 +101,94 @@ class EspaceEmployeActionsTest extends TestCase
         $this->assertSame($before, Commande::count());
     }
 
-    public function test_creation_ignore_deux_blocs_vides_et_ne_cree_qu_un_article(): void
+    public function test_creation_enregistre_les_types_de_grille_avec_leurs_quantites(): void
     {
         $employe = $this->connecterEmploye();
         $donnees = $this->formulaireCommande();
         $donnees['articles'] = [
-            ['typeArticle' => ' Chemise ', 'couleur' => 'Bleu', 'description' => 'Coton', 'quantite' => 1],
-            ['typeArticle' => '   ', 'couleur' => '', 'description' => '', 'quantite' => ''],
-            ['typeArticle' => '', 'couleur' => '', 'description' => '', 'quantite' => ''],
+            ['type' => 'Chemise', 'couleur' => 'Bleu', 'description' => 'Coton', 'quantite' => 2],
+            ['type' => 'Pantalon', 'couleur' => '', 'description' => '', 'quantite' => 3],
         ];
         $this->ajouterTarifPiece($employe, 'Chemise', '1500');
+        $this->ajouterTarifPiece($employe, 'Pantalon', '2000');
 
         $response = $this->post('/employe/commandes/nouvelle', $donnees);
         $commande = Commande::where('idPressing', $employe->pressingActif())->firstOrFail();
 
         $response->assertRedirect('/employe/commandes/'.$commande->idCommande);
-        $this->assertSame(1, Article::where('idCommande', $commande->idCommande)->count());
-        $this->assertSame('Chemise', Article::where('idCommande', $commande->idCommande)->firstOrFail()->typeArticle);
+        $this->assertSame(2, Article::where('idCommande', $commande->idCommande)->count());
+        $this->assertSame([['Chemise', 2], ['Pantalon', 3]], Article::where('idCommande', $commande->idCommande)->orderBy('idArticle')->get(['typeArticle', 'quantite'])->map(fn ($a) => [$a->typeArticle, $a->quantite])->all());
+        $this->assertSame('9000', $commande->fresh()->montantTotal);
     }
 
     public function test_creation_sans_article_valide_affiche_message_et_ne_cree_rien(): void
     {
         $this->connecterEmploye();
         $donnees = $this->formulaireCommande();
-        $donnees['articles'] = [
-            ['typeArticle' => '', 'couleur' => '', 'description' => '', 'quantite' => ''],
-            ['typeArticle' => '  ', 'couleur' => '', 'description' => '', 'quantite' => ''],
-            ['typeArticle' => '', 'couleur' => '', 'description' => '', 'quantite' => ''],
-        ];
+        $donnees['articles'] = [['type' => 'Chemise', 'quantite' => 0]];
         $before = Commande::count();
 
         $response = $this->from('/employe/commandes/nouvelle')
             ->post('/employe/commandes/nouvelle', $donnees);
 
         $response->assertRedirect('/employe/commandes/nouvelle')
-            ->assertSessionHasErrors(['articles' => 'Ajoutez au moins un article']);
+            ->assertSessionHasErrors('commande');
         $this->assertSame($before, Commande::count());
+    }
+
+    public function test_type_hors_grille_est_refuse_sans_ecriture(): void
+    {
+        $employe = $this->connecterEmploye();
+        $donnees = $this->formulaireCommande();
+        $donnees['articles'] = [['type' => 'Veste', 'quantite' => 1]];
+        $before = Commande::count();
+        $this->from('/employe/commandes/nouvelle')->post('/employe/commandes/nouvelle', $donnees)
+            ->assertRedirect('/employe/commandes/nouvelle')->assertSessionHasErrors('commande');
+        $this->assertSame($before, Commande::count());
+    }
+
+    public function test_formulaire_affiche_les_types_distincts_de_la_grille_piece(): void
+    {
+        $employe = $this->connecterEmploye();
+        $this->ajouterTarifPiece($employe, 'Chemise', '1500');
+        $this->ajouterTarifPiece($employe, 'Pantalon', '2000');
+        DB::table('tarif')->insert([
+            'idPressing' => $employe->pressingActif(), 'typeArticle' => 'Chemise',
+            'formule' => 'LAVAGE_REPASSAGE', 'unite' => 'PIECE', 'prix' => '1700',
+        ]);
+        $this->get('/employe/commandes/nouvelle')->assertOk()
+            ->assertSee('Chemise')->assertSee('Pantalon')->assertSee('quantite');
+    }
+
+    public function test_formulaire_filtre_les_types_selon_la_formule_choisie(): void
+    {
+        $employe = $this->connecterEmploye();
+        $this->ajouterTarifPiece($employe, 'Pantalon', '1500');
+
+        $this->get('/employe/commandes/nouvelle?formule=LAVAGE_REPASSAGE')->assertOk()
+            ->assertDontSee('<legend>Pantalon</legend>', false);
+        $this->get('/employe/commandes/nouvelle?formule=REPASSAGE')->assertOk()
+            ->assertSee('<legend>Pantalon</legend>', false);
+    }
+
+    public function test_la_liste_du_formulaire_est_celle_de_pressing_types_pour_formule(): void
+    {
+        $employe = $this->connecterEmploye();
+        $this->ajouterTarifPiece($employe, 'Chemise', '1500');
+        DB::table('tarif')->insert([
+            ['idPressing' => $employe->pressingActif(), 'typeArticle' => 'Chemise', 'formule' => 'LAVAGE_REPASSAGE', 'unite' => 'PIECE', 'prix' => '1700'],
+            ['idPressing' => $employe->pressingActif(), 'typeArticle' => 'Pantalon', 'formule' => 'LAVAGE_REPASSAGE', 'unite' => 'PIECE', 'prix' => '2100'],
+        ]);
+
+        $expected = $employe->pressing->typesPourFormule('LAVAGE_REPASSAGE');
+        $this->get('/employe/commandes/types?formule=LAVAGE_REPASSAGE')
+            ->assertOk()->assertExactJson(['types' => $expected]);
     }
 
     public function test_formulaire_commande_limite_les_formules_et_le_poids_selon_le_pressing(): void
     {
         $employe = $this->connecterEmploye();
+        $this->ajouterTarifPiece($employe, 'Chemise', '1500');
         $this->get('/employe/commandes/nouvelle')->assertOk()
             ->assertSee('value="PIECE"', false)
             ->assertDontSee('value="POIDS"', false)

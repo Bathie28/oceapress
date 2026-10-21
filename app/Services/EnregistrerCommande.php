@@ -22,23 +22,50 @@ class EnregistrerCommande
     {
         return DB::transaction(function () use ($client, $articles, $idEmploye, $idPressing, $modeFacturation, $formule, $poids): Commande {
             $pressing = Pressing::whereKey($idPressing)->firstOrFail();
+            if (! in_array($formule, Tarif::FORMULES_PAR_MODE[$modeFacturation] ?? [], true)) {
+                throw new \RuntimeException('Formule ou mode de facturation invalide.');
+            }
             if ($modeFacturation === Commande::MODE_FACTURATION_POIDS && ! $pressing->pesee) {
                 throw new \RuntimeException('Ce pressing ne propose pas la facturation au poids.');
             }
-            $lignes = [];
+            $typesAutorises = $modeFacturation === Commande::MODE_FACTURATION_PIECE
+                ? $pressing->typesPourFormule($formule)
+                : collect(Tarif::FORMULES_PAR_MODE[Commande::MODE_FACTURATION_PIECE])
+                    ->flatMap(fn (string $formulePiece) => $pressing->typesPourFormule($formulePiece))
+                    ->unique()
+                    ->values()
+                    ->all();
+            $lignesParType = [];
             foreach ($articles as $article) {
-                if (! is_array($article)
-                    || ! isset($article['typeArticle'])
-                    || trim((string) $article['typeArticle']) === '') {
-                    throw new InvalidArgumentException('Chaque article doit avoir un typeArticle non vide.');
+                if (! is_array($article)) {
+                    throw new InvalidArgumentException('Chaque article doit avoir un type valide.');
                 }
-                $lignes[] = [
-                    'type' => trim((string) $article['typeArticle']),
-                    'quantite' => (int) ($article['quantite'] ?? 1),
-                ];
+                $quantiteBrute = $article['quantite'] ?? 1;
+                if (! is_numeric($quantiteBrute) || (int) $quantiteBrute != $quantiteBrute || (int) $quantiteBrute < 0) {
+                    throw new InvalidArgumentException('Chaque article doit avoir un type valide et une quantité entière positive ou nulle.');
+                }
+                $quantite = (int) $quantiteBrute;
+                if ($quantite === 0) {
+                    continue;
+                }
+                $type = trim((string) ($article['type'] ?? $article['typeArticle'] ?? ''));
+                if ($type === '' || ! in_array($type, $typesAutorises, true)) {
+                    throw new \RuntimeException("Pas de tarif {$type} en {$formule}");
+                }
+                if (! isset($lignesParType[$type])) {
+                    $lignesParType[$type] = [
+                        'type' => $type,
+                        'typeArticle' => $type,
+                        'quantite' => 0,
+                        'couleur' => $article['couleur'] ?? null,
+                        'description' => $article['description'] ?? null,
+                    ];
+                }
+                $lignesParType[$type]['quantite'] += $quantite;
             }
+            $lignes = array_values($lignesParType);
             if ($lignes === []) {
-                throw new InvalidArgumentException('Ajoutez au moins un article.');
+                throw new \RuntimeException('Ajoutez au moins un article.');
             }
 
             $montant = app(CalculerMontant::class)->executer($pressing, $modeFacturation, $formule, $lignes, $poids);
@@ -92,17 +119,14 @@ class EnregistrerCommande
                 'idClient' => $clientCree->idClient,
             ]);
 
-            foreach ($articles as $article) {
+            foreach ($lignes as $article) {
                 Article::create([
                     ...Arr::only($article, [
                         'typeArticle',
                         'description',
                         'couleur',
-                        'etatInitial',
-                        'etatFinal',
                         'quantite',
                     ]),
-                    'quantite' => (int) ($article['quantite'] ?? 1),
                     'idCommande' => $commande->idCommande,
                 ]);
             }

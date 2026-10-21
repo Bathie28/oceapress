@@ -23,11 +23,15 @@ class RestitutionTest extends TestCase
     {
         $employe = $this->creerEmploye();
         $commande = $this->creerCommande();
-        $statuts = app(ChangerStatutCommande::class);
-        $statuts->executer($commande->idCommande, Commande::STATUT_EN_TRAITEMENT, $employe->idEmploye);
-        $statuts->executer($commande->idCommande, Commande::STATUT_PRETE, $employe->idEmploye);
+        $service = app(ChangerStatutCommande::class);
+        $service->executer($commande->idCommande, Commande::STATUT_EN_TRAITEMENT, $employe->idEmploye);
+        $service->executer($commande->idCommande, Commande::STATUT_PRETE, $employe->idEmploye);
+        $articles = collect([
+            ['typeArticle' => 'Chemise', 'quantite' => 3],
+            ['typeArticle' => 'Pantalon', 'quantite' => 2],
+        ])->map(fn (array $data) => Article::create([...$data, 'idCommande' => $commande->idCommande]));
 
-        return [$commande, $employe];
+        return [$commande, $employe, $articles];
     }
 
     public function test_refuse_si_commande_pas_prete(): void
@@ -38,75 +42,79 @@ class RestitutionTest extends TestCase
         app(EnregistrerRestitution::class)->executer($commande->idCommande, $employe->idEmploye, []);
     }
 
-    public function test_restitution_partielle_signale_anomalie_sans_restitution_et_garde_commande_prete(): void
+    public function test_toutes_les_quantites_presentees_enregistrent_restitution_conforme(): void
     {
-        [$commande, $employe] = $this->commandePrete();
-        $articles = collect(['Chemise', 'Pantalon'])->map(fn ($type) => Article::create([
-            'typeArticle' => $type, 'idCommande' => $commande->idCommande,
-        ]));
-
-        $resultat = app(EnregistrerRestitution::class)->executer(
-            $commande->idCommande, $employe->idEmploye, [$articles->first()->idArticle],
-        );
-
-        $this->assertNull($resultat['restitution']);
-        $this->assertSame(1, $resultat['anomalies']);
-        $this->assertSame(1, Anomalie::count());
-        $this->assertSame(0, Restitution::count());
-        $this->assertSame(Commande::STATUT_PRETE, $commande->fresh()->statut);
-    }
-
-    public function test_restitution_complete_recupere_commande_et_refuse_seconde_restitution(): void
-    {
-        [$commande, $employe] = $this->commandePrete();
-        $articles = collect(['Chemise', 'Pantalon'])->map(fn ($type) => Article::create([
-            'typeArticle' => $type, 'idCommande' => $commande->idCommande,
-        ]));
+        [$commande, $employe, $articles] = $this->commandePrete();
         $avant = HistoriqueCommande::where('idCommande', $commande->idCommande)->count();
-        $resultat = app(EnregistrerRestitution::class)->executer(
-            $commande->idCommande, $employe->idEmploye, $articles->pluck('idArticle')->all(),
-        );
+        $quantites = $articles->mapWithKeys(fn (Article $article) => [$article->idArticle => $article->quantite])->all();
+
+        $resultat = app(EnregistrerRestitution::class)->executer($commande->idCommande, $employe->idEmploye, $quantites);
 
         $this->assertSame('CONFORME', $resultat['restitution']->statut);
         $this->assertSame(Commande::STATUT_RECUPEREE, $commande->fresh()->statut);
-        $this->assertSame(3, $avant);
-        $this->assertSame(4, HistoriqueCommande::where('idCommande', $commande->idCommande)->count());
-
+        $this->assertSame($avant + 1, HistoriqueCommande::where('idCommande', $commande->idCommande)->count());
         $this->expectException(RuntimeException::class);
-        app(EnregistrerRestitution::class)->executer(
-            $commande->idCommande, $employe->idEmploye, $articles->pluck('idArticle')->all(),
-        );
+        app(EnregistrerRestitution::class)->executer($commande->idCommande, $employe->idEmploye, $quantites);
     }
 
-    public function test_seconde_restitution_refusee_par_la_base(): void
+    public function test_quantite_manquante_cree_anomalie_sans_restitution_et_garde_commande_prete(): void
     {
-        [$commande, $employe] = $this->commandePrete();
-        $articles = collect(['Chemise', 'Pantalon'])->map(fn ($type) => Article::create([
-            'typeArticle' => $type, 'idCommande' => $commande->idCommande,
-        ]));
+        [$commande, $employe, $articles] = $this->commandePrete();
+        $quantites = $articles->mapWithKeys(fn (Article $article) => [$article->idArticle => $article->quantite])->all();
+        $quantites[$articles->first()->idArticle] = 2;
 
-        app(EnregistrerRestitution::class)->executer(
-            $commande->idCommande, $employe->idEmploye, $articles->pluck('idArticle')->all(),
-        );
+        $resultat = app(EnregistrerRestitution::class)->executer($commande->idCommande, $employe->idEmploye, $quantites);
 
-        $premiereRestitution = Restitution::where('idCommande', $commande->idCommande)->firstOrFail();
+        $this->assertNull($resultat['restitution']);
+        $this->assertSame(1, $resultat['anomalies']);
+        $this->assertSame(0, Restitution::count());
+        $this->assertSame(Commande::STATUT_PRETE, $commande->fresh()->statut);
+        $this->assertStringContainsString('Manque 1 sur 3', Anomalie::firstOrFail()->description);
+        $this->assertSame($articles->first()->idArticle, Anomalie::firstOrFail()->idArticle);
+    }
 
+    public function test_quantite_presentee_superieure_est_refusee(): void
+    {
+        [$commande, $employe, $articles] = $this->commandePrete();
+        $quantites = $articles->mapWithKeys(fn (Article $article) => [$article->idArticle => $article->quantite])->all();
+        $quantites[$articles->first()->idArticle] = 4;
+        try {
+            app(EnregistrerRestitution::class)->executer($commande->idCommande, $employe->idEmploye, $quantites);
+            $this->fail('Un excédent devait être refusé.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('supérieure', mb_strtolower($exception->getMessage()));
+        }
+        $this->assertSame(0, Restitution::count());
+        $this->assertSame(0, Anomalie::count());
+    }
+
+    public function test_ligne_d_une_autre_commande_est_refusee(): void
+    {
+        [$commande, $employe, $articles] = $this->commandePrete();
+        $autreCommande = $this->creerCommande();
+        $articleAutre = Article::create(['typeArticle' => 'Jupe', 'idCommande' => $autreCommande->idCommande]);
+        $quantites = $articles->mapWithKeys(fn (Article $article) => [$article->idArticle => $article->quantite])->all();
+        $quantites[$articleAutre->idArticle] = 1;
+        $this->expectException(RuntimeException::class);
+        app(EnregistrerRestitution::class)->executer($commande->idCommande, $employe->idEmploye, $quantites);
+    }
+
+    public function test_seconde_restitution_est_refusee_par_le_service_et_la_base(): void
+    {
+        [$commande, $employe, $articles] = $this->commandePrete();
+        $quantites = $articles->mapWithKeys(fn (Article $article) => [$article->idArticle => $article->quantite])->all();
+        app(EnregistrerRestitution::class)->executer($commande->idCommande, $employe->idEmploye, $quantites);
+        $restitution = Restitution::where('idCommande', $commande->idCommande)->firstOrFail();
         try {
             Restitution::create([
-                'dateRestitution' => now(),
-                'statut' => 'CONFORME',
-                'observation' => 'Deuxième insertion directe',
-                'idCommande' => $commande->idCommande,
+                'dateRestitution' => now(), 'statut' => 'CONFORME', 'idCommande' => $commande->idCommande,
                 'idEmploye' => $employe->idEmploye,
             ]);
             $this->fail('La contrainte uq_restitution_commande devait refuser la seconde insertion.');
         } catch (QueryException $exception) {
             $this->assertSame('23000', (string) $exception->getCode());
-            $this->assertStringContainsString('1062', $exception->getMessage());
             $this->assertStringContainsString('uq_restitution_commande', $exception->getMessage());
         }
-
-        $this->assertSame(1, Restitution::where('idCommande', $commande->idCommande)->count());
-        $this->assertNotNull($premiereRestitution->fresh());
+        $this->assertNotNull($restitution->fresh());
     }
 }

@@ -36,6 +36,18 @@ class Pressing extends Model
         return $this->hasMany(Tarif::class, 'idPressing');
     }
 
+    public function typesPourFormule(string $formule): array
+    {
+        return $this->tarifs()
+            ->where('unite', 'PIECE')
+            ->where('formule', $formule)
+            ->whereNotNull('typeArticle')
+            ->distinct()
+            ->orderBy('typeArticle')
+            ->pluck('typeArticle')
+            ->all();
+    }
+
     public function tarifsAffiches()
     {
         $tarifs = $this->relationLoaded('tarifs')
