@@ -3,6 +3,7 @@
 @section('title', 'Mes commandes — OceaPress')
 @section('navigation')
     <a href="{{ route('client.commandes.index') }}" class="text-blue-700 hover:underline">Mes commandes</a>
+    <a href="{{ route('client.notifications.index') }}" class="text-blue-700 hover:underline">Mes notifications</a>
 @endsection
 
 @section('content')

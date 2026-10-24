@@ -8,6 +8,7 @@ use App\Http\Controllers\Employe\ScanController;
 use App\Http\Controllers\Client\CommandeController as ClientCommandeController;
 use App\Http\Controllers\Client\FactureController as ClientFactureController;
 use App\Http\Controllers\Client\MotDePasseController;
+use App\Http\Controllers\Client\NotificationController;
 use App\Http\Controllers\Admin\TarifController as AdminTarifController;
 
 Route::get('/', function () {
@@ -27,6 +28,8 @@ Route::prefix('client')->name('client.')->middleware(['role:client', 'mot-de-pas
     Route::get('/', [EspaceController::class, 'clientAccueil'])->name('accueil');
     Route::get('/commandes', [ClientCommandeController::class, 'index'])->name('commandes.index');
     Route::get('/commandes/{commande}', [ClientCommandeController::class, 'show'])->name('commandes.show');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
     Route::post('/factures/{facture}/paiement', [ClientFactureController::class, 'storePaiement'])->name('factures.paiement');
 });
 

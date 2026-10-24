@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Commande;
 use App\Models\HistoriqueCommande;
+use App\Services\EnvoyerNotification;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -54,6 +55,17 @@ class ChangerStatutCommande
                 'commentaire' => $commentaire,
                 'idCommande' => $commande->idCommande,
             ]);
+
+            if ($nouveauStatut === Commande::STATUT_PRETE) {
+                $commande->loadMissing('client');
+                app(EnvoyerNotification::class)->executer(
+                    $commande->client,
+                    'Votre commande est prête',
+                    'Votre commande '.$commande->referenceCommande.' est prête à être récupérée.',
+                    'COMMANDE_PRETE',
+                    ['IN_APP', 'EMAIL'],
+                );
+            }
 
             return $commande;
         });

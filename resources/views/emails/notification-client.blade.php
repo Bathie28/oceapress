@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><title>{{ $titre }}</title></head>
+<body>
+    <h1>{{ $titre }}</h1>
+    <p>{{ $corps }}</p>
+</body>
+</html>

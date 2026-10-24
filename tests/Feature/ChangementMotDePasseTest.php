@@ -39,8 +39,15 @@ class ChangementMotDePasseTest extends TestCase
         $this->post('/client/mot-de-passe', [
             'password' => 'nouveau-secret-123', 'password_confirmation' => 'nouveau-secret-123',
         ])->assertRedirect('/client');
-        $this->assertFalse((bool) $compte['utilisateur']->fresh()->doitChangerMotDePasse);
+        $this->assertDatabaseHas('utilisateur', [
+            'idUtilisateur' => $compte['utilisateur']->idUtilisateur,
+            'doitChangerMotDePasse' => 0,
+        ]);
         $this->get('/client')->assertOk();
+        $this->post('/logout')->assertRedirect('/login');
+        $this->post('/login', [
+            'email' => 'force@example.test', 'password' => 'nouveau-secret-123',
+        ])->assertRedirect('/client');
     }
 
     public function test_refuse_un_mot_de_passe_trop_court(): void

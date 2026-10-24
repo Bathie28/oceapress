@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Facture;
 use App\Models\Paiement;
+use App\Models\Commande;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -37,6 +38,20 @@ class EnregistrerPaiement
             if ($statutPaiement === 'CONFIRME') {
                 $facture->statut = 'PAYEE';
                 $facture->save();
+            }
+
+            if (in_array($statutPaiement, ['CONFIRME', 'ECHOUE'], true)) {
+                $commande = Commande::with('client')->findOrFail($facture->idCommande);
+                $confirme = $statutPaiement === 'CONFIRME';
+                app(EnvoyerNotification::class)->executer(
+                    $commande->client,
+                    $confirme ? 'Paiement confirmé' : 'Paiement échoué',
+                    $confirme
+                        ? 'Le paiement de votre facture a été confirmé.'
+                        : 'Le paiement de votre facture a échoué. Vous pouvez réessayer.',
+                    $confirme ? 'PAIEMENT_CONFIRME' : 'PAIEMENT_ECHOUE',
+                    ['IN_APP'],
+                );
             }
 
             return $paiement;
