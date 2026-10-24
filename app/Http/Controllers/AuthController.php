@@ -50,6 +50,10 @@ class AuthController extends Controller
             return redirect()->route('login')->withErrors(['email' => 'Ce compte n’a pas d’espace associé']);
         }
 
+        if ($utilisateur->client !== null && $utilisateur->doitChangerMotDePasse) {
+            return redirect()->route('client.mot-de-passe.edit');
+        }
+
         return redirect()->route($this->espaceDe($utilisateur));
     }
 

@@ -13,7 +13,7 @@ class Utilisateur extends Authenticatable
     protected $primaryKey = 'idUtilisateur';
     public $timestamps = false;
 
-    protected $fillable = ['nom', 'prenom', 'email', 'telephone', 'motDePasse'];
+    protected $fillable = ['nom', 'prenom', 'email', 'telephone', 'motDePasse', 'doitChangerMotDePasse'];
     protected $hidden = ['motDePasse'];
 
     public function client()
@@ -38,6 +38,6 @@ class Utilisateur extends Authenticatable
 
     protected function casts(): array
     {
-        return ['motDePasse' => 'hashed'];
+        return ['motDePasse' => 'hashed', 'doitChangerMotDePasse' => 'boolean'];
     }
 }

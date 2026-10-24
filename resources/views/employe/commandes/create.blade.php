@@ -16,6 +16,7 @@
         @csrf
         <section class="grid gap-4 rounded-xl bg-white p-6 shadow sm:grid-cols-2">
             <h2 class="text-xl font-semibold sm:col-span-2">Client</h2>
+            <div class="sm:col-span-2"><button id="rechercher-client" type="button" data-url="{{ route('employe.clients.rechercher') }}" class="rounded-lg border border-blue-700 px-4 py-2 text-blue-700">Rechercher le client</button><p id="resultat-client" class="mt-2 text-sm" role="status" aria-live="polite"></p></div>
             <div><label for="email">E-mail</label><input id="email" name="client[email]" type="email" value="{{ old('client.email') }}" required></div>
             <div><label for="telephone">Téléphone</label><input id="telephone" name="client[telephone]" value="{{ old('client.telephone') }}"></div>
             <div><label for="prenom">Prénom</label><input id="prenom" name="client[prenom]" value="{{ old('client.prenom') }}" required></div>
@@ -55,6 +56,27 @@
 </div>
 <script>
 (() => {
+    const searchClientButton = document.getElementById('rechercher-client');
+    const searchClientResult = document.getElementById('resultat-client');
+    searchClientButton.addEventListener('click', async () => {
+        const params = new URLSearchParams();
+        const email = document.getElementById('email').value.trim();
+        const telephone = document.getElementById('telephone').value.trim();
+        if (email) params.set('email', email);
+        if (telephone) params.set('telephone', telephone);
+        if (!email && !telephone) {
+            searchClientResult.textContent = 'Saisissez un e-mail ou un téléphone.';
+            return;
+        }
+        const response = await fetch(`${searchClientButton.dataset.url}?${params.toString()}`, {headers: {'Accept': 'application/json'}});
+        if (!response.ok) {
+            searchClientResult.textContent = response.status === 404 ? 'Aucun client trouvé. Un nouveau compte sera créé avec ces coordonnées.' : 'La recherche a échoué.';
+            return;
+        }
+        const client = await response.json();
+        searchClientResult.textContent = `Client trouvé : ${client.nom} — ${client.telephone || 'aucun téléphone'}. La commande sera liée à ce compte.`;
+    });
+
     const mode = document.getElementById('modeFacturation');
     const formule = document.getElementById('formule');
     const poidsWrap = document.getElementById('poids-wrap');

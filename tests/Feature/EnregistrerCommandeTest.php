@@ -61,6 +61,10 @@ class EnregistrerCommandeTest extends TestCase
         $this->assertSame('REPASSAGE', $commande->fresh()->formule);
         $this->assertNull($commande->fresh()->poids);
         $this->assertSame('3473', $commande->fresh()->montantTotal);
+        $utilisateurClient = Utilisateur::where('email', 'commande@example.test')->firstOrFail();
+        $this->assertTrue((bool) $utilisateurClient->doitChangerMotDePasse);
+        $this->assertNotEmpty($commande->motDePasseProvisoire);
+        $this->assertNotSame($commande->motDePasseProvisoire, $utilisateurClient->motDePasse);
         $this->assertDatabaseHas('facture', [
             'idCommande' => $commande->idCommande,
             'montantTotal' => '3473',

@@ -12,6 +12,11 @@
         @if (session('restitution_resultat'))
             <div class="rounded-lg bg-emerald-50 p-4 text-emerald-800" role="status">{{ session('restitution_resultat') }}</div>
         @endif
+        @if (session('motDePasseProvisoire'))
+            <div class="rounded-lg bg-amber-50 p-4 text-amber-900" role="status">
+                Mot de passe provisoire du client (à lui remettre maintenant) : <strong>{{ session('motDePasseProvisoire') }}</strong>
+            </div>
+        @endif
         @if ($errors->has('restitution'))
             <div class="rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ $errors->first('restitution') }}</div>
         @endif

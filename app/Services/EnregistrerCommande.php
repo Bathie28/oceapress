@@ -89,21 +89,21 @@ class EnregistrerCommande
             }
 
             $montant = app(CalculerMontant::class)->executer($pressing, $modeFacturation, $formule, $lignes, $poids);
-            $utilisateur = Utilisateur::where('email', $client['email'])->first();
+            $motDePasseProvisoire = null;
+            $utilisateur = app(RechercherClient::class)->executer(
+                $client['email'] ?? null,
+                $client['telephone'] ?? null,
+            );
 
             if ($utilisateur === null) {
-                $utilisateur = Utilisateur::create(Arr::only($client, [
-                    'nom',
-                    'prenom',
-                    'email',
-                    'telephone',
-                    'motDePasse',
-                ]));
-
-                $clientCree = Client::create([
-                    'idClient' => $utilisateur->idUtilisateur,
-                    'dateInscription' => $client['dateInscription'] ?? now()->toDateString(),
-                ]);
+                $compteAvecEmail = isset($client['email']) ? Utilisateur::where('email', $client['email'])->first() : null;
+                if ($compteAvecEmail !== null) {
+                    throw new \RuntimeException('Cet e-mail appartient à un compte qui n’est pas client.');
+                }
+                $compte = app(CreerCompteClient::class)->executer($client);
+                $utilisateur = $compte['utilisateur'];
+                $clientCree = $compte['client'];
+                $motDePasseProvisoire = $compte['motDePasseProvisoire'];
             } else {
                 $estEmploye = DB::table('employe')
                     ->where('idEmploye', $utilisateur->idUtilisateur)
@@ -174,6 +174,10 @@ class EnregistrerCommande
                 'statut' => 'EN_ATTENTE',
                 'idCommande' => $commande->idCommande,
             ]);
+
+            if ($motDePasseProvisoire !== null) {
+                $commande->setAttribute('motDePasseProvisoire', $motDePasseProvisoire);
+            }
 
             return $commande;
         });

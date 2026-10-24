@@ -9,10 +9,10 @@ use App\Models\Tarif;
 use App\Services\ChangerStatutCommande;
 use App\Services\EnregistrerCommande;
 use App\Services\EnregistrerRestitution;
+use App\Services\RechercherClient;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Str;
 use RuntimeException;
 use Illuminate\View\View;
 
@@ -105,6 +105,24 @@ class CommandeController extends Controller
         return response()->json(['types' => $types]);
     }
 
+    public function rechercherClient(Request $request, RechercherClient $rechercherClient): JsonResponse
+    {
+        $donnees = $request->validate([
+            'email' => ['nullable', 'email', 'max:190', 'required_without:telephone'],
+            'telephone' => ['nullable', 'string', 'max:30', 'required_without:email'],
+        ]);
+        $utilisateur = $rechercherClient->executer($donnees['email'] ?? null, $donnees['telephone'] ?? null);
+
+        if ($utilisateur === null) {
+            return response()->json(['message' => 'Aucun client trouvé.'], 404);
+        }
+
+        return response()->json([
+            'nom' => trim($utilisateur->prenom.' '.$utilisateur->nom),
+            'telephone' => $utilisateur->telephone,
+        ]);
+    }
+
     public function store(Request $request, EnregistrerCommande $enregistrerCommande): RedirectResponse
     {
         $validated = $request->validate([
@@ -130,7 +148,7 @@ class CommandeController extends Controller
         if ($articles === []) {
             return back()->withErrors(['commande' => 'Ajoutez au moins un article avec une quantité supérieure ou égale à 1'])->withInput();
         }
-        $client = [...$validated['client'], 'motDePasse' => Str::random(48)];
+        $client = $validated['client'];
 
         try {
             $commande = $enregistrerCommande->executer(
@@ -146,7 +164,12 @@ class CommandeController extends Controller
             return back()->withErrors(['commande' => $exception->getMessage()])->withInput();
         }
 
-        return redirect()->route('employe.commandes.show', $commande->idCommande);
+        $redirection = redirect()->route('employe.commandes.show', $commande->idCommande);
+        if ($commande->motDePasseProvisoire !== null) {
+            $redirection->with('motDePasseProvisoire', $commande->motDePasseProvisoire);
+        }
+
+        return $redirection;
     }
 
     public function updateStatus(Request $request, int $commande, ChangerStatutCommande $changerStatutCommande): RedirectResponse
