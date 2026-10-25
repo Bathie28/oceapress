@@ -11,6 +11,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except: ['webhooks/wave']);
         $middleware->alias([
             'role' => \App\Http\Middleware\VerifierRole::class,
             'mot-de-passe' => \App\Http\Middleware\ForcerChangementMotDePasse::class,

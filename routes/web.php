@@ -10,6 +10,7 @@ use App\Http\Controllers\Client\FactureController as ClientFactureController;
 use App\Http\Controllers\Client\MotDePasseController;
 use App\Http\Controllers\Client\NotificationController;
 use App\Http\Controllers\PhotoController;
+use App\Http\Controllers\WaveWebhookController;
 use App\Http\Controllers\Admin\TarifController as AdminTarifController;
 
 Route::get('/', function () {
@@ -19,6 +20,7 @@ Route::get('/', function () {
 Route::get('/login', [AuthController::class, 'afficherConnexion'])->name('login');
 Route::post('/login', [AuthController::class, 'connecter'])->name('login.store');
 Route::post('/logout', [AuthController::class, 'deconnecter'])->name('logout');
+Route::post('/webhooks/wave', WaveWebhookController::class)->name('webhooks.wave');
 Route::get('/photos/{photo}', [PhotoController::class, 'show'])->middleware('auth')->whereNumber('photo')->name('photos.show');
 
 Route::middleware('role:client')->prefix('client')->name('client.')->group(function () {
@@ -33,6 +35,8 @@ Route::prefix('client')->name('client.')->middleware(['role:client', 'mot-de-pas
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
     Route::post('/factures/{facture}/paiement', [ClientFactureController::class, 'storePaiement'])->name('factures.paiement');
+    Route::get('/factures/{facture}/wave/succes', [ClientFactureController::class, 'retourWave'])->name('factures.wave.succes');
+    Route::get('/factures/{facture}/wave/echec', [ClientFactureController::class, 'retourWave'])->name('factures.wave.echec');
 });
 
 Route::prefix('employe')->name('employe.')->middleware('role:employe')->group(function () {

@@ -7,12 +7,19 @@ use App\Models\Commande;
 use App\Models\Facture;
 use App\Models\Paiement;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\Support\CreeDonneesTest;
 use Tests\TestCase;
 
 class EspaceClientPaiementTest extends TestCase
 {
     use RefreshDatabase, CreeDonneesTest;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['app.url' => 'https://oceapress.test']);
+    }
 
     private function connecterClient(): Client
     {
@@ -36,11 +43,17 @@ class EspaceClientPaiementTest extends TestCase
 
     public function test_lancement_du_paiement_cree_un_paiement_en_attente_et_garde_la_facture_en_attente(): void
     {
+        Http::fake([
+            '*/v1/checkout/sessions' => Http::response([
+                'id' => 'cos-test-session-001',
+                'wave_launch_url' => 'https://pay.wave.com/c/cos-test-session-001',
+            ], 200),
+        ]);
         $client = $this->connecterClient();
         $facture = $this->creerFacture($client);
 
         $this->post('/client/factures/'.$facture->idFacture.'/paiement', ['methode' => 'WAVE'])
-            ->assertRedirect('/client/commandes/'.$facture->idCommande);
+            ->assertRedirect('https://pay.wave.com/c/cos-test-session-001');
 
         $this->assertDatabaseHas('paiement', [
             'idFacture' => $facture->idFacture,
