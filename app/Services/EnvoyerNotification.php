@@ -12,7 +12,15 @@ use Throwable;
 class EnvoyerNotification
 {
     /** @param list<string> $canaux */
-    public function executer(Client $client, string $titre, string $message, string $type, array $canaux): Notification
+    public function executer(
+        Client $client,
+        string $titre,
+        string $message,
+        string $type,
+        array $canaux,
+        ?int $idCommande = null,
+        ?string $niveauRelance = null,
+    ): Notification
     {
         $notification = Notification::create([
             'titre' => $titre,
@@ -22,6 +30,8 @@ class EnvoyerNotification
             'dateEnvoi' => now(),
             'lu' => false,
             'idClient' => $client->idClient,
+            'idCommande' => $idCommande,
+            'niveauRelance' => $niveauRelance,
         ]);
 
         if (in_array('EMAIL', array_map('strtoupper', $canaux), true)) {

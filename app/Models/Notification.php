@@ -18,5 +18,12 @@ class Notification extends Model
         'dateEnvoi',
         'lu',
         'idClient',
+        'idCommande',
+        'niveauRelance',
     ];
+
+    public function commande()
+    {
+        return $this->belongsTo(Commande::class, 'idCommande');
+    }
 }

@@ -35,6 +35,7 @@ Route::prefix('client')->name('client.')->middleware(['role:client', 'mot-de-pas
 
 Route::prefix('employe')->name('employe.')->middleware('role:employe')->group(function () {
     Route::get('/', [EspaceController::class, 'employeAccueil'])->name('accueil');
+    Route::get('/tableau-de-bord', [EspaceController::class, 'tableauDeBordEmploye'])->name('tableau-de-bord');
     Route::get('/scan', [ScanController::class, 'create'])->name('scan');
     Route::post('/scan', [ScanController::class, 'store'])->middleware('throttle:30,1')->name('scan.store');
     Route::get('/commandes', [CommandeController::class, 'index'])->name('commandes.index');
