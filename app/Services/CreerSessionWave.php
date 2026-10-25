@@ -17,7 +17,10 @@ class CreerSessionWave
     {
         $apiKey = config('services.wave.api_key');
         $apiUrl = config('services.wave.api_url');
-        if (! is_string($apiKey) || $apiKey === '' || ! is_string($apiUrl) || $apiUrl === '') {
+        if (! is_string($apiKey) || trim($apiKey) === '') {
+            throw new RuntimeException('Paiement en ligne indisponible pour le moment');
+        }
+        if (! is_string($apiUrl) || trim($apiUrl) === '') {
             throw new RuntimeException('La configuration Wave est incomplète.');
         }
 

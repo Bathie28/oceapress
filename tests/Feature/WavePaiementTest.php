@@ -87,6 +87,24 @@ class WavePaiementTest extends TestCase
         $this->assertSame('EN_ATTENTE', $facture->fresh()->statut);
     }
 
+    public function test_absence_de_cle_wave_affiche_indisponible_sans_creer_de_paiement(): void
+    {
+        config(['services.wave.api_key' => '']);
+        $client = $this->creerClient();
+        $facture = $this->creerFacture($client);
+
+        $this->from('/client/commandes/'.$facture->idCommande)
+            ->actingAs($client->utilisateur)
+            ->post('/client/factures/'.$facture->idFacture.'/paiement', ['methode' => 'WAVE'])
+            ->assertRedirect('/client/commandes/'.$facture->idCommande)
+            ->assertSessionHasErrors([
+                'paiement' => 'Paiement en ligne indisponible pour le moment',
+            ]);
+
+        $this->assertSame(0, Paiement::where('idFacture', $facture->idFacture)->count());
+        $this->assertSame('EN_ATTENTE', $facture->fresh()->statut);
+    }
+
     public function test_webhook_valide_confirme_facture_paiement_et_notification(): void
     {
         $client = $this->creerClient();
