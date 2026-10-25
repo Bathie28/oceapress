@@ -31,6 +31,9 @@ class RelancerCommandesNonRecupereesTest extends TestCase
         $this->assertSame(1, app(RelancerCommandesNonRecuperees::class)->executer());
         $this->assertSame(0, app(RelancerCommandesNonRecuperees::class)->executer());
 
+        Artisan::call('oceapress:relancer');
+        $this->assertStringContainsString('0 relance(s)', Artisan::output());
+
         $this->assertDatabaseHas('notification', [
             'idCommande' => $commande->idCommande,
             'niveauRelance' => 'J2',
@@ -38,6 +41,22 @@ class RelancerCommandesNonRecupereesTest extends TestCase
         ]);
         $this->assertSame(1, Notification::where('idCommande', $commande->idCommande)->count());
         Mail::assertSentTimes(\App\Mail\NotificationClient::class, 1);
+    }
+
+    public function test_commande_prete_depuis_trois_jours_recoit_j2_sans_notification_existante(): void
+    {
+        $this->travelTo(now()->setDate(2026, 10, 25)->setTime(3, 26, 35));
+        $commande = $this->creerCommande(null, null, Commande::STATUT_PRETE);
+        HistoriqueCommande::where('idCommande', $commande->idCommande)
+            ->where('nouveauStatut', Commande::STATUT_PRETE)
+            ->update(['dateChangement' => '2026-10-22 03:25:28']);
+
+        $this->assertSame(0, Notification::where('idCommande', $commande->idCommande)->count());
+        $this->assertSame(1, app(RelancerCommandesNonRecuperees::class)->executer());
+        $this->assertDatabaseHas('notification', [
+            'idCommande' => $commande->idCommande,
+            'niveauRelance' => 'J2',
+        ]);
     }
 
     public function test_commande_prete_depuis_sept_jours_recoit_j2_et_j7_sans_doublon(): void
@@ -89,6 +108,17 @@ class RelancerCommandesNonRecupereesTest extends TestCase
         $commandePrete = $this->creerCommandePreteIlYA(7, $employe->pressing);
         $commandeAttente = $this->creerCommande(null, $employe->pressing, Commande::STATUT_EN_ATTENTE);
         $commandeAutrePressing = $this->creerCommandePreteIlYA(7);
+        Notification::create([
+            'titre' => 'Rappel de commande',
+            'message' => 'Rappel déjà enregistré',
+            'type' => 'RAPPEL_COMMANDE',
+            'canal' => 'IN_APP',
+            'dateEnvoi' => now(),
+            'lu' => false,
+            'idClient' => $commandePrete->idClient,
+            'idCommande' => $commandePrete->idCommande,
+            'niveauRelance' => 'J2',
+        ]);
 
         $this->actingAs($employe->utilisateur)
             ->get('/employe/tableau-de-bord')
@@ -96,7 +126,8 @@ class RelancerCommandesNonRecupereesTest extends TestCase
             ->assertSee('data-statut="PRETE" data-count="1"', false)
             ->assertSee('data-statut="EN_ATTENTE" data-count="1"', false)
             ->assertSee($commandePrete->referenceCommande)
-            ->assertSee('J7')
+            ->assertSee('J2')
+            ->assertDontSee('J7')
             ->assertDontSee($commandeAutrePressing->referenceCommande)
             ->assertDontSee($commandeAttente->referenceCommande);
     }

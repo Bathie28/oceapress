@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Commande;
+use App\Models\HistoriqueCommande;
 use App\Models\Notification;
 use Carbon\Carbon;
 
@@ -21,17 +22,16 @@ class RelancerCommandesNonRecuperees
         $nombreRelances = 0;
         $commandes = Commande::query()
             ->where('statut', Commande::STATUT_PRETE)
-            ->with([
-                'client',
-                'historiques' => fn ($query) => $query
-                    ->where('nouveauStatut', Commande::STATUT_PRETE)
-                    ->orderByDesc('dateChangement')
-                    ->orderByDesc('idHistorique'),
-            ])
+            ->with('client')
             ->get();
 
         foreach ($commandes as $commande) {
-            $datePassagePrete = $commande->historiques->first()?->dateChangement;
+            $datePassagePrete = HistoriqueCommande::query()
+                ->where('idCommande', $commande->idCommande)
+                ->where('nouveauStatut', Commande::STATUT_PRETE)
+                ->orderByDesc('dateChangement')
+                ->orderByDesc('idHistorique')
+                ->value('dateChangement');
             $joursDepuisPrete = $this->joursDepuis($datePassagePrete);
 
             if ($joursDepuisPrete === null) {
@@ -46,7 +46,7 @@ class RelancerCommandesNonRecuperees
                     continue;
                 }
 
-                app(EnvoyerNotification::class)->executer(
+                $notification = app(EnvoyerNotification::class)->executer(
                     $commande->client,
                     'Rappel : votre commande est prête',
                     "Rappel {$niveau} : votre commande {$commande->referenceCommande} est prête à être récupérée.",
@@ -56,7 +56,11 @@ class RelancerCommandesNonRecuperees
                     $niveau,
                 );
 
-                $nombreRelances++;
+                if ($notification->wasRecentlyCreated
+                    && $notification->idCommande === $commande->idCommande
+                    && $notification->niveauRelance === $niveau) {
+                    $nombreRelances++;
+                }
             }
         }
 
@@ -88,7 +92,7 @@ class RelancerCommandesNonRecuperees
 
         $timezone = config('app.timezone');
         $dateReference = Carbon::parse($datePassagePrete, $timezone)->startOfDay();
-        $aujourdHui = Carbon::today($timezone);
+        $aujourdHui = Carbon::now($timezone)->startOfDay();
 
         if ($dateReference->greaterThan($aujourdHui)) {
             return null;

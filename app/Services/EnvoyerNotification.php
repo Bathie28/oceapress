@@ -34,6 +34,15 @@ class EnvoyerNotification
             'niveauRelance' => $niveauRelance,
         ]);
 
+        // Keep the relance metadata persisted even if the model's mass-assignment
+        // configuration changes independently from this service.
+        if ($idCommande !== null || $niveauRelance !== null) {
+            $notification->forceFill([
+                'idCommande' => $idCommande,
+                'niveauRelance' => $niveauRelance,
+            ])->save();
+        }
+
         if (in_array('EMAIL', array_map('strtoupper', $canaux), true)) {
             try {
                 $client->loadMissing('utilisateur');

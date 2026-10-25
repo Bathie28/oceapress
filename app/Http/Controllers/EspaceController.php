@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use App\Models\Commande;
+use App\Models\Notification;
 use App\Services\RelancerCommandesNonRecuperees;
 
 class EspaceController extends Controller
@@ -22,7 +23,7 @@ class EspaceController extends Controller
         return view('employe.accueil', compact('utilisateur', 'pressingActif'));
     }
 
-    public function tableauDeBordEmploye(Request $request, RelancerCommandesNonRecuperees $relancer): View
+    public function tableauDeBordEmploye(Request $request): View
     {
         $idPressing = $request->user()->employe->pressingActif();
         $statuts = [
@@ -51,14 +52,22 @@ class EspaceController extends Controller
                     ->orderByDesc('idHistorique'),
             ])
             ->orderByDesc('idCommande')
-            ->get()
-            ->map(function (Commande $commande) use ($relancer): Commande {
-                $commande->niveauRelanceAtteint = $relancer->niveauAtteint(
-                    $commande->historiques->first()?->dateChangement,
-                );
+            ->get();
 
-                return $commande;
-            });
+        $niveauxParCommande = Notification::query()
+            ->whereIn('idCommande', $commandesNonRecuperees->pluck('idCommande'))
+            ->whereNotNull('niveauRelance')
+            ->get(['idCommande', 'niveauRelance'])
+            ->groupBy('idCommande');
+
+        $commandesNonRecuperees->each(function (Commande $commande) use ($niveauxParCommande): void {
+            $ordreNiveaux = ['J2' => 2, 'J7' => 7, 'J15' => 15, 'J30' => 30];
+            $commande->niveauRelanceAtteint = $niveauxParCommande
+                ->get($commande->idCommande, collect())
+                ->pluck('niveauRelance')
+                ->sortBy(fn (string $niveau) => $ordreNiveaux[$niveau] ?? 0)
+                ->last();
+        });
 
         return view('employe.tableau-de-bord', compact('compteurs', 'commandesNonRecuperees'));
     }
