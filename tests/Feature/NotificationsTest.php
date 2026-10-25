@@ -99,22 +99,74 @@ class NotificationsTest extends TestCase
         $this->get('/client/notifications/'.$notificationB->idNotification)->assertNotFound();
     }
 
-    public function test_paiement_confirme_ou_echoue_envoie_une_notification_dans_l_application_seulement(): void
+    public function test_paiement_confirme_cree_une_notification_in_app_avec_le_numero_de_facture_sans_email(): void
     {
         Mail::fake();
-        $client = $this->creerClient(['email' => 'paiement-notif@example.test']);
+        $client = $this->creerClient(['email' => 'paiement-confirme@example.test']);
         $commande = $this->creerCommande($client);
         $facture = Facture::create([
-            'numeroFacture' => 'FAC-NOTIF-'.bin2hex(random_bytes(4)),
+            'numeroFacture' => 'FAC-CONFIRMEE-'.bin2hex(random_bytes(4)),
             'dateEmission' => now(), 'montantTotal' => 1200, 'statut' => 'EN_ATTENTE',
             'idCommande' => $commande->idCommande,
         ]);
 
         app(EnregistrerPaiement::class)->executer($facture->idFacture, 'WAVE', 'CONFIRME', 1200);
+
+        $notification = Notification::where('idClient', $client->idClient)
+            ->where('type', 'PAIEMENT_CONFIRME')
+            ->firstOrFail();
+        $this->assertSame('IN_APP', $notification->canal);
+        $this->assertStringContainsString($facture->numeroFacture, $notification->message);
+        $this->assertSame('PAYEE', $facture->fresh()->statut);
+        Mail::assertNothingSent();
+    }
+
+    public function test_paiement_echoue_cree_une_notification_in_app_et_conserve_la_facture_en_attente(): void
+    {
+        Mail::fake();
+        $client = $this->creerClient(['email' => 'paiement-echoue@example.test']);
+        $commande = $this->creerCommande($client);
+        $facture = Facture::create([
+            'numeroFacture' => 'FAC-ECHOUEE-'.bin2hex(random_bytes(4)),
+            'dateEmission' => now(), 'montantTotal' => 1200, 'statut' => 'EN_ATTENTE',
+            'idCommande' => $commande->idCommande,
+        ]);
+
         app(EnregistrerPaiement::class)->executer($facture->idFacture, 'WAVE', 'ECHOUE', 1200);
 
-        $this->assertSame(2, Notification::where('idClient', $client->idClient)->where('canal', 'IN_APP')->count());
+        $notification = Notification::where('idClient', $client->idClient)
+            ->where('type', 'PAIEMENT_ECHOUE')
+            ->firstOrFail();
+        $this->assertSame('IN_APP', $notification->canal);
+        $this->assertStringContainsString('échoué', $notification->message);
+        $this->assertSame('EN_ATTENTE', $facture->fresh()->statut);
         Mail::assertNothingSent();
+    }
+
+    public function test_un_client_ne_voit_pas_les_notifications_de_paiement_d_un_autre_client(): void
+    {
+        $clientA = $this->creerClient(['email' => 'paiement-client-a@example.test']);
+        $clientB = $this->creerClient(['email' => 'paiement-client-b@example.test']);
+        $commandeB = $this->creerCommande($clientB);
+        $factureB = Facture::create([
+            'numeroFacture' => 'FAC-CLIENT-B-'.bin2hex(random_bytes(4)),
+            'dateEmission' => now(), 'montantTotal' => 1200, 'statut' => 'EN_ATTENTE',
+            'idCommande' => $commandeB->idCommande,
+        ]);
+
+        app(EnregistrerPaiement::class)->executer($factureB->idFacture, 'WAVE', 'CONFIRME', 1200);
+        $notificationB = Notification::where('idClient', $clientB->idClient)
+            ->where('type', 'PAIEMENT_CONFIRME')
+            ->firstOrFail();
+        $notificationA = $this->creerNotification($clientA->idClient, 'Paiement confirmé pour A');
+
+        $this->actingAs($clientA->utilisateur)
+            ->get('/client/notifications')
+            ->assertOk()
+            ->assertSee('Paiement confirmé pour A')
+            ->assertDontSee(route('client.notifications.show', $notificationB->idNotification));
+
+        $this->get('/client/notifications/'.$notificationB->idNotification)->assertNotFound();
     }
 
     private function creerNotification(int $idClient, string $titre): Notification

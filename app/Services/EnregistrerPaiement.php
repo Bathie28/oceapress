@@ -47,7 +47,7 @@ class EnregistrerPaiement
                     $commande->client,
                     $confirme ? 'Paiement confirmé' : 'Paiement échoué',
                     $confirme
-                        ? 'Le paiement de votre facture a été confirmé.'
+                        ? 'Le paiement de votre facture '.$facture->numeroFacture.' a été confirmé.'
                         : 'Le paiement de votre facture a échoué. Vous pouvez réessayer.',
                     $confirme ? 'PAIEMENT_CONFIRME' : 'PAIEMENT_ECHOUE',
                     ['IN_APP'],
