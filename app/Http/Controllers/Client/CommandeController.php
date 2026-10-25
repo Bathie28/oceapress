@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\Commande;
+use App\Services\GenererImageQrCode;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -25,11 +26,15 @@ class CommandeController extends Controller
     {
         $idClient = $request->user()->client->idClient;
         $commande = Commande::query()
-            ->with(['articles', 'historiques', 'facture'])
+            ->with(['articles', 'historiques', 'facture', 'qrCodeActif'])
             ->where('idClient', $idClient)
             ->whereKey($commande)
             ->firstOrFail();
 
-        return view('client.commandes.show', compact('commande'));
+        $qrCodeSvg = $commande->qrCodeActif === null
+            ? null
+            : app(GenererImageQrCode::class)->executer($commande->qrCodeActif->token);
+
+        return view('client.commandes.show', compact('commande', 'qrCodeSvg'));
     }
 }

@@ -65,6 +65,38 @@
         </section>
 
         <section class="rounded-xl bg-white p-6 shadow">
+            <h2 class="mb-4 text-xl font-semibold">Votre QR Code</h2>
+            @if ($qrCodeSvg !== null)
+                <button type="button" id="agrandir-qr" aria-label="Agrandir le QR Code" class="inline-flex cursor-zoom-in rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700">
+                    {!! $qrCodeSvg !!}
+                </button>
+                <p class="mt-3 text-sm text-slate-600">Commande {{ $commande->referenceCommande }}</p>
+                <dialog id="qr-plein-ecran" aria-label="QR Code agrandi" class="h-screen w-screen max-h-none max-w-none bg-slate-950/95 p-6 text-white backdrop:bg-slate-950/90">
+                    <div class="flex h-full flex-col items-center justify-center gap-6">
+                        <form method="dialog" class="absolute right-5 top-5"><button class="rounded-lg bg-white px-4 py-2 font-semibold text-slate-900">Fermer</button></form>
+                        <div id="qr-plein-ecran-image" class="rounded-xl bg-white p-4"></div>
+                        <p>Commande {{ $commande->referenceCommande }}</p>
+                    </div>
+                </dialog>
+                <script>
+                    (() => {
+                        const button = document.getElementById('agrandir-qr');
+                        const dialog = document.getElementById('qr-plein-ecran');
+                        const target = document.getElementById('qr-plein-ecran-image');
+                        const image = button.querySelector('svg').cloneNode(true);
+                        image.setAttribute('width', 'min(80vw, 80vh)');
+                        image.setAttribute('height', 'min(80vw, 80vh)');
+                        image.classList.add('max-h-[80vh]', 'max-w-[80vw]');
+                        target.append(image);
+                        button.addEventListener('click', () => dialog.showModal());
+                    })();
+                </script>
+            @else
+                <p class="text-slate-600">QR Code indisponible, contactez le pressing</p>
+            @endif
+        </section>
+
+        <section class="rounded-xl bg-white p-6 shadow">
             <h2 class="mb-4 text-xl font-semibold">Historique</h2>
             <ol class="space-y-3">
                 @forelse ($commande->historiques as $historique)
