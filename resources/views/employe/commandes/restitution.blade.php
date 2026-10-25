@@ -15,7 +15,7 @@
         @if ($errors->any())
             <div class="mb-4 rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ $errors->first() }}</div>
         @endif
-        <form method="POST" action="{{ route('employe.commandes.restitution.store', $commande->idCommande) }}" class="space-y-5">
+        <form method="POST" enctype="multipart/form-data" action="{{ route('employe.commandes.restitution.store', $commande->idCommande) }}" class="space-y-5">
             @csrf
             <fieldset class="space-y-3">
                 <legend class="mb-2 font-semibold">Articles présentés</legend>
@@ -27,6 +27,11 @@
                             <input id="quantite-{{ $article->idArticle }}" type="number" min="0" max="{{ $article->quantite }}" step="1"
                                 name="quantitesPresentees[{{ $article->idArticle }}]"
                                 value="{{ old('quantitesPresentees.'.$article->idArticle, $article->quantite) }}" required>
+                        </div>
+                        <div class="sm:col-span-3">
+                            <label for="photo-{{ $article->idArticle }}" class="mb-1 block">Ajouter une photo (facultatif, JPEG ou PNG, 5 Mo maximum)</label>
+                            <input id="photo-{{ $article->idArticle }}" name="photos[{{ $article->idArticle }}]" type="file" accept="image/jpeg,image/png">
+                            @error('photos.'.$article->idArticle)<p class="mt-1 text-sm text-red-700">{{ $message }}</p>@enderror
                         </div>
                     </div>
                 @empty

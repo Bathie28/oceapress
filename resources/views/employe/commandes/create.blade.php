@@ -16,7 +16,7 @@
         @csrf
         <section class="grid gap-4 rounded-xl bg-white p-6 shadow sm:grid-cols-2">
             <h2 class="text-xl font-semibold sm:col-span-2">Client</h2>
-            <div class="sm:col-span-2"><button id="rechercher-client" type="button" data-url="{{ route('employe.clients.rechercher') }}" class="rounded-lg border border-blue-700 px-4 py-2 text-blue-700">Rechercher le client</button><p id="resultat-client" class="mt-2 text-sm" role="status" aria-live="polite"></p></div>
+            <div class="sm:col-span-2"><button id="rechercher-client" type="button" data-url="{{ route('employe.clients.rechercher') }}" class="rounded-lg border border-blue-700 px-4 py-2 text-blue-700">Rechercher le client</button><button id="modifier-client" type="button" class="ml-2 rounded-lg border border-slate-500 px-4 py-2 text-slate-700" hidden>Modifier l’e-mail et refaire la recherche</button><p id="resultat-client" class="mt-2 text-sm" role="status" aria-live="polite"></p></div>
             <div><label for="email">E-mail</label><input id="email" name="client[email]" type="email" value="{{ old('client.email') }}" required></div>
             <div><label for="telephone">Téléphone</label><input id="telephone" name="client[telephone]" value="{{ old('client.telephone') }}"></div>
             <div><label for="prenom">Prénom</label><input id="prenom" name="client[prenom]" value="{{ old('client.prenom') }}" required></div>
@@ -57,10 +57,36 @@
 <script>
 (() => {
     const searchClientButton = document.getElementById('rechercher-client');
+    const editClientButton = document.getElementById('modifier-client');
     const searchClientResult = document.getElementById('resultat-client');
+    const clientInputs = ['email', 'telephone', 'prenom', 'nom'].map(id => document.getElementById(id));
+    const emailInput = document.getElementById('email');
+    let clientRecherche = false;
+
+    const clearSelectedClient = (viderChamps = false) => {
+        clientRecherche = false;
+        editClientButton.hidden = true;
+        clientInputs.forEach(input => {
+            input.readOnly = false;
+            if (viderChamps) input.value = '';
+        });
+    };
+
+    emailInput.addEventListener('input', () => {
+        if (!clientRecherche) return;
+        clearSelectedClient();
+        searchClientResult.textContent = 'Le client sélectionné a été annulé. Relancez la recherche.';
+    });
+
+    editClientButton.addEventListener('click', () => {
+        clearSelectedClient();
+        searchClientResult.textContent = 'Le client sélectionné a été annulé. Modifiez l’e-mail puis relancez la recherche.';
+        emailInput.focus();
+    });
+
     searchClientButton.addEventListener('click', async () => {
         const params = new URLSearchParams();
-        const email = document.getElementById('email').value.trim();
+        const email = emailInput.value.trim();
         const telephone = document.getElementById('telephone').value.trim();
         if (email) params.set('email', email);
         if (telephone) params.set('telephone', telephone);
@@ -70,11 +96,19 @@
         }
         const response = await fetch(`${searchClientButton.dataset.url}?${params.toString()}`, {headers: {'Accept': 'application/json'}});
         if (!response.ok) {
+            clearSelectedClient(true);
             searchClientResult.textContent = response.status === 404 ? 'Aucun client trouvé. Un nouveau compte sera créé avec ces coordonnées.' : 'La recherche a échoué.';
             return;
         }
         const client = await response.json();
-        searchClientResult.textContent = `Client trouvé : ${client.nom} — ${client.telephone || 'aucun téléphone'}. La commande sera liée à ce compte.`;
+        if (Object.hasOwn(client, 'email')) emailInput.value = client.email || '';
+        if (Object.hasOwn(client, 'telephone')) document.getElementById('telephone').value = client.telephone || '';
+        if (Object.hasOwn(client, 'prenom')) document.getElementById('prenom').value = client.prenom || '';
+        if (Object.hasOwn(client, 'nom')) document.getElementById('nom').value = client.nom || '';
+        clientInputs.forEach(input => { input.readOnly = true; });
+        clientRecherche = true;
+        editClientButton.hidden = false;
+        searchClientResult.textContent = `Client trouvé : ${client.prenom ? client.prenom + ' ' : ''}${client.nom || ''} — ${client.telephone || 'aucun téléphone'}. La commande sera liée à ce compte.`;
     });
 
     const mode = document.getElementById('modeFacturation');

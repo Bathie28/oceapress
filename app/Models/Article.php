@@ -25,4 +25,14 @@ class Article extends Model
     {
         return ['quantite' => 'integer', 'prixUnitaire' => 'decimal:0'];
     }
+
+    public function photos()
+    {
+        return $this->hasMany(Photo::class, 'idArticle');
+    }
+
+    public function commande()
+    {
+        return $this->belongsTo(Commande::class, 'idCommande');
+    }
 }

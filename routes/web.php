@@ -9,6 +9,7 @@ use App\Http\Controllers\Client\CommandeController as ClientCommandeController;
 use App\Http\Controllers\Client\FactureController as ClientFactureController;
 use App\Http\Controllers\Client\MotDePasseController;
 use App\Http\Controllers\Client\NotificationController;
+use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\Admin\TarifController as AdminTarifController;
 
 Route::get('/', function () {
@@ -18,6 +19,7 @@ Route::get('/', function () {
 Route::get('/login', [AuthController::class, 'afficherConnexion'])->name('login');
 Route::post('/login', [AuthController::class, 'connecter'])->name('login.store');
 Route::post('/logout', [AuthController::class, 'deconnecter'])->name('logout');
+Route::get('/photos/{photo}', [PhotoController::class, 'show'])->middleware('auth')->whereNumber('photo')->name('photos.show');
 
 Route::middleware('role:client')->prefix('client')->name('client.')->group(function () {
     Route::get('/mot-de-passe', [MotDePasseController::class, 'edit'])->name('mot-de-passe.edit');

@@ -8,6 +8,7 @@ use App\Models\Pressing;
 use App\Models\Tarif;
 use App\Services\ChangerStatutCommande;
 use App\Services\EnregistrerCommande;
+use App\Services\EnregistrerPhoto;
 use App\Services\EnregistrerRestitution;
 use App\Services\RechercherClient;
 use Illuminate\Http\Request;
@@ -47,7 +48,7 @@ class CommandeController extends Controller
     public function show(Request $request, int $commande): View
     {
         $commande = Commande::query()
-            ->with(['client.utilisateur', 'articles', 'historiques', 'facture'])
+            ->with(['client.utilisateur', 'articles.photos', 'historiques', 'facture'])
             ->where('idPressing', $this->pressingActif($request))
             ->whereKey($commande)
             ->firstOrFail();
@@ -117,8 +118,23 @@ class CommandeController extends Controller
             return response()->json(['message' => 'Aucun client trouvé.'], 404);
         }
 
+        $nomComplet = trim($utilisateur->prenom.' '.$utilisateur->nom);
+        $clientDeCePressing = Commande::query()
+            ->where('idClient', $utilisateur->idUtilisateur)
+            ->where('idPressing', $this->pressingActif($request))
+            ->exists();
+
+        if (! $clientDeCePressing) {
+            return response()->json([
+                'nom' => $nomComplet,
+                'telephone' => $utilisateur->telephone,
+            ]);
+        }
+
         return response()->json([
-            'nom' => trim($utilisateur->prenom.' '.$utilisateur->nom),
+            'prenom' => $utilisateur->prenom,
+            'nom' => $utilisateur->nom,
+            'email' => $utilisateur->email,
             'telephone' => $utilisateur->telephone,
         ]);
     }
@@ -203,14 +219,29 @@ class CommandeController extends Controller
         return view('employe.commandes.restitution', compact('commande'));
     }
 
-    public function storeRestitution(Request $request, int $commande, EnregistrerRestitution $enregistrerRestitution): RedirectResponse
+    public function storeRestitution(Request $request, int $commande, EnregistrerRestitution $enregistrerRestitution, EnregistrerPhoto $enregistrerPhoto): RedirectResponse
     {
         $commande = $this->commandeDuPressing($request, $commande);
         $validated = $request->validate([
             'quantitesPresentees' => ['sometimes', 'array'],
             'quantitesPresentees.*' => ['integer', 'min:0'],
             'observation' => ['nullable', 'string'],
+            'photos' => ['sometimes', 'array'],
+            'photos.*' => ['nullable', 'file', 'max:5120'],
         ]);
+
+        foreach ($validated['photos'] ?? [] as $idArticle => $fichier) {
+            if ($fichier === null) {
+                continue;
+            }
+            try {
+                $enregistrerPhoto->valider($fichier);
+            } catch (RuntimeException $exception) {
+                return redirect()->route('employe.commandes.restitution.create', $commande->idCommande)
+                    ->withErrors(['photos.'.$idArticle => $exception->getMessage()])
+                    ->withInput();
+            }
+        }
 
         try {
             $resultat = $enregistrerRestitution->executer(
@@ -218,6 +249,7 @@ class CommandeController extends Controller
                 $request->user()->employe->idEmploye,
                 $validated['quantitesPresentees'] ?? [],
                 $validated['observation'] ?? null,
+                $validated['photos'] ?? [],
             );
         } catch (RuntimeException $exception) {
             return redirect()->route('employe.commandes.show', $commande->idCommande)

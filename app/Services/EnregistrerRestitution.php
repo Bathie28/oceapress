@@ -6,8 +6,11 @@ use App\Models\Anomalie;
 use App\Models\Article;
 use App\Models\Commande;
 use App\Models\Restitution;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use RuntimeException;
+use Throwable;
 
 class EnregistrerRestitution
 {
@@ -16,8 +19,18 @@ class EnregistrerRestitution
         int $idEmploye,
         array $quantitesPresentees,
         ?string $observation = null,
+        array $photos = [],
     ): array {
-        return DB::transaction(function () use ($idCommande, $idEmploye, $quantitesPresentees, $observation): array {
+        $enregistrerPhoto = app(EnregistrerPhoto::class);
+        foreach ($photos as $fichier) {
+            if ($fichier instanceof UploadedFile) {
+                $enregistrerPhoto->valider($fichier);
+            }
+        }
+
+        $cheminsEcrits = [];
+        try {
+            return DB::transaction(function () use ($idCommande, $idEmploye, $quantitesPresentees, $observation, $photos, $enregistrerPhoto, &$cheminsEcrits): array {
             $commande = Commande::whereKey($idCommande)->lockForUpdate()->firstOrFail();
 
             if ($commande->statut !== Commande::STATUT_PRETE) {
@@ -32,6 +45,10 @@ class EnregistrerRestitution
             $idsPresentees = array_map('intval', array_keys($quantitesPresentees));
             if (array_diff($idsPresentees, $idsCommande) !== []) {
                 throw new RuntimeException('Une ligne présentée n’appartient pas à cette commande');
+            }
+            $idsPhotos = array_map('intval', array_keys($photos));
+            if (array_diff($idsPhotos, $idsCommande) !== []) {
+                throw new RuntimeException('Une photo doit être rattachée à un article de cette commande.');
             }
 
             $manquants = [];
@@ -68,6 +85,13 @@ class EnregistrerRestitution
                 'idCommande' => $commande->idCommande,
                 'idEmploye' => $idEmploye,
             ]);
+            foreach ($photos as $idArticle => $fichier) {
+                if ($fichier instanceof UploadedFile) {
+                    $article = $articles->firstWhere('idArticle', (int) $idArticle);
+                    $photo = $enregistrerPhoto->executer($fichier, $article);
+                    $cheminsEcrits[] = $photo->urlPhoto;
+                }
+            }
             (new ChangerStatutCommande())->executer(
                 $commande->idCommande,
                 Commande::STATUT_RECUPEREE,
@@ -76,6 +100,12 @@ class EnregistrerRestitution
             );
 
             return ['restitution' => $restitution, 'anomalies' => 0];
-        });
+            });
+        } catch (Throwable $exception) {
+            if ($cheminsEcrits !== []) {
+                Storage::disk('local')->delete($cheminsEcrits);
+            }
+            throw $exception;
+        }
     }
 }

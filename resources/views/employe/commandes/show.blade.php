@@ -70,7 +70,9 @@
             <h2 class="mb-4 text-xl font-semibold">Articles</h2>
             <ul class="divide-y divide-slate-100">
                 @forelse ($commande->articles as $article)
-                    <li class="flex justify-between gap-4 py-3"><span>{{ $article->typeArticle }} @if ($article->couleur) · {{ $article->couleur }} @endif</span><span>Quantité : {{ $article->quantite }}</span></li>
+                    <li class="flex flex-col justify-between gap-4 py-3 sm:flex-row"><span>{{ $article->typeArticle }} @if ($article->couleur) · {{ $article->couleur }} @endif <span>Quantité : {{ $article->quantite }}</span>
+                        @foreach ($article->photos as $photo)<a href="{{ route('photos.show', $photo->idPhoto) }}"><img class="mt-2 h-28 rounded object-cover" src="{{ route('photos.show', $photo->idPhoto) }}" alt="Photo de restitution de {{ $article->typeArticle }}"></a>@endforeach
+                    </span></li>
                 @empty
                     <li class="py-3 text-slate-500">Aucun article.</li>
                 @endforelse

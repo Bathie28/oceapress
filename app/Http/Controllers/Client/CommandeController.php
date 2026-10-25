@@ -26,7 +26,7 @@ class CommandeController extends Controller
     {
         $idClient = $request->user()->client->idClient;
         $commande = Commande::query()
-            ->with(['articles', 'historiques', 'facture', 'qrCodeActif'])
+            ->with(['articles.photos', 'historiques', 'facture', 'qrCodeActif'])
             ->where('idClient', $idClient)
             ->whereKey($commande)
             ->firstOrFail();
