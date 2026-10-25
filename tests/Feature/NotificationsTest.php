@@ -7,6 +7,7 @@ use App\Models\Commande;
 use App\Models\Facture;
 use App\Models\Notification;
 use App\Services\ChangerStatutCommande;
+use App\Services\CreerCompteClient;
 use App\Services\EnregistrerPaiement;
 use App\Services\EnvoyerNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -52,6 +53,32 @@ class NotificationsTest extends TestCase
             'titre' => 'Rappel',
             'canal' => 'IN_APP',
         ]);
+    }
+
+    public function test_mot_de_passe_provisoire_n_est_jamais_inclus_dans_un_email_ou_une_notification(): void
+    {
+        Mail::fake();
+
+        $compte = app(CreerCompteClient::class)->executer([
+            'nom' => 'Nouveau', 'prenom' => 'Client',
+            'email' => 'nouveau-client@example.test', 'telephone' => '771234567',
+        ]);
+        $motDePasseProvisoire = $compte['motDePasseProvisoire'];
+
+        $this->assertNotEmpty($motDePasseProvisoire);
+        Mail::assertNothingOutgoing();
+        $this->assertSame(0, Notification::where('idClient', $compte['client']->idClient)->count());
+
+        app(EnvoyerNotification::class)->executer(
+            $compte['client'], 'Bienvenue', 'Votre compte client est prêt.', 'INFO', ['EMAIL'],
+        );
+
+        $notification = Notification::where('idClient', $compte['client']->idClient)->firstOrFail();
+        $this->assertStringNotContainsString($motDePasseProvisoire, $notification->titre.$notification->message);
+        Mail::assertSent(NotificationClient::class, function (NotificationClient $mail) use ($motDePasseProvisoire): bool {
+            return ! str_contains($mail->titre.$mail->corps, $motDePasseProvisoire)
+                && ! str_contains($mail->render(), $motDePasseProvisoire);
+        });
     }
 
     public function test_un_client_ne_voit_que_ses_notifications_et_ouvrir_marque_comme_lu(): void
