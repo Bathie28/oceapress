@@ -24,7 +24,7 @@
             <h1 class="text-2xl font-bold">{{ $commande->referenceCommande }}</h1>
             <dl class="mt-5 grid gap-4 sm:grid-cols-2">
                 <div><dt class="text-sm text-slate-500">Client</dt><dd>{{ $commande->client?->utilisateur?->prenom }} {{ $commande->client?->utilisateur?->nom }}</dd></div>
-                <div><dt class="text-sm text-slate-500">Statut</dt><dd>{{ str_replace('_', ' ', $commande->statut) }}</dd></div>
+                <div><dt class="text-sm text-slate-500">Statut</dt><dd><x-status-badge :status="$commande->statut" :label="str_replace('_', ' ', $commande->statut)" /></dd></div>
                 <div><dt class="text-sm text-slate-500">Montant</dt><dd>{{ number_format((float) $commande->montantTotal, 0, '.', ' ') }}</dd></div>
             </dl>
         </section>
@@ -61,7 +61,7 @@
                 <dl class="grid gap-4 sm:grid-cols-3">
                     <div><dt class="text-sm text-slate-500">Numéro</dt><dd>{{ $commande->facture->numeroFacture }}</dd></div>
                     <div><dt class="text-sm text-slate-500">Montant</dt><dd>{{ number_format((float) $commande->facture->montantTotal, 0, '.', ' ') }}</dd></div>
-                    <div><dt class="text-sm text-slate-500">Statut</dt><dd>{{ str_replace('_', ' ', $commande->facture->statut) }}</dd></div>
+                    <div><dt class="text-sm text-slate-500">Statut</dt><dd><x-status-badge :status="$commande->facture->statut" :label="str_replace('_', ' ', $commande->facture->statut)" /></dd></div>
                 </dl>
             </section>
         @endif

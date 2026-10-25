@@ -18,7 +18,7 @@
                     @forelse ($commandes as $commande)
                         <tr>
                             <td class="p-4"><a class="font-medium text-blue-700 hover:underline" href="{{ route('client.commandes.show', $commande->idCommande) }}">{{ $commande->referenceCommande }}</a></td>
-                            <td class="p-4">{{ str_replace('_', ' ', $commande->statut) }}</td>
+                            <td class="p-4"><x-status-badge :status="$commande->statut" :label="str_replace('_', ' ', $commande->statut)" /></td>
                             <td class="p-4">{{ $commande->dateCreation }}</td>
                             <td class="p-4">{{ number_format((float) $commande->montantTotal, 0, '.', ' ') }}</td>
                         </tr>

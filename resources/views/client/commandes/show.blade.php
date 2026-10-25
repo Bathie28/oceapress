@@ -11,7 +11,7 @@
         <section class="rounded-xl bg-white p-6 shadow">
             <h1 class="text-2xl font-bold">{{ $commande->referenceCommande }}</h1>
             <dl class="mt-5 grid gap-4 sm:grid-cols-2">
-                <div><dt class="text-sm text-slate-500">Statut</dt><dd>{{ str_replace('_', ' ', $commande->statut) }}</dd></div>
+                <div><dt class="text-sm text-slate-500">Statut</dt><dd><x-status-badge :status="$commande->statut" :label="str_replace('_', ' ', $commande->statut)" /></dd></div>
                 <div><dt class="text-sm text-slate-500">Date</dt><dd>{{ $commande->dateCreation }}</dd></div>
                 <div><dt class="text-sm text-slate-500">Montant</dt><dd>{{ number_format((float) $commande->montantTotal, 0, '.', ' ') }}</dd></div>
             </dl>
@@ -29,7 +29,7 @@
                 <dl class="grid gap-4 sm:grid-cols-3">
                     <div><dt class="text-sm text-slate-500">Numéro</dt><dd>{{ $commande->facture->numeroFacture }}</dd></div>
                     <div><dt class="text-sm text-slate-500">Montant</dt><dd>{{ number_format((float) $commande->facture->montantTotal, 0, '.', ' ') }}</dd></div>
-                    <div><dt class="text-sm text-slate-500">Statut</dt><dd>{{ str_replace('_', ' ', $commande->facture->statut) }}</dd></div>
+                    <div><dt class="text-sm text-slate-500">Statut</dt><dd><x-status-badge :status="$commande->facture->statut" :label="str_replace('_', ' ', $commande->facture->statut)" /></dd></div>
                 </dl>
                 @if ($commande->facture->statut === 'EN_ATTENTE')
                     <form method="POST" action="{{ route('client.factures.paiement', $commande->facture->idFacture) }}" class="mt-5 flex flex-wrap items-end gap-3">

@@ -1,12 +1,13 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head><meta charset="utf-8"><title>Tarifs — {{ $pressing->nom }}</title></head>
-<body>
-<main>
+@extends('layouts.app')
+
+@section('title', 'Tarifs — '.$pressing->nom.' — OceaPress')
+
+@section('content')
+<div class="space-y-6 py-5">
     <p><a href="{{ route('admin.pressings.index') }}">Pressings</a></p>
     <h1>Tarifs de {{ $pressing->nom }}</h1>
-    @if ($errors->any())<div role="alert"><ul>@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
-    <section>
+    @if ($errors->any())<x-alert type="error"><ul>@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></x-alert>@endif
+    <section class="op-card space-y-4 p-6">
         <h2>Pesée</h2>
         <form method="POST" action="{{ route('admin.pressings.mode', $pressing->idPressing) }}">
             @csrf
@@ -15,7 +16,7 @@
             <button type="submit">Enregistrer</button>
         </form>
     </section>
-    <section><h2>Grille tarifaire PIECE</h2>
+    <section class="op-card space-y-4 p-6"><h2>Grille tarifaire PIECE</h2>
         @php($tarifsAffiches = $pressing->tarifsAffiches())
         @php($groupesPiece = $tarifsAffiches->where('unite', 'PIECE')->groupBy('formule'))
         @forelse ($groupesPiece as $formule => $tarifs)
@@ -27,7 +28,7 @@
         @empty<p>Aucun tarif pièce enregistré.</p>@endforelse
     </section>
     @if ($pressing->pesee)
-    <section><h2>Grille tarifaire KG</h2>
+    <section class="op-card space-y-4 p-6"><h2>Grille tarifaire KG</h2>
         @php($groupesKg = $tarifsAffiches->where('unite', 'KG')->groupBy('formule'))
         @forelse ($groupesKg as $formule => $tarifs)
             <h3>{{ $formule }}</h3><table><thead><tr><th>Tarif</th><th>Prix (F CFA / kg)</th><th>Action</th></tr></thead><tbody>
@@ -38,7 +39,7 @@
         @empty<p>Aucun tarif au kilo enregistré.</p>@endforelse
     </section>
     @endif
-    <section>
+    <section class="op-card space-y-4 p-6">
         <h2>Ajouter un tarif</h2>
         <form method="POST" action="{{ route('admin.pressings.tarifs.store', $pressing->idPressing) }}">
             @csrf
@@ -52,7 +53,9 @@
             <button type="submit">Ajouter le tarif</button>
         </form>
     </section>
-</main>
+</div>
+@endsection
+@section('scripts')
 <script>
 (() => {
     const unite = document.getElementById('unite');
@@ -68,5 +71,4 @@
     unite.addEventListener('change', sync); sync();
 })();
 </script>
-</body>
-</html>
+@endsection

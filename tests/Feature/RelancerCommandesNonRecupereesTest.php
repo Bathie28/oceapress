@@ -123,6 +123,8 @@ class RelancerCommandesNonRecupereesTest extends TestCase
         $this->actingAs($employe->utilisateur)
             ->get('/employe/tableau-de-bord')
             ->assertOk()
+            ->assertSee(route('employe.accueil'), false)
+            ->assertSee('Retour à l’accueil employé')
             ->assertSee('data-statut="PRETE" data-count="1"', false)
             ->assertSee('data-statut="EN_ATTENTE" data-count="1"', false)
             ->assertSee($commandePrete->referenceCommande)
