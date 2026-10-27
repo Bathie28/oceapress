@@ -6,7 +6,7 @@
 @endsection
 
 @section('content')
-<div class="mx-auto max-w-4xl space-y-6 py-5">
+<div class="px-4 py-8 mx-auto max-w-5xl space-y-6">
     <a href="{{ route('employe.commandes.index') }}" class="text-blue-700 hover:underline">← Commandes</a>
     <h1 class="text-3xl font-bold">Nouvelle commande</h1>
     @if ($errors->any())
@@ -14,44 +14,44 @@
     @endif
     <form method="POST" action="{{ route('employe.commandes.store') }}" class="space-y-6">
         @csrf
-        <section class="grid gap-4 rounded-xl bg-white p-6 shadow sm:grid-cols-2">
-            <h2 class="text-xl font-semibold sm:col-span-2">Client</h2>
-            <div class="sm:col-span-2"><button id="rechercher-client" type="button" data-url="{{ route('employe.clients.rechercher') }}" class="rounded-lg border border-blue-700 px-4 py-2 text-blue-700">Rechercher le client</button><button id="modifier-client" type="button" class="ml-2 rounded-lg border border-slate-500 px-4 py-2 text-slate-700" hidden>Modifier l’e-mail et refaire la recherche</button><p id="resultat-client" class="mt-2 text-sm" role="status" aria-live="polite"></p></div>
-            <div><label for="email">E-mail</label><input id="email" name="client[email]" type="email" value="{{ old('client.email') }}" required></div>
-            <div><label for="telephone">Téléphone</label><input id="telephone" name="client[telephone]" value="{{ old('client.telephone') }}"></div>
-            <div><label for="prenom">Prénom</label><input id="prenom" name="client[prenom]" value="{{ old('client.prenom') }}" required></div>
-            <div><label for="nom">Nom</label><input id="nom" name="client[nom]" value="{{ old('client.nom') }}" required></div>
+        <section class="grid gap-4 rounded-xl bg-white border border-gray-200 p-6 mb-6 sm:grid-cols-2">
+            <h2 class="mb-4 text-xl font-semibold sm:col-span-2">Client</h2>
+            <div class="mb-4 sm:col-span-2"><button id="rechercher-client" type="button" data-url="{{ route('employe.clients.rechercher') }}" class="rounded-lg border border-blue-700 px-4 py-2 text-blue-700">Rechercher le client</button><button id="modifier-client" type="button" class="ml-2 rounded-lg border border-slate-500 px-4 py-2 text-slate-700" hidden>Modifier l’e-mail et refaire la recherche</button><p id="resultat-client" class="mt-2 text-sm" role="status" aria-live="polite"></p></div>
+            <div class="mb-4"><x-form-label for="email">E-mail</x-form-label><x-form-input id="email" name="client[email]" type="email" value="{{ old('client.email') }}" required /></div>
+            <div class="mb-4"><x-form-label for="telephone">Téléphone</x-form-label><x-form-input id="telephone" name="client[telephone]" value="{{ old('client.telephone') }}" /></div>
+            <div class="mb-4"><x-form-label for="prenom">Prénom</x-form-label><x-form-input id="prenom" name="client[prenom]" value="{{ old('client.prenom') }}" required /></div>
+            <div class="mb-4"><x-form-label for="nom">Nom</x-form-label><x-form-input id="nom" name="client[nom]" value="{{ old('client.nom') }}" required /></div>
         </section>
-        <section class="grid gap-4 rounded-xl bg-white p-6 shadow sm:grid-cols-2">
-            <h2 class="text-xl font-semibold sm:col-span-2">Tarification</h2>
-            <div><label for="modeFacturation">Mode de facturation</label><select id="modeFacturation" name="modeFacturation" required>
+        <section class="grid gap-4 rounded-xl bg-white border border-gray-200 p-6 mb-6 sm:grid-cols-2">
+            <h2 class="mb-4 text-xl font-semibold sm:col-span-2">Tarification</h2>
+            <div class="mb-4"><x-form-label for="modeFacturation">Mode de facturation</x-form-label><select id="modeFacturation" name="modeFacturation" required class="block w-full rounded-xl border border-gray-300 px-3 py-2 focus:border-blue-600 focus:outline-none">
                 <option value="PIECE" @selected($modeInitial === 'PIECE')>PIECE</option>
                 @if ($pesee)<option value="POIDS" @selected($modeInitial === 'POIDS')>POIDS</option>@endif
             </select></div>
-            <div><label for="formule">Formule</label><select id="formule" name="formule" required>
+            <div class="mb-4"><x-form-label for="formule">Formule</x-form-label><select id="formule" name="formule" required class="block w-full rounded-xl border border-gray-300 px-3 py-2 focus:border-blue-600 focus:outline-none">
                 @foreach (\App\Models\Tarif::FORMULES_PAR_MODE[$modeInitial] as $formule)
                     <option value="{{ $formule }}" @selected($formuleInitiale === $formule)>{{ $formule }}</option>
                 @endforeach
             </select></div>
-            <div id="poids-wrap" @if($modeInitial !== 'POIDS') hidden @endif><label for="poids">Poids (kg)</label><input id="poids" name="poids" type="number" min="0.1" step="0.1" value="{{ old('poids') }}" @if($modeInitial === 'POIDS') required @endif>@if($modeInitial === 'POIDS')<p id="poids-note" class="mt-2 text-sm text-slate-600">Le montant dépend du poids et de la formule seulement. Les quantités d’articles servent à la restitution.</p>@endif</div>
+            <div id="poids-wrap" class="mb-4" @if($modeInitial !== 'POIDS') hidden @endif><x-form-label for="poids">Poids (kg)</x-form-label><x-form-input id="poids" name="poids" type="number" min="0.1" step="0.1" value="{{ old('poids') }}" @if($modeInitial === 'POIDS') required @endif />@if($modeInitial === 'POIDS')<p id="poids-note" class="mt-2 text-sm text-slate-600">Le montant dépend du poids et de la formule seulement. Les quantités d’articles servent à la restitution.</p>@endif</div>
         </section>
-        <section class="space-y-4 rounded-xl bg-white p-6 shadow">
-            <h2 class="text-xl font-semibold">Articles</h2>
+        <section class="space-y-4 rounded-xl bg-white border border-gray-200 p-6 mb-6 shadow">
+            <h2 class="mb-4 text-xl font-semibold">Articles</h2>
             <div id="articles-list" data-types-url="{{ route('employe.commandes.types') }}">
                 @forelse ($typesArticles as $index => $type)
                     <fieldset class="mb-4 grid gap-3 rounded-lg border border-slate-200 p-4 sm:grid-cols-2" data-type-row data-type="{{ $type }}">
                         <legend>{{ $type }}</legend>
                         <input type="hidden" name="articles[{{ $index }}][type]" value="{{ $type }}">
-                        <div><label for="couleur{{ $index }}">Couleur</label><input id="couleur{{ $index }}" name="articles[{{ $index }}][couleur]" value="{{ old("articles.{$index}.couleur") }}"></div>
-                        <div><label for="description{{ $index }}">Description</label><input id="description{{ $index }}" name="articles[{{ $index }}][description]" value="{{ old("articles.{$index}.description") }}"></div>
-                        <div><label for="quantite{{ $index }}">Quantité</label><input id="quantite{{ $index }}" data-quantity type="number" min="0" step="1" name="articles[{{ $index }}][quantite]" value="{{ old("articles.{$index}.quantite", 0) }}"></div>
+                        <div class="mb-4"><x-form-label for="couleur{{ $index }}">Couleur</x-form-label><x-form-input id="couleur{{ $index }}" name="articles[{{ $index }}][couleur]" value="{{ old("articles.{$index}.couleur") }}" /></div>
+                        <div class="mb-4"><x-form-label for="description{{ $index }}">Description</x-form-label><x-form-input id="description{{ $index }}" name="articles[{{ $index }}][description]" value="{{ old("articles.{$index}.description") }}" /></div>
+                        <div class="mb-4"><x-form-label for="quantite{{ $index }}">Quantité</x-form-label><x-form-input id="quantite{{ $index }}" data-quantity type="number" min="0" step="1" name="articles[{{ $index }}][quantite]" value="{{ old("articles.{$index}.quantite", 0) }}" /></div>
                     </fieldset>
                 @empty
                     <p class="text-slate-500" data-empty>Aucun type disponible pour cette formule.</p>
                 @endforelse
             </div>
         </section>
-        <button class="rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white">Créer la commande</button>
+        <button class="mt-2 rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white">Créer la commande</button>
     </form>
 </div>
 <script>
@@ -143,7 +143,7 @@
         let index = 0;
         types.forEach(type => {
             const state = rowsState.get(type) || {quantity: '0', color: '', description: ''};
-            list.insertAdjacentHTML('beforeend', `<fieldset class="mb-4 grid gap-3 rounded-lg border border-slate-200 p-4 sm:grid-cols-2" data-type-row data-type="${escapeHtml(type)}"><legend>${escapeHtml(type)}</legend><input type="hidden" name="articles[${index}][type]" value="${escapeHtml(type)}"><div><label for="couleur${index}">Couleur</label><input id="couleur${index}" name="articles[${index}][couleur]" value="${escapeHtml(state.color)}"></div><div><label for="description${index}">Description</label><input id="description${index}" name="articles[${index}][description]" value="${escapeHtml(state.description)}"></div><div><label for="quantite${index}">Quantité</label><input id="quantite${index}" data-quantity type="number" min="0" step="1" name="articles[${index}][quantite]" value="${escapeHtml(state.quantity)}"></div></fieldset>`);
+            list.insertAdjacentHTML('beforeend', `<fieldset class="mb-4 grid gap-3 rounded-lg border border-slate-200 p-4 sm:grid-cols-2" data-type-row data-type="${escapeHtml(type)}"><legend>${escapeHtml(type)}</legend><input type="hidden" name="articles[${index}][type]" value="${escapeHtml(type)}"><div class="mb-4"><label class="block mb-1 text-sm font-medium text-gray-700" for="couleur${index}">Couleur</label><input class="block w-full rounded-xl border border-gray-300 px-3 py-2 focus:border-blue-600 focus:outline-none" id="couleur${index}" name="articles[${index}][couleur]" value="${escapeHtml(state.color)}"></div><div class="mb-4"><label class="block mb-1 text-sm font-medium text-gray-700" for="description${index}">Description</label><input class="block w-full rounded-xl border border-gray-300 px-3 py-2 focus:border-blue-600 focus:outline-none" id="description${index}" name="articles[${index}][description]" value="${escapeHtml(state.description)}"></div><div class="mb-4"><label class="block mb-1 text-sm font-medium text-gray-700" for="quantite${index}">Quantité</label><input class="block w-full rounded-xl border border-gray-300 px-3 py-2 focus:border-blue-600 focus:outline-none" id="quantite${index}" data-quantity type="number" min="0" step="1" name="articles[${index}][quantite]" value="${escapeHtml(state.quantity)}"></div></fieldset>`);
             index++;
         });
         previousTypes.filter(type => !types.includes(type)).forEach(type => {

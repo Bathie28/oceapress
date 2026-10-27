@@ -20,6 +20,13 @@ class GabaritCommunTest extends TestCase
             ->assertSee('Se connecter');
     }
 
+    public function test_formulaire_de_connexion_utilise_les_classes_communes_de_champ_et_libelle(): void
+    {
+        $this->get('/login')->assertOk()
+            ->assertSee('class="block mb-1 text-sm font-medium text-gray-700"', false)
+            ->assertSee('class="block w-full rounded-xl border border-gray-300 px-3 py-2 focus:border-blue-600 focus:outline-none"', false);
+    }
+
     public function test_accueil_employe_utilise_le_gabarit_et_sa_navigation(): void
     {
         $employe = $this->creerEmploye();

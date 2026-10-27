@@ -6,9 +6,9 @@
 @endsection
 
 @section('content')
-    <div class="mx-auto max-w-6xl space-y-6 py-5">
+    <div class="px-4 py-8 mx-auto max-w-5xl space-y-6">
         <a href="{{ route('client.commandes.index') }}" class="text-blue-700 hover:underline">← Mes commandes</a>
-        <section class="rounded-xl bg-white p-6 shadow">
+        <section class="rounded-xl bg-white p-6 mb-6 shadow">
             <h1 class="text-2xl font-bold">{{ $commande->referenceCommande }}</h1>
             <dl class="mt-5 grid gap-4 sm:grid-cols-2">
                 <div><dt class="text-sm text-slate-500">Statut</dt><dd><x-status-badge :status="$commande->statut" :label="str_replace('_', ' ', $commande->statut)" /></dd></div>
@@ -17,7 +17,7 @@
             </dl>
         </section>
 
-        <section class="rounded-xl bg-white p-6 shadow">
+        <section class="rounded-xl bg-white p-6 mb-6 shadow">
             <h2 class="mb-4 text-xl font-semibold">Facture</h2>
             @if (session('paiement_resultat'))
                 <p class="mb-4 rounded-lg bg-emerald-50 p-3 text-emerald-800" role="status">{{ session('paiement_resultat') }}</p>
@@ -35,14 +35,14 @@
                     <form method="POST" action="{{ route('client.factures.paiement', $commande->facture->idFacture) }}" class="mt-5 flex flex-wrap items-end gap-3">
                         @csrf
                         <div>
-                            <label for="methode" class="mb-1 block text-sm font-medium">Méthode de paiement</label>
-                            <select id="methode" name="methode" required class="rounded-lg border border-slate-300 px-3 py-2">
+                            <x-form-label for="methode">Méthode de paiement</x-form-label>
+                            <select id="methode" name="methode" required class="block w-full rounded-xl border border-gray-300 px-3 py-2 focus:border-blue-600 focus:outline-none">
                                 <option value="" selected disabled>Choisir une méthode</option>
                                 <option value="WAVE">Wave</option>
                                 <option value="ORANGE_MONEY">Orange Money</option>
                             </select>
                         </div>
-                        <button class="rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white">Lancer le paiement</button>
+                        <button class="mt-2 rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white">Lancer le paiement</button>
                     </form>
                 @endif
             @else
@@ -50,7 +50,7 @@
             @endif
         </section>
 
-        <section class="rounded-xl bg-white p-6 shadow">
+        <section class="rounded-xl bg-white p-6 mb-6 shadow">
             <h2 class="mb-4 text-xl font-semibold">Articles</h2>
             <ul class="divide-y divide-slate-100">
                 @forelse ($commande->articles as $article)
@@ -65,7 +65,7 @@
             </ul>
         </section>
 
-        <section class="rounded-xl bg-white p-6 shadow">
+        <section class="rounded-xl bg-white p-6 mb-6 shadow">
             <h2 class="mb-4 text-xl font-semibold">Votre QR Code</h2>
             @if ($qrCodeSvg !== null)
                 <button type="button" id="agrandir-qr" aria-label="Agrandir le QR Code" class="inline-flex cursor-zoom-in rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700">
@@ -97,7 +97,7 @@
             @endif
         </section>
 
-        <section class="rounded-xl bg-white p-6 shadow">
+        <section class="rounded-xl bg-white p-6 mb-6 shadow">
             <h2 class="mb-4 text-xl font-semibold">Historique</h2>
             <ol class="space-y-3">
                 @forelse ($commande->historiques as $historique)

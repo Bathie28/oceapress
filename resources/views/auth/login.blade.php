@@ -16,15 +16,15 @@
 
         <form method="POST" action="{{ route('login.store') }}" class="space-y-5">
             @csrf
-            <div>
-                <label for="email" class="mb-1 block text-sm font-medium">E-mail</label>
-                <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus class="w-full">
+            <div class="mb-4">
+                <x-form-label for="email">E-mail</x-form-label>
+                <x-form-input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus />
             </div>
-            <div>
-                <label for="password" class="mb-1 block text-sm font-medium">Mot de passe</label>
-                <input id="password" name="password" type="password" required class="w-full">
+            <div class="mb-4">
+                <x-form-label for="password">Mot de passe</x-form-label>
+                <x-form-input id="password" name="password" type="password" required />
             </div>
-            <x-primary-button class="w-full">Se connecter</x-primary-button>
+            <x-primary-button class="mt-2 w-full">Se connecter</x-primary-button>
         </form>
     </x-card>
 </div>

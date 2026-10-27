@@ -7,10 +7,10 @@
 @endsection
 
 @section('content')
-<div class="mx-auto max-w-6xl space-y-6 py-5">
+<div class="px-4 py-8 mx-auto max-w-5xl space-y-6">
     <a href="{{ route('employe.commandes.show', $commande->idCommande) }}" class="text-blue-700 hover:underline">← {{ $commande->referenceCommande }}</a>
-    <section class="rounded-xl bg-white p-6 shadow">
-        <h1 class="mb-2 text-2xl font-bold">Restitution</h1>
+    <section class="rounded-xl bg-white border border-gray-200 p-6 mb-6 shadow">
+        <h1 class="mb-4 text-2xl font-bold">Restitution</h1>
         <p class="mb-6 text-slate-600">Indiquez la quantité présentée pour chaque type.</p>
         @if ($errors->any())
             <div class="mb-4 rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ $errors->first() }}</div>
@@ -20,17 +20,17 @@
             <fieldset class="space-y-3">
                 <legend class="mb-2 font-semibold">Articles présentés</legend>
                 @forelse ($commande->articles as $article)
-                    <div class="grid items-center gap-3 rounded-lg border border-slate-200 p-3 sm:grid-cols-3">
-                        <label for="quantite-{{ $article->idArticle }}">{{ $article->typeArticle }} @if ($article->couleur) · {{ $article->couleur }} @endif</label>
+                    <div class="mb-4 grid items-center gap-4 rounded-lg border border-slate-200 p-3 sm:grid-cols-2">
+                        <x-form-label for="quantite-{{ $article->idArticle }}">{{ $article->typeArticle }} @if ($article->couleur) · {{ $article->couleur }} @endif</x-form-label>
                         <span>Quantité enregistrée : {{ $article->quantite }}</span>
-                        <div><label for="quantite-{{ $article->idArticle }}">Présentée</label>
-                            <input id="quantite-{{ $article->idArticle }}" type="number" min="0" max="{{ $article->quantite }}" step="1"
+                        <div class="mb-4"><x-form-label for="quantite-{{ $article->idArticle }}">Présentée</x-form-label>
+                            <x-form-input id="quantite-{{ $article->idArticle }}" type="number" min="0" max="{{ $article->quantite }}" step="1"
                                 name="quantitesPresentees[{{ $article->idArticle }}]"
-                                value="{{ old('quantitesPresentees.'.$article->idArticle, $article->quantite) }}" required>
+                                value="{{ old('quantitesPresentees.'.$article->idArticle, $article->quantite) }}" required />
                         </div>
-                        <div class="sm:col-span-3">
-                            <label for="photo-{{ $article->idArticle }}" class="mb-1 block">Ajouter une photo (facultatif, JPEG ou PNG, 5 Mo maximum)</label>
-                            <input id="photo-{{ $article->idArticle }}" name="photos[{{ $article->idArticle }}]" type="file" accept="image/jpeg,image/png">
+                        <div class="mb-4 sm:col-span-2">
+                            <x-form-label for="photo-{{ $article->idArticle }}">Ajouter une photo (facultatif, JPEG ou PNG, 5 Mo maximum)</x-form-label>
+                            <input id="photo-{{ $article->idArticle }}" name="photos[{{ $article->idArticle }}]" type="file" accept="image/jpeg,image/png" class="block w-full rounded-xl border border-gray-300 px-3 py-2 focus:border-blue-600 focus:outline-none">
                             @error('photos.'.$article->idArticle)<p class="mt-1 text-sm text-red-700">{{ $message }}</p>@enderror
                         </div>
                     </div>
@@ -38,8 +38,8 @@
                     <p class="text-slate-500">Aucun article enregistré.</p>
                 @endforelse
             </fieldset>
-            <div><label for="observation" class="mb-1 block font-medium">Observation (facultative)</label><textarea id="observation" name="observation" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2">{{ old('observation') }}</textarea></div>
-            <button class="rounded-lg bg-emerald-700 px-5 py-3 font-semibold text-white hover:bg-emerald-800">Valider la restitution</button>
+            <div class="mb-4"><x-form-label for="observation">Observation (facultative)</x-form-label><textarea id="observation" name="observation" rows="3" class="block w-full rounded-xl border border-gray-300 px-3 py-2 focus:border-blue-600 focus:outline-none">{{ old('observation') }}</textarea></div>
+            <button class="mt-2 rounded-lg bg-emerald-700 px-5 py-3 font-semibold text-white hover:bg-emerald-800">Valider la restitution</button>
         </form>
     </section>
 </div>
