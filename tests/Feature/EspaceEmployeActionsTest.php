@@ -121,6 +121,39 @@ class EspaceEmployeActionsTest extends TestCase
         $this->assertSame('9000', $commande->fresh()->montantTotal);
     }
 
+    public function test_mot_de_passe_provisoire_est_affiche_une_fois_copiable_et_absent_des_logs(): void
+    {
+        $employe = $this->connecterEmploye();
+        $this->ajouterTarifPiece($employe, 'Chemise', '1500');
+
+        $response = $this->post('/employe/commandes/nouvelle', $this->formulaireCommande());
+        $commande = Commande::where('idPressing', $employe->pressingActif())->firstOrFail();
+        $url = '/employe/commandes/'.$commande->idCommande;
+        $motDePasseProvisoire = null;
+
+        $response->assertRedirect($url)
+            ->assertSessionHas('motDePasseProvisoire', function ($motDePasse) use (&$motDePasseProvisoire): bool {
+                $motDePasseProvisoire = $motDePasse;
+
+                return is_string($motDePasse) && $motDePasse !== '';
+            });
+
+        $this->get($url)->assertOk()
+            ->assertSee('Copier')
+            ->assertSee('id="mot-de-passe-provisoire"', false)
+            ->assertSee($motDePasseProvisoire);
+
+        $this->get($url)->assertOk()
+            ->assertDontSee($motDePasseProvisoire)
+            ->assertDontSee('id="mot-de-passe-provisoire"', false);
+
+        foreach (glob(storage_path('logs/*.log')) ?: [] as $fichierLog) {
+            $contenu = file_get_contents($fichierLog);
+            $this->assertIsString($contenu);
+            $this->assertStringNotContainsString($motDePasseProvisoire, $contenu, basename($fichierLog));
+        }
+    }
+
     public function test_creation_http_calcule_quantites_et_enregistre_prix_unitaire_pour_deux_chemises_et_un_pantalon(): void
     {
         $this->assertCreationHttpAvecQuantitesEtPrix(2, 1, '720');
