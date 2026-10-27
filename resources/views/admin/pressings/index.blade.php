@@ -6,7 +6,7 @@
 <div class="space-y-6 py-5">
     <header class="op-banner flex flex-wrap items-center justify-between gap-4">
         <h1 class="text-3xl font-bold">Pressings</h1>
-        <a href="{{ route('admin.pressings.create') }}" class="rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white">Ajouter un pressing</a>
+        <x-primary-button :href="route('admin.pressings.create')">Ajouter un pressing</x-primary-button>
     </header>
     <section class="op-card p-6">
         <ul class="divide-y divide-slate-200">

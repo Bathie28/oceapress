@@ -34,11 +34,24 @@ class AdminTarifsTest extends TestCase
         $this->get('/admin/pressings')->assertOk()
             ->assertSee($pressing->nom)
             ->assertSee('Pesée : Non')
-            ->assertSee('1 tarif');
+            ->assertSee('1 tarif')
+            ->assertSeeText('Ajouter un pressing')
+            ->assertSee('class="op-button-primary"', false);
 
-        $this->get('/admin/pressings/'.$pressing->idPressing.'/tarifs')->assertOk()
+        $reponseTarifs = $this->get('/admin/pressings/'.$pressing->idPressing.'/tarifs');
+        $reponseTarifs->assertOk()
             ->assertSee('Pantalon')
             ->assertSee('LAVAGE');
+
+        preg_match_all('/<button\b[^>]*>Modifier le prix<\/button>/', $reponseTarifs->getContent(), $boutonsModifierPrix);
+        $this->assertNotEmpty($boutonsModifierPrix[0]);
+        foreach ($boutonsModifierPrix[0] as $bouton) {
+            $this->assertStringContainsString('inline-flex', $bouton);
+            $this->assertStringContainsString('text-sm', $bouton);
+            $this->assertStringContainsString('px-4', $bouton);
+            $this->assertStringContainsString('py-2', $bouton);
+            $this->assertDoesNotMatchRegularExpression('/\b(?:w-full|block)\b/', $bouton);
+        }
 
         $this->post('/admin/pressings/'.$pressing->idPressing.'/tarifs', [
             'typeArticle' => 'Chemise', 'formule' => 'LAVAGE_REPASSAGE', 'unite' => 'PIECE', 'prix' => '2250',
