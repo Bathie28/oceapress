@@ -18,6 +18,9 @@ class WavePaiementTest extends TestCase
     {
         parent::setUp();
         config(['app.url' => 'https://oceapress.test']);
+        config(['services.wave.api_key' => 'test-wave-api-key']);
+        config(['services.wave.api_url' => 'https://api.wave.test']);
+        config(['services.wave.webhook_secret' => 'test-wave-webhook-secret']);
         Http::preventStrayRequests();
     }
 

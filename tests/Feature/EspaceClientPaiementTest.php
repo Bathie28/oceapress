@@ -19,6 +19,8 @@ class EspaceClientPaiementTest extends TestCase
     {
         parent::setUp();
         config(['app.url' => 'https://oceapress.test']);
+        config(['services.wave.api_key' => 'test-wave-api-key']);
+        config(['services.wave.api_url' => 'https://api.wave.test']);
     }
 
     private function connecterClient(): Client
