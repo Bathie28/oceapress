@@ -2,6 +2,8 @@
 
 return [
 
+    'paiement_en_ligne' => filter_var(env('PAIEMENT_EN_LIGNE_ACTIVE', false), FILTER_VALIDATE_BOOL),
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

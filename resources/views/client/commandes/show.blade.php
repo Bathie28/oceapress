@@ -31,7 +31,9 @@
                     <div><dt class="text-sm text-slate-500">Montant</dt><dd>{{ number_format((float) $commande->facture->montantTotal, 0, '.', ' ') }}</dd></div>
                     <div><dt class="text-sm text-slate-500">Statut</dt><dd><x-status-badge :status="$commande->facture->statut" :label="str_replace('_', ' ', $commande->facture->statut)" /></dd></div>
                 </dl>
-                @if ($commande->facture->statut === 'EN_ATTENTE')
+                @if (! config('services.paiement_en_ligne'))
+                    <p class="mt-5 rounded-lg bg-slate-50 p-4 text-slate-700">Paiement au pressing lors de la récupération de vos vêtements.</p>
+                @elseif ($commande->facture->statut === 'EN_ATTENTE')
                     <form method="POST" action="{{ route('client.factures.paiement', $commande->facture->idFacture) }}" class="mt-5 flex flex-wrap items-end gap-3">
                         @csrf
                         <div>

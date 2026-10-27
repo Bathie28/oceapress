@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\Commande;
 use App\Models\Facture;
 use App\Models\Paiement;
+use App\Services\CreerSessionWave;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\Support\CreeDonneesTest;
@@ -19,6 +20,7 @@ class EspaceClientPaiementTest extends TestCase
     {
         parent::setUp();
         config(['app.url' => 'https://oceapress.test']);
+        config(['services.paiement_en_ligne' => true]);
         config(['services.wave.api_key' => 'test-wave-api-key']);
         config(['services.wave.api_url' => 'https://api.wave.test']);
     }
@@ -64,6 +66,40 @@ class EspaceClientPaiementTest extends TestCase
             'montant' => '2751',
         ]);
         $this->assertSame('EN_ATTENTE', $facture->fresh()->statut);
+    }
+
+    public function test_paiement_en_ligne_desactive_masque_le_formulaire_et_indique_le_paiement_au_pressing(): void
+    {
+        config(['services.paiement_en_ligne' => false]);
+        $client = $this->connecterClient();
+        $facture = $this->creerFacture($client);
+
+        $this->get('/client/commandes/'.$facture->idCommande)->assertOk()
+            ->assertSee('Paiement au pressing lors de la récupération de vos vêtements.')
+            ->assertSee('2 751')
+            ->assertSee('EN ATTENTE')
+            ->assertDontSee('Lancer le paiement')
+            ->assertDontSee('name="methode"', false)
+            ->assertDontSee('Méthode de paiement');
+    }
+
+    public function test_paiement_en_ligne_desactive_refuse_la_route_sans_creer_de_paiement_ni_session_wave(): void
+    {
+        config(['services.paiement_en_ligne' => false]);
+        $client = $this->connecterClient();
+        $facture = $this->creerFacture($client);
+        $creerSessionWave = \Mockery::mock(CreerSessionWave::class);
+        $creerSessionWave->shouldNotReceive('executer');
+        $this->app->instance(CreerSessionWave::class, $creerSessionWave);
+
+        $this->from('/client/commandes/'.$facture->idCommande)
+            ->post('/client/factures/'.$facture->idFacture.'/paiement', ['methode' => 'WAVE'])
+            ->assertRedirect('/client/commandes/'.$facture->idCommande)
+            ->assertSessionHasErrors([
+                'paiement' => 'Le paiement en ligne n’est pas disponible pour le moment.',
+            ]);
+
+        $this->assertSame(0, Paiement::where('idFacture', $facture->idFacture)->count());
     }
 
     public function test_le_statut_envoye_dans_la_requete_est_ignore(): void

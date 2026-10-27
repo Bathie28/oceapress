@@ -25,6 +25,11 @@ class FactureController extends Controller
             return back()->withErrors(['paiement' => 'Cette facture ne peut plus être payée.']);
         }
 
+        if (! config('services.paiement_en_ligne')) {
+            return redirect()->route('client.commandes.show', $facture->idCommande)
+                ->withErrors(['paiement' => 'Le paiement en ligne n’est pas disponible pour le moment.']);
+        }
+
         $validated = $request->validate([
             'methode' => ['required', 'string', 'in:WAVE,ORANGE_MONEY'],
         ]);
