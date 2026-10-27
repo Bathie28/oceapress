@@ -12,6 +12,8 @@ class Employe extends Model
     protected $keyType = 'int';
     public $timestamps = false;
 
+    protected $fillable = ['idEmploye', 'fonction', 'dateEmbauche', 'idPressing'];
+
     public function utilisateur()
     {
         return $this->belongsTo(Utilisateur::class, 'idEmploye', 'idUtilisateur');

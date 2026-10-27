@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Pressing;
 use App\Models\Tarif;
+use App\Services\CreerEmploye;
 use App\Services\CreerPressing;
 use App\Services\EnregistrerTarif;
 use App\Services\ModifierTarif;
@@ -43,7 +44,31 @@ class TarifController extends Controller
 
     public function edit(Pressing $pressing): View
     {
+        $pressing->load(['employes.utilisateur']);
+
         return view('admin.pressings.formulaire', ['pressing' => $pressing]);
+    }
+
+    public function storeEmploye(Request $request, Pressing $pressing, CreerEmploye $creerEmploye): RedirectResponse
+    {
+        $validated = $request->validate([
+            'nom' => ['required', 'string', 'max:100'],
+            'prenom' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'max:190', 'unique:utilisateur,email'],
+            'telephone' => ['nullable', 'string', 'max:30'],
+            'fonction' => ['required', 'string', 'max:100'],
+        ]);
+
+        try {
+            $compte = $creerEmploye->executer($pressing, $validated);
+        } catch (InvalidArgumentException $exception) {
+            return back()->withErrors(['email' => $exception->getMessage()])->withInput();
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['email' => $exception->getMessage()])->withInput();
+        }
+
+        return redirect()->route('admin.pressings.edit', $pressing->idPressing)
+            ->with('motDePasseProvisoire', $compte['motDePasseProvisoire']);
     }
 
     public function updatePressing(Request $request, Pressing $pressing): RedirectResponse

@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EspaceController;
 use App\Http\Controllers\Employe\CommandeController;
 use App\Http\Controllers\Employe\ScanController;
+use App\Http\Controllers\Employe\MotDePasseController as EmployeMotDePasseController;
 use App\Http\Controllers\Client\CommandeController as ClientCommandeController;
 use App\Http\Controllers\Client\FactureController as ClientFactureController;
 use App\Http\Controllers\Client\MotDePasseController;
@@ -39,7 +40,12 @@ Route::prefix('client')->name('client.')->middleware(['role:client', 'mot-de-pas
     Route::get('/factures/{facture}/wave/echec', [ClientFactureController::class, 'retourWave'])->name('factures.wave.echec');
 });
 
-Route::prefix('employe')->name('employe.')->middleware('role:employe')->group(function () {
+Route::prefix('employe')->name('employe.')->middleware(['role:employe', 'mot-de-passe'])->group(function () {
+    Route::get('/mot-de-passe', [EmployeMotDePasseController::class, 'edit'])->name('mot-de-passe.edit');
+    Route::post('/mot-de-passe', [EmployeMotDePasseController::class, 'update'])->name('mot-de-passe.update');
+});
+
+Route::prefix('employe')->name('employe.')->middleware(['role:employe', 'mot-de-passe'])->group(function () {
     Route::get('/', [EspaceController::class, 'employeAccueil'])->name('accueil');
     Route::get('/tableau-de-bord', [EspaceController::class, 'tableauDeBordEmploye'])->name('tableau-de-bord');
     Route::get('/scan', [ScanController::class, 'create'])->name('scan');
@@ -61,6 +67,7 @@ Route::prefix('admin')->name('admin.')->middleware('role:administrateur')->group
     Route::get('/pressings/create', [AdminTarifController::class, 'create'])->name('pressings.create');
     Route::post('/pressings', [AdminTarifController::class, 'storePressing'])->name('pressings.store');
     Route::get('/pressings/{pressing}/edit', [AdminTarifController::class, 'edit'])->name('pressings.edit');
+    Route::post('/pressings/{pressing}/employes', [AdminTarifController::class, 'storeEmploye'])->name('pressings.employes.store');
     Route::put('/pressings/{pressing}', [AdminTarifController::class, 'updatePressing'])->name('pressings.update');
     Route::get('/pressings/{pressing}/tarifs', [AdminTarifController::class, 'show'])->name('pressings.tarifs');
     Route::post('/pressings/{pressing}/tarifs', [AdminTarifController::class, 'store'])->name('pressings.tarifs.store');
