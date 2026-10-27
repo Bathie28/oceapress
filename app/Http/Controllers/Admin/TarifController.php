@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Pressing;
 use App\Models\Tarif;
+use App\Services\CreerPressing;
 use App\Services\EnregistrerTarif;
 use App\Services\ModifierTarif;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use InvalidArgumentException;
 use RuntimeException;
 
 class TarifController extends Controller
@@ -19,6 +21,38 @@ class TarifController extends Controller
         return view('admin.pressings.index', [
             'pressings' => Pressing::with('tarifs')->orderBy('nom')->get(),
         ]);
+    }
+
+    public function create(): View
+    {
+        return view('admin.pressings.formulaire', ['pressing' => null]);
+    }
+
+    public function storePressing(Request $request, CreerPressing $creerPressing): RedirectResponse
+    {
+        $validated = $this->validerDonneesPressing($request);
+
+        try {
+            $creerPressing->executer($validated);
+        } catch (InvalidArgumentException $exception) {
+            return back()->withErrors(['nom' => $exception->getMessage()])->withInput();
+        }
+
+        return redirect()->route('admin.pressings.index');
+    }
+
+    public function edit(Pressing $pressing): View
+    {
+        return view('admin.pressings.formulaire', ['pressing' => $pressing]);
+    }
+
+    public function updatePressing(Request $request, Pressing $pressing): RedirectResponse
+    {
+        $validated = $this->validerDonneesPressing($request);
+        $validated['pesee'] = (bool) ($validated['pesee'] ?? false);
+        $pressing->update($validated);
+
+        return redirect()->route('admin.pressings.index');
     }
 
     public function show(Pressing $pressing): View
@@ -77,5 +111,16 @@ class TarifController extends Controller
         $pressing->save();
 
         return redirect()->route('admin.pressings.tarifs', $pressing->idPressing);
+    }
+
+    private function validerDonneesPressing(Request $request): array
+    {
+        return $request->validate([
+            'nom' => ['required', 'string', 'max:150'],
+            'adresse' => ['required', 'string', 'max:255'],
+            'telephone' => ['nullable', 'string', 'max:30'],
+            'email' => ['nullable', 'email', 'max:190'],
+            'pesee' => ['nullable', 'boolean'],
+        ]);
     }
 }
