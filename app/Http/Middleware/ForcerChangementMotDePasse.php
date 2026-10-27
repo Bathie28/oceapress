@@ -12,8 +12,13 @@ class ForcerChangementMotDePasse
     {
         if ($request->user()?->doitChangerMotDePasse && ! in_array($request->route()?->getName(), [
             'client.mot-de-passe.edit', 'client.mot-de-passe.update',
+            'employe.mot-de-passe.edit', 'employe.mot-de-passe.update',
         ], true)) {
-            return redirect()->route('client.mot-de-passe.edit');
+            $route = $request->user()->employe !== null
+                ? 'employe.mot-de-passe.edit'
+                : 'client.mot-de-passe.edit';
+
+            return redirect()->route($route);
         }
 
         return $next($request);
