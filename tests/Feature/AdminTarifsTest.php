@@ -46,11 +46,8 @@ class AdminTarifsTest extends TestCase
         preg_match_all('/<button\b[^>]*>Modifier le prix<\/button>/', $reponseTarifs->getContent(), $boutonsModifierPrix);
         $this->assertNotEmpty($boutonsModifierPrix[0]);
         foreach ($boutonsModifierPrix[0] as $bouton) {
-            $this->assertStringContainsString('inline-flex', $bouton);
-            $this->assertStringContainsString('text-sm', $bouton);
-            $this->assertStringContainsString('px-4', $bouton);
-            $this->assertStringContainsString('py-2', $bouton);
-            $this->assertDoesNotMatchRegularExpression('/\b(?:w-full|block)\b/', $bouton);
+            preg_match('/<button\b[^>]*class="([^"]*)"[^>]*>Modifier le prix<\/button>/', $bouton, $classesBouton);
+            $this->assertSame('mt-2', $classesBouton[1] ?? null);
         }
 
         $this->post('/admin/pressings/'.$pressing->idPressing.'/tarifs', [
