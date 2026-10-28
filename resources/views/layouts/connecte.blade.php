@@ -64,7 +64,7 @@
 
             @foreach ($liens as $lien)
                 @php($actif = request()->routeIs($lien['route']))
-                <a href="{{ route($lien['route']) }}" @if ($actif) aria-current="page" @endif class="block rounded-xl px-4 py-3 text-sm font-semibold {{ $actif ? 'bg-[#111827] text-white' : 'text-[#374151] hover:bg-white/70 hover:text-[#111827]' }}">{{ $lien['label'] }}</a>
+                <a href="{{ route($lien['route']) }}" @if ($actif) aria-current="page" @endif class="block rounded-xl px-4 py-3 text-sm font-semibold {{ $actif ? 'bg-[#111827] !text-white' : 'text-[#374151] hover:bg-white/70 hover:text-[#111827]' }}">{{ $lien['label'] }}</a>
             @endforeach
         </nav>
     </aside>

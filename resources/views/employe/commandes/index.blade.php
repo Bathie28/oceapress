@@ -10,7 +10,7 @@
     <div class="px-4 py-8 mx-auto max-w-5xl space-y-6">
         <header class="mb-8 flex items-center justify-between">
             <h1 class="text-3xl font-bold">Commandes</h1>
-            <div class="flex gap-4"><a href="{{ route('employe.commandes.create') }}" class="rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white">Nouvelle commande</a><a href="{{ route('employe.accueil') }}" class="self-center text-blue-700 hover:underline">Retour à l’espace employé</a></div>
+            <div class="flex gap-4"><a href="{{ route('employe.commandes.create') }}" class="rounded-lg bg-blue-700 px-4 py-2 font-semibold !text-white">Nouvelle commande</a><a href="{{ route('employe.accueil') }}" class="self-center text-blue-700 hover:underline">Retour à l’espace employé</a></div>
         </header>
 
         <form method="GET" action="{{ route('employe.commandes.index') }}" class="mb-6 grid gap-4 rounded-xl bg-white border border-gray-200 p-6 shadow sm:grid-cols-2">
@@ -23,7 +23,7 @@
                     @endforeach
                 </select>
             </div>
-            <button class="mt-2 rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white">Filtrer</button>
+            <button class="mt-2 w-fit rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white">Filtrer</button>
         </form>
 
         <div class="mb-6 overflow-hidden rounded-xl bg-white border border-gray-200 p-6 shadow">

@@ -88,6 +88,15 @@ class EspaceEmployeScanTest extends TestCase
             ->assertSee('Caméra indisponible : saisissez le code');
     }
 
+    public function test_bouton_rechercher_la_commande_a_un_espace_superieur(): void
+    {
+        $employe = $this->creerEmploye();
+        $this->actingAs($employe->utilisateur);
+
+        $this->get('/employe/scan')->assertOk()
+            ->assertSee('mt-3 block rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white', false);
+    }
+
     public function test_accueil_employe_propose_le_lien_vers_le_scanner(): void
     {
         $employe = $this->creerEmploye();

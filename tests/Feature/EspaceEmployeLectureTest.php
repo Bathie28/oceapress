@@ -74,6 +74,15 @@ class EspaceEmployeLectureTest extends TestCase
             ->assertSee('1 235');
     }
 
+    public function test_liens_et_bouton_de_la_liste_des_commandes_respectent_le_contraste_et_la_largeur(): void
+    {
+        [$employe] = $this->connexionEmploye();
+
+        $this->get('/employe/commandes')->assertOk()
+            ->assertSee('rounded-lg bg-blue-700 px-4 py-2 font-semibold !text-white', false)
+            ->assertSee('mt-2 w-fit rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white', false);
+    }
+
     public function test_accueil_employe_contient_les_liens_vers_les_commandes(): void
     {
         $this->connexionEmploye();

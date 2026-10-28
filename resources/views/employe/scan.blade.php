@@ -23,7 +23,7 @@
             <label for="token-manuel" class="mb-2 block font-medium">Saisie manuelle du code</label>
             <input id="token-manuel" name="token-manuel" type="text" maxlength="255" value="{{ old('token') }}" autocomplete="off" class="w-full rounded border border-slate-300 p-3">
         </div>
-        <button type="submit" class="rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white">Rechercher la commande</button>
+        <button type="submit" class="mt-3 block rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white">Rechercher la commande</button>
     </form>
 </div>
 
