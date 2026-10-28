@@ -134,6 +134,57 @@ class RelancerCommandesNonRecupereesTest extends TestCase
             ->assertDontSee($commandeAttente->referenceCommande);
     }
 
+    public function test_tableau_de_bord_affiche_le_graphique_sept_jours_et_nos_listes_actionnelles(): void
+    {
+        $employe = $this->creerEmploye();
+
+        $aujourdhui = now()->startOfDay();
+        $commandeAujourdhui = $this->creerCommande(null, $employe->pressing, Commande::STATUT_PRETE);
+        $commandeAujourdhui->dateCreation = $aujourdhui->copy()->setTime(10, 0);
+        $commandeAujourdhui->datePrevue = $aujourdhui->toDateString();
+        $commandeAujourdhui->save();
+
+        $commandeSixJours = $this->creerCommande(null, $employe->pressing, Commande::STATUT_EN_TRAITEMENT);
+        $commandeSixJours->dateCreation = $aujourdhui->copy()->subDays(6)->setTime(10, 0);
+        $commandeSixJours->save();
+
+        Notification::create([
+            'titre' => 'Rappel de commande',
+            'message' => 'Rappel J2',
+            'type' => 'RAPPEL_COMMANDE',
+            'canal' => 'IN_APP',
+            'dateEnvoi' => now(),
+            'lu' => false,
+            'idClient' => $commandeAujourdhui->idClient,
+            'idCommande' => $commandeAujourdhui->idCommande,
+            'niveauRelance' => 'J2',
+        ]);
+
+        $reponse = $this->actingAs($employe->utilisateur)
+            ->get('/employe/tableau-de-bord')
+            ->assertOk()
+            ->assertSee('data-statut="PRETE" data-count="1"', false)
+            ->assertSee('data-statut="EN_TRAITEMENT" data-count="1"', false)
+            ->assertSee('data-chart-bar="1"', false)
+            ->assertSee('data-chart-bar="0"', false)
+            ->assertSee('data-commandes-jour="', false)
+            ->assertSee(route('employe.commandes.show', $commandeAujourdhui->idCommande), false)
+            ->assertSee('J2');
+
+        $this->assertSame(7, substr_count($reponse->getContent(), 'data-chart-bar="'));
+    }
+
+    public function test_tableau_de_bord_affiche_des_messages_neutres_pour_les_listes_vides(): void
+    {
+        $employe = $this->creerEmploye();
+
+        $this->actingAs($employe->utilisateur)
+            ->get('/employe/tableau-de-bord')
+            ->assertOk()
+            ->assertSee('Aucune commande prête à relancer.')
+            ->assertSee('Aucune commande à restituer aujourd’hui.');
+    }
+
     public function test_accueil_employe_lie_au_tableau_de_bord(): void
     {
         $employe = $this->creerEmploye();

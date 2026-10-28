@@ -7,6 +7,7 @@ use Illuminate\View\View;
 use App\Models\Commande;
 use App\Models\Notification;
 use App\Services\RelancerCommandesNonRecuperees;
+use Illuminate\Support\Carbon;
 
 class EspaceController extends Controller
 {
@@ -69,7 +70,38 @@ class EspaceController extends Controller
                 ->last();
         });
 
-        return view('employe.tableau-de-bord', compact('compteurs', 'commandesNonRecuperees'));
+        $debutSeptJours = Carbon::today()->subDays(6)->startOfDay();
+        $datesEnregistrements = Commande::query()
+            ->where('idPressing', $idPressing)
+            ->whereBetween('dateCreation', [$debutSeptJours, Carbon::today()->endOfDay()])
+            ->pluck('dateCreation')
+            ->map(fn ($dateCreation) => Carbon::parse($dateCreation)->toDateString());
+
+        $commandesParJour = collect(range(6, 0))->map(function (int $jours) use ($datesEnregistrements): array {
+            $jour = Carbon::today()->subDays($jours);
+            $date = $jour->toDateString();
+
+            return [
+                'date' => $date,
+                'libelle' => $jour->locale('fr')->isoFormat('dd D'),
+                'total' => $datesEnregistrements->filter(fn (string $dateEnregistree) => $dateEnregistree === $date)->count(),
+            ];
+        });
+
+        $commandesRestitutionAujourdhui = Commande::query()
+            ->where('idPressing', $idPressing)
+            ->where('statut', Commande::STATUT_PRETE)
+            ->whereDate('datePrevue', Carbon::today())
+            ->with('client.utilisateur')
+            ->orderBy('referenceCommande')
+            ->get();
+
+        return view('employe.tableau-de-bord', compact(
+            'compteurs',
+            'commandesNonRecuperees',
+            'commandesParJour',
+            'commandesRestitutionAujourdhui',
+        ));
     }
 
     public function adminAccueil(Request $request): View
