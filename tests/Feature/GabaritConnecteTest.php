@@ -70,6 +70,21 @@ BLADE);
         $this->assertStringContainsString('Gérer les pressings et tarifs', $html);
     }
 
+    public function test_tableau_de_bord_employe_utilise_la_barre_laterale_sans_navigation_du_haut(): void
+    {
+        $employe = $this->creerEmploye();
+
+        $this->actingAs($employe->utilisateur)
+            ->get(route('employe.tableau-de-bord'))
+            ->assertOk()
+            ->assertSee('data-layout="connecte"', false)
+            ->assertSee('aria-label="Navigation latérale"', false)
+            ->assertSee('aria-label="Ouvrir le menu"', false)
+            ->assertSee('Menu')
+            ->assertSee('Retour à l’accueil employé')
+            ->assertDontSee('data-layout="oceapress"', false);
+    }
+
     public function test_menu_mobile_et_lien_actif_sont_accessibles(): void
     {
         $employe = $this->creerEmploye();
@@ -87,5 +102,7 @@ BLADE);
         $this->assertStringContainsString('aria-label="Ouvrir le menu"', $html);
         $this->assertStringContainsString('aria-current="page"', $html);
         $this->assertStringContainsString('aria-expanded="false"', $html);
+        $this->assertStringContainsString('Tableau de bord', $html);
+        $this->assertStringContainsString("bg-[#111827] !text-white", $html);
     }
 }
