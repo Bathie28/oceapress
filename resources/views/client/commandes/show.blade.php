@@ -70,13 +70,15 @@
         <section class="rounded-xl bg-white p-6 mb-6 shadow">
             <h2 class="mb-4 text-xl font-semibold">Votre QR Code</h2>
             @if ($qrCodeSvg !== null)
-                <button type="button" id="agrandir-qr" aria-label="Agrandir le QR Code" class="inline-flex cursor-zoom-in rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700">
-                    {!! $qrCodeSvg !!}
-                </button>
-                <p class="mt-3 text-sm text-slate-600">Commande {{ $commande->referenceCommande }}</p>
+                <div class="flex justify-center">
+                    <button type="button" id="agrandir-qr" aria-label="Agrandir le QR Code" class="mx-auto inline-flex cursor-zoom-in !rounded-lg !bg-white !p-2 focus:outline-none focus:ring-2 focus:ring-blue-700">
+                        {!! $qrCodeSvg !!}
+                    </button>
+                </div>
+                <p class="mt-3 text-center text-sm text-slate-600">Commande {{ $commande->referenceCommande }}</p>
                 <dialog id="qr-plein-ecran" aria-label="QR Code agrandi" class="h-screen w-screen max-h-none max-w-none bg-slate-950/95 p-6 text-white backdrop:bg-slate-950/90">
                     <div class="flex h-full flex-col items-center justify-center gap-6">
-                        <form method="dialog" class="absolute right-5 top-5"><button class="rounded-lg bg-white px-4 py-2 font-semibold text-slate-900">Fermer</button></form>
+                        <form method="dialog" class="absolute right-5 top-5"><button class="rounded-lg !bg-white px-4 py-2 font-semibold !text-slate-900 hover:!bg-white">Fermer</button></form>
                         <div id="qr-plein-ecran-image" class="rounded-xl bg-white p-4"></div>
                         <p>Commande {{ $commande->referenceCommande }}</p>
                     </div>

@@ -22,7 +22,7 @@
         @forelse ($groupesPiece as $formule => $tarifs)
             <h3>{{ $formule }}</h3><table class="w-full divide-y"><thead><tr><th>Type d’article</th><th>Prix (F CFA)</th><th>Action</th></tr></thead><tbody>
             @foreach ($tarifs as $tarif)<tr><td>{{ $tarif->typeArticle }}</td><td>{{ number_format((float) $tarif->prix, 0, '.', ' ') }}</td><td>
-                <form method="POST" action="{{ route('admin.tarifs.update', $tarif->idTarif) }}" class="grid gap-4 sm:grid-cols-2">@csrf<input type="hidden" name="idPressing" value="{{ $pressing->idPressing }}"><div class="mb-4"><x-form-label for="prix-{{ $tarif->idTarif }}">Nouveau prix</x-form-label><x-form-input id="prix-{{ $tarif->idTarif }}" name="prix" type="number" min="0" step="1" value="{{ $tarif->prix }}" required /></div><button type="submit" class="mt-2">Modifier le prix</button></form>
+                <form method="POST" action="{{ route('admin.tarifs.update', $tarif->idTarif) }}" class="grid gap-4 sm:grid-cols-2">@csrf<input type="hidden" name="idPressing" value="{{ $pressing->idPressing }}"><div class="mb-4"><x-form-label for="prix-{{ $tarif->idTarif }}">Nouveau prix</x-form-label><x-form-input id="prix-{{ $tarif->idTarif }}" name="prix" type="number" min="0" step="1" value="{{ $tarif->prix }}" required /></div><button type="submit" class="mt-2 w-fit self-center !px-4 !py-2 !text-sm">Modifier le prix</button></form>
             </td></tr>@endforeach
             </tbody></table>
         @empty<p>Aucun tarif pièce enregistré.</p>@endforelse
@@ -33,7 +33,7 @@
         @forelse ($groupesKg as $formule => $tarifs)
             <h3>{{ $formule }}</h3><table class="w-full divide-y"><thead><tr><th>Tarif</th><th>Prix (F CFA / kg)</th><th>Action</th></tr></thead><tbody>
             @foreach ($tarifs as $tarif)<tr><td>Au kilo</td><td>{{ number_format((float) $tarif->prix, 0, '.', ' ') }}</td><td>
-                <form method="POST" action="{{ route('admin.tarifs.update', $tarif->idTarif) }}" class="grid gap-4 sm:grid-cols-2">@csrf<input type="hidden" name="idPressing" value="{{ $pressing->idPressing }}"><div class="mb-4"><x-form-label for="prix-{{ $tarif->idTarif }}">Nouveau prix</x-form-label><x-form-input id="prix-{{ $tarif->idTarif }}" name="prix" type="number" min="0" step="1" value="{{ $tarif->prix }}" required /></div><button type="submit" class="mt-2">Modifier le prix</button></form>
+                <form method="POST" action="{{ route('admin.tarifs.update', $tarif->idTarif) }}" class="grid gap-4 sm:grid-cols-2">@csrf<input type="hidden" name="idPressing" value="{{ $pressing->idPressing }}"><div class="mb-4"><x-form-label for="prix-{{ $tarif->idTarif }}">Nouveau prix</x-form-label><x-form-input id="prix-{{ $tarif->idTarif }}" name="prix" type="number" min="0" step="1" value="{{ $tarif->prix }}" required /></div><button type="submit" class="mt-2 w-fit self-center !px-4 !py-2 !text-sm">Modifier le prix</button></form>
             </td></tr>@endforeach
             </tbody></table>
         @empty<p>Aucun tarif au kilo enregistré.</p>@endforelse
@@ -50,7 +50,7 @@
                 @if($pressing->pesee)@foreach (\App\Models\Tarif::FORMULES_PAR_MODE['POIDS'] as $formule)<option value="{{ $formule }}" data-mode="POIDS">{{ $formule }}</option>@endforeach @endif
             </select></div>
             <div class="mb-4"><x-form-label for="prix">Prix (F CFA)</x-form-label><x-form-input id="prix" name="prix" type="number" min="0" step="1" value="{{ old('prix') }}" required /></div>
-            <button type="submit" class="mt-2">Ajouter le tarif</button>
+            <button type="submit" class="mt-2 w-fit !px-4 !py-2 !text-sm">Ajouter le tarif</button>
         </form>
     </section>
 </div>

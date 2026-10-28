@@ -11,7 +11,45 @@
         <x-alert type="error"><ul>@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></x-alert>
     @endif
     @if ($pressing && session('motDePasseProvisoire'))
-        <x-alert type="warning">Mot de passe provisoire de l’employé : <strong id="mot-de-passe-provisoire">{{ session('motDePasseProvisoire') }}</strong></x-alert>
+        <x-alert type="warning">
+            Mot de passe provisoire de l’employé :
+            <strong id="mot-de-passe-provisoire" class="cursor-pointer select-all" role="button" tabindex="0" aria-label="Copier le mot de passe provisoire">{{ session('motDePasseProvisoire') }}</strong>
+            <button id="copier-mot-de-passe" type="button" class="ml-2 rounded border border-amber-800 px-3 py-1 font-semibold hover:bg-amber-100" aria-live="polite">Copier</button>
+        </x-alert>
+        <script>
+            (() => {
+                const password = document.getElementById('mot-de-passe-provisoire');
+                const button = document.getElementById('copier-mot-de-passe');
+                if (!password || !button) return;
+                const copyPassword = async () => {
+                    try {
+                        if (navigator.clipboard?.writeText) {
+                            await navigator.clipboard.writeText(password.textContent.trim());
+                        } else {
+                            const selection = window.getSelection();
+                            const range = document.createRange();
+                            range.selectNodeContents(password);
+                            selection.removeAllRanges();
+                            selection.addRange(range);
+                            document.execCommand('copy');
+                            selection.removeAllRanges();
+                        }
+                        button.textContent = 'Copié !';
+                        window.setTimeout(() => { button.textContent = 'Copier'; }, 2000);
+                    } catch (_) {
+                        button.textContent = 'Copier';
+                    }
+                };
+                button.addEventListener('click', copyPassword);
+                password.addEventListener('click', copyPassword);
+                password.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        copyPassword();
+                    }
+                });
+            })();
+        </script>
     @endif
 
     <section class="op-card space-y-4 p-6">

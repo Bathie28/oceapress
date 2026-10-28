@@ -49,6 +49,14 @@ class AdminEmployesTest extends TestCase
         $premierePage = $this->get(route('admin.pressings.edit', $pressing->idPressing));
         $premierePage->assertOk()->assertSee('Employés')->assertSee('Diallo')->assertSee('Mamadou')
             ->assertSee('mamadou@example.test')->assertSee('Caissier')->assertSee($motDePasse);
+
+        $htmlEmployes = $premierePage->getContent();
+        $this->assertStringContainsString('id="mot-de-passe-provisoire"', $htmlEmployes);
+        $this->assertStringContainsString('id="copier-mot-de-passe"', $htmlEmployes);
+        $this->assertStringContainsString('navigator.clipboard.writeText', $htmlEmployes);
+        $this->assertStringContainsString("document.execCommand('copy')", $htmlEmployes);
+        $this->assertStringContainsString('Copié !', $htmlEmployes);
+        $this->assertStringContainsString('2000', $htmlEmployes);
         $this->get(route('admin.pressings.edit', $pressing->idPressing))
             ->assertDontSee($motDePasse);
     }

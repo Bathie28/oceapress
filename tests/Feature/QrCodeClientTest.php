@@ -32,6 +32,12 @@ class QrCodeClientTest extends TestCase
             ->assertSee('<dialog', false)
             ->assertSee($svgActif, false)
             ->assertDontSee($svgInactif, false);
+
+        $html = $response->getContent();
+        $this->assertStringContainsString('class="flex justify-center', $html);
+        $this->assertStringContainsString('!bg-white', $html);
+        $this->assertStringContainsString('!text-slate-900', $html);
+        $this->assertStringNotContainsString('rounded-full', $html);
     }
 
     public function test_un_client_ne_peut_pas_afficher_le_qr_d_une_commande_etrangere(): void
