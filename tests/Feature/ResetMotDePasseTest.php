@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Notifications\ReinitialisationMotDePasse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -35,8 +35,52 @@ class ResetMotDePasseTest extends TestCase
         $this->post(route('password.email'), ['email' => 'connu@example.test'])
             ->assertSessionHas('status', self::REPONSE_GENERIQUE);
 
-        Notification::assertSentTo($utilisateur, ResetPassword::class);
+        Notification::assertSentTo($utilisateur, ReinitialisationMotDePasse::class);
         $this->assertDatabaseHas('password_reset_tokens', ['email' => 'connu@example.test']);
+    }
+
+    public function test_email_reinitialisation_a_un_sujet_francais(): void
+    {
+        Notification::fake();
+        $utilisateur = $this->creerUtilisateur(['email' => 'sujet@example.test']);
+
+        $this->post(route('password.email'), ['email' => 'sujet@example.test']);
+
+        Notification::assertSentTo($utilisateur, ReinitialisationMotDePasse::class, function ($notification) use ($utilisateur) {
+            $mail = $notification->toMail($utilisateur);
+            return $mail->subject === 'Réinitialisation de votre mot de passe OceaPress';
+        });
+    }
+
+    public function test_corps_email_reinitialisation_est_francais_et_affiche_la_duree(): void
+    {
+        Notification::fake();
+        $utilisateur = $this->creerUtilisateur(['email' => 'corps@example.test']);
+
+        $this->post(route('password.email'), ['email' => 'corps@example.test']);
+
+        Notification::assertSentTo($utilisateur, ReinitialisationMotDePasse::class, function ($notification) use ($utilisateur) {
+            $mail = $notification->toMail($utilisateur);
+            $corps = $mail->render();
+            return str_contains($corps, 'Réinitialiser mon mot de passe')
+                && str_contains($corps, '60 minutes')
+                && str_contains($corps, "Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail.");
+        });
+    }
+
+    public function test_email_reinitialisation_ne_contient_aucun_texte_anglais(): void
+    {
+        Notification::fake();
+        $utilisateur = $this->creerUtilisateur(['email' => 'anglais@example.test']);
+
+        $this->post(route('password.email'), ['email' => 'anglais@example.test']);
+
+        Notification::assertSentTo($utilisateur, ReinitialisationMotDePasse::class, function ($notification) use ($utilisateur) {
+            $mail = $notification->toMail($utilisateur);
+            $corps = $mail->render();
+            return ! str_contains($corps, 'Reset your password')
+                && ! str_contains($corps, 'Reset Password');
+        });
     }
 
     public function test_lien_valide_change_le_mot_de_passe_et_retire_l_ancien(): void

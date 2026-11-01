@@ -36,6 +36,11 @@ class Utilisateur extends Authenticatable
         return 'motDePasse';
     }
 
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\ReinitialisationMotDePasse($token));
+    }
+
     protected function casts(): array
     {
         return ['motDePasse' => 'hashed', 'doitChangerMotDePasse' => 'boolean'];
