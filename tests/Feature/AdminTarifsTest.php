@@ -36,7 +36,7 @@ class AdminTarifsTest extends TestCase
             ->assertSee('Pesée : Non')
             ->assertSee('1 tarif')
             ->assertSeeText('Ajouter un pressing')
-            ->assertSee('class="op-button-primary"', false);
+            ->assertSee('class="op-button-primary bg-[#2563EB] text-white hover:bg-[#1E40AF]"', false);
 
         $reponseTarifs = $this->get('/admin/pressings/'.$pressing->idPressing.'/tarifs');
         $reponseTarifs->assertOk()

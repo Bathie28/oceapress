@@ -103,6 +103,6 @@ BLADE);
         $this->assertStringContainsString('aria-current="page"', $html);
         $this->assertStringContainsString('aria-expanded="false"', $html);
         $this->assertStringContainsString('Tableau de bord', $html);
-        $this->assertStringContainsString("bg-[#111827] !text-white", $html);
+        $this->assertStringContainsString("bg-[#2563EB] !text-white", $html);
     }
 }
