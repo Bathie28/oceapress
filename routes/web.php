@@ -72,6 +72,7 @@ Route::prefix('admin')->name('admin.')->middleware('role:administrateur')->group
     Route::post('/pressings', [AdminTarifController::class, 'storePressing'])->name('pressings.store');
     Route::get('/pressings/{pressing}/edit', [AdminTarifController::class, 'edit'])->name('pressings.edit');
     Route::post('/pressings/{pressing}/employes', [AdminTarifController::class, 'storeEmploye'])->name('pressings.employes.store');
+    Route::post('/pressings/{pressing}/employes/{employe}/desactiver', [AdminTarifController::class, 'desactiverEmploye'])->name('pressings.employes.desactiver');
     Route::put('/pressings/{pressing}', [AdminTarifController::class, 'updatePressing'])->name('pressings.update');
     Route::get('/pressings/{pressing}/tarifs', [AdminTarifController::class, 'show'])->name('pressings.tarifs');
     Route::post('/pressings/{pressing}/tarifs', [AdminTarifController::class, 'store'])->name('pressings.tarifs.store');

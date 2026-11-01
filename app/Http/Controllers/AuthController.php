@@ -26,10 +26,19 @@ class AuthController extends Controller
             return back()->withErrors(['email' => 'Identifiants incorrects'])->onlyInput('email');
         }
 
-        $request->session()->regenerate();
         /** @var Utilisateur $utilisateur */
         $utilisateur = Auth::user();
         $utilisateur->load(['client', 'employe', 'administrateur']);
+
+        if ($utilisateur->employe !== null && ! $utilisateur->employe->actif) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return back()->withErrors(['email' => 'Identifiants incorrects'])->onlyInput('email');
+        }
+
+        $request->session()->regenerate();
         $roles = collect([$utilisateur->client, $utilisateur->employe, $utilisateur->administrateur])
             ->filter()
             ->count();

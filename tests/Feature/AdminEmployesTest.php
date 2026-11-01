@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Pressing;
 use App\Models\Utilisateur;
+use App\Models\Restitution;
 use App\Services\CreerEmploye;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -114,6 +115,65 @@ class AdminEmployesTest extends TestCase
         $this->actingAs($client->utilisateur)
             ->get(route('admin.pressings.edit', $pressing->idPressing))
             ->assertForbidden();
+    }
+
+    public function test_employe_desactive_ne_peut_pas_se_connecter(): void
+    {
+        $employe = $this->creerEmploye();
+        $employe->update(['actif' => false]);
+
+        $this->post(route('login.store'), [
+            'email' => $employe->utilisateur->email,
+            'password' => 'secret',
+        ])->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
+    public function test_employe_actif_peut_toujours_se_connecter(): void
+    {
+        $employe = $this->creerEmploye();
+
+        $this->post(route('login.store'), [
+            'email' => $employe->utilisateur->email,
+            'password' => 'secret',
+        ])->assertRedirect(route('employe.accueil'));
+        $this->assertAuthenticatedAs($employe->utilisateur);
+    }
+
+    public function test_desactivation_ne_supprime_pas_commande_restitution_ni_historique(): void
+    {
+        $this->connecterAdministrateur();
+        $employe = $this->creerEmploye();
+        $commande = $this->creerCommande(null, $employe->pressing);
+        Restitution::create([
+            'dateRestitution' => now(),
+            'statut' => 'CONFORME',
+            'idCommande' => $commande->idCommande,
+            'idEmploye' => $employe->idEmploye,
+        ]);
+        $commandesAvant = DB::table('commande')->count();
+        $restitutionsAvant = DB::table('restitution')->count();
+        $historiquesAvant = DB::table('historique_commande')->count();
+
+        $this->post(route('admin.pressings.employes.desactiver', [$employe->pressing->idPressing, $employe->idEmploye]))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('employe', ['idEmploye' => $employe->idEmploye, 'actif' => false]);
+        $this->assertSame($commandesAvant, DB::table('commande')->count());
+        $this->assertSame($restitutionsAvant, DB::table('restitution')->count());
+        $this->assertSame($historiquesAvant, DB::table('historique_commande')->count());
+    }
+
+    public function test_administrateur_ne_peut_pas_desactiver_employe_d_un_autre_pressing(): void
+    {
+        $this->connecterAdministrateur();
+        $pressing = $this->creerPressing();
+        $autrePressing = $this->creerPressing();
+        $employe = $this->creerEmploye($autrePressing);
+
+        $this->post(route('admin.pressings.employes.desactiver', [$pressing->idPressing, $employe->idEmploye]))
+            ->assertNotFound();
+        $this->assertDatabaseHas('employe', ['idEmploye' => $employe->idEmploye, 'actif' => true]);
     }
 
     public function test_connexion_d_un_employe_cree_redirige_vers_le_changement_du_mot_de_passe(): void

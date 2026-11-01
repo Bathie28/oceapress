@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Employe;
 use App\Models\Pressing;
 use App\Models\Tarif;
 use App\Services\CreerEmploye;
@@ -69,6 +70,16 @@ class TarifController extends Controller
 
         return redirect()->route('admin.pressings.edit', $pressing->idPressing)
             ->with('motDePasseProvisoire', $compte['motDePasseProvisoire']);
+    }
+
+    public function desactiverEmploye(Pressing $pressing, Employe $employe): RedirectResponse
+    {
+        abort_unless((int) $employe->idPressing === (int) $pressing->idPressing, 404);
+
+        $employe->update(['actif' => false]);
+
+        return redirect()->route('admin.pressings.edit', $pressing->idPressing)
+            ->with('statut', 'Employé désactivé.');
     }
 
     public function updatePressing(Request $request, Pressing $pressing): RedirectResponse

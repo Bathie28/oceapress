@@ -12,7 +12,12 @@ class Employe extends Model
     protected $keyType = 'int';
     public $timestamps = false;
 
-    protected $fillable = ['idEmploye', 'fonction', 'dateEmbauche', 'idPressing'];
+    protected $fillable = ['idEmploye', 'fonction', 'dateEmbauche', 'idPressing', 'actif'];
+
+    protected function casts(): array
+    {
+        return ['actif' => 'boolean'];
+    }
 
     public function utilisateur()
     {

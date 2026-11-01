@@ -91,7 +91,7 @@
         </div>
         <div class="overflow-x-auto">
             <table class="w-full divide-y">
-                <thead><tr><th>Nom</th><th>Prénom</th><th>E-mail</th><th>Fonction</th></tr></thead>
+                <thead><tr><th>Nom</th><th>Prénom</th><th>E-mail</th><th>Fonction</th><th>Statut</th><th>Action</th></tr></thead>
                 <tbody>
                 @forelse ($pressing->employes as $employe)
                     <tr>
@@ -99,9 +99,18 @@
                         <td>{{ $employe->utilisateur?->prenom }}</td>
                         <td>{{ $employe->utilisateur?->email }}</td>
                         <td>{{ $employe->fonction }}</td>
+                        <td>{{ $employe->actif ? 'Actif' : 'Inactif' }}</td>
+                        <td>
+                            @if ($employe->actif)
+                                <form method="POST" action="{{ route('admin.pressings.employes.desactiver', [$pressing->idPressing, $employe->idEmploye]) }}">
+                                    @csrf
+                                    <button type="submit" class="!px-4 !py-2 !text-sm">Désactiver</button>
+                                </form>
+                            @endif
+                        </td>
                     </tr>
                 @empty
-                    <tr><td colspan="4">Aucun employé enregistré.</td></tr>
+                    <tr><td colspan="6">Aucun employé enregistré.</td></tr>
                 @endforelse
                 </tbody>
             </table>
