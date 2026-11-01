@@ -26,6 +26,7 @@
             </div>
             <x-primary-button class="mt-2 w-full">Se connecter</x-primary-button>
         </form>
+        <a class="mt-4 block text-center" href="{{ route('password.request') }}">Mot de passe oublié ?</a>
     </x-card>
 </div>
 @endsection
