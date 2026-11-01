@@ -106,6 +106,11 @@
                                     @csrf
                                     <button type="submit" class="!px-4 !py-2 !text-sm">Désactiver</button>
                                 </form>
+                            @else
+                                <form method="POST" action="{{ route('admin.pressings.employes.reactiver', [$pressing->idPressing, $employe->idEmploye]) }}">
+                                    @csrf
+                                    <button type="submit" class="!px-4 !py-2 !text-sm">Réactiver</button>
+                                </form>
                             @endif
                         </td>
                     </tr>

@@ -82,6 +82,16 @@ class TarifController extends Controller
             ->with('statut', 'Employé désactivé.');
     }
 
+    public function reactiverEmploye(Pressing $pressing, Employe $employe): RedirectResponse
+    {
+        abort_unless((int) $employe->idPressing === (int) $pressing->idPressing, 404);
+
+        $employe->update(['actif' => true]);
+
+        return redirect()->route('admin.pressings.edit', $pressing->idPressing)
+            ->with('statut', 'Employé réactivé.');
+    }
+
     public function updatePressing(Request $request, Pressing $pressing): RedirectResponse
     {
         $validated = $this->validerDonneesPressing($request);
