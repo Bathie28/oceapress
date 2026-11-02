@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.connecte')
 
 @section('title', 'Mes commandes — OceaPress')
 @section('navigation')

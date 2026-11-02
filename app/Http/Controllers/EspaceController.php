@@ -13,7 +13,38 @@ class EspaceController extends Controller
 {
     public function clientAccueil(Request $request): View
     {
-        return view('client.accueil', ['utilisateur' => $request->user()]);
+        $utilisateur = $request->user();
+        $client = $utilisateur->client;
+
+        $commandes = Commande::query()
+            ->where('idClient', $client->idClient)
+            ->with('qrCodeActif')
+            ->orderByDesc('dateCreation')
+            ->orderByDesc('idCommande')
+            ->get();
+
+        $nombreCommandesEnCours = $commandes
+            ->whereIn('statut', [Commande::STATUT_EN_ATTENTE, Commande::STATUT_EN_TRAITEMENT])
+            ->count();
+        $commandesPretes = $commandes->where('statut', Commande::STATUT_PRETE)->values();
+        $commandeRecente = $commandes->first();
+        $commandeAvecQrCode = $commandes->first(fn (Commande $commande) => $commande->qrCodeActif !== null);
+        $notificationsNonLues = Notification::query()
+            ->where('idClient', $client->idClient)
+            ->where('lu', false)
+            ->orderByDesc('dateEnvoi')
+            ->orderByDesc('idNotification')
+            ->limit(5)
+            ->get();
+
+        return view('client.accueil', compact(
+            'utilisateur',
+            'nombreCommandesEnCours',
+            'commandesPretes',
+            'notificationsNonLues',
+            'commandeRecente',
+            'commandeAvecQrCode',
+        ));
     }
 
     public function employeAccueil(Request $request): View
