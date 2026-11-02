@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.connecte')
 
 @section('title', 'Tarifs — '.$pressing->nom.' — OceaPress')
 

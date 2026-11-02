@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.connecte')
 
 @section('title', ($pressing ? 'Modifier' : 'Ajouter').' un pressing — OceaPress')
 

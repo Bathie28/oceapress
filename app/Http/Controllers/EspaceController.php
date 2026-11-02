@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use App\Models\Commande;
+use App\Models\Pressing;
 use App\Models\Notification;
 use App\Services\RelancerCommandesNonRecuperees;
 use Illuminate\Support\Carbon;
@@ -154,6 +155,15 @@ class EspaceController extends Controller
 
     public function adminAccueil(Request $request): View
     {
-        return view('admin.accueil', ['utilisateur' => $request->user()]);
+        $utilisateur = $request->user();
+        $pressings = Pressing::query()
+            ->withCount([
+                'employes as employesActifs' => fn ($query) => $query->where('actif', true),
+                'employes as employesInactifs' => fn ($query) => $query->where('actif', false),
+            ])
+            ->orderBy('nom')
+            ->get();
+
+        return view('admin.accueil', compact('utilisateur', 'pressings'));
     }
 }
