@@ -32,7 +32,7 @@ class GabaritCommunTest extends TestCase
         $employe = $this->creerEmploye();
 
         $this->actingAs($employe->utilisateur)->get('/employe')->assertOk()
-            ->assertSee('data-layout="oceapress"', false)
+            ->assertSee('data-layout="connecte"', false)
             ->assertSee('OP')
             ->assertSee('OceaPress')
             ->assertSee('href="'.route('employe.commandes.index').'"', false)
