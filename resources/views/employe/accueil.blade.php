@@ -1,18 +1,31 @@
-@extends('layouts.app')
+@extends('layouts.connecte')
 
 @section('title', 'Espace employé — OceaPress')
+@php use App\Models\Commande; @endphp
 
 @section('content')
-<div class="space-y-6 py-5">
-    <header class="op-banner">
-        <h1 class="text-3xl font-bold">Espace employé</h1>
-        <p class="mt-2 text-slate-600">{{ $utilisateur->prenom }} {{ $utilisateur->nom }}</p>
+<div class="mx-auto max-w-7xl space-y-6">
+    <header>
+        <h1 class="text-3xl font-bold text-[#0F172A]">Bonjour {{ $utilisateur->prenom }}</h1>
+        <p class="mt-2 text-[#64748B]">État actuel des commandes de votre pressing.</p>
     </header>
-    <nav aria-label="Accès rapides" class="grid gap-4 sm:grid-cols-2">
-        <x-secondary-button :href="route('employe.commandes.index')">Commandes</x-secondary-button>
-        <x-secondary-button :href="route('employe.commandes.create')">Nouvelle commande</x-secondary-button>
-        <x-secondary-button :href="route('employe.scan')">Scanner un QR code</x-secondary-button>
-        <x-secondary-button :href="route('employe.tableau-de-bord')">Tableau de bord</x-secondary-button>
-    </nav>
+
+    <section aria-label="Indicateurs du pressing">
+        <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <li><x-card class="h-full"><strong class="block text-3xl font-bold">{{ $compteurs[Commande::STATUT_EN_ATTENTE] }}</strong><span class="mt-2 block text-sm text-[#64748B]">En attente</span><span class="mt-3 block"><x-status-badge status="EN_ATTENTE" /></span></x-card></li>
+            <li><x-card class="h-full"><strong class="block text-3xl font-bold">{{ $compteurs[Commande::STATUT_EN_TRAITEMENT] }}</strong><span class="mt-2 block text-sm text-[#64748B]">En traitement</span><span class="mt-3 block"><x-status-badge status="EN_TRAITEMENT" /></span></x-card></li>
+            <li><x-card class="h-full"><strong class="block text-3xl font-bold">{{ $compteurs[Commande::STATUT_PRETE] }}</strong><span class="mt-2 block text-sm text-[#64748B]">Prêtes</span><span class="mt-3 block"><x-status-badge status="PRETE" /></span></x-card></li>
+            <li><x-card class="h-full"><strong class="block text-3xl font-bold">{{ $compteurs[Commande::STATUT_RECUPEREE] }}</strong><span class="mt-2 block text-sm text-[#64748B]">Non récupérées</span><span class="mt-3 block"><x-status-badge status="PRETE" /></span></x-card></li>
+        </ul>
+    </section>
+
+    <x-card aria-labelledby="acces-rapides-titre">
+        <h2 id="acces-rapides-titre" class="text-xl font-semibold">Accès rapides</h2>
+        <nav aria-label="Accès rapides" class="mt-4 grid gap-3 sm:grid-cols-3">
+            <x-secondary-button :href="route('employe.commandes.create')">Nouvelle commande</x-secondary-button>
+            <x-secondary-button :href="route('employe.scan')">Scanner un QR code</x-secondary-button>
+            <x-secondary-button :href="route('employe.tableau-de-bord')">Tableau de bord</x-secondary-button>
+        </nav>
+    </x-card>
 </div>
 @endsection

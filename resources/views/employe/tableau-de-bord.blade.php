@@ -3,7 +3,7 @@
 @section('title', 'Tableau de bord — OceaPress')
 
 @section('content')
-<div class="mx-auto max-w-7xl space-y-6 px-4 py-8 text-[#111827]" style="background:#FFFBEB">
+<div class="mx-auto max-w-7xl space-y-6 text-[#111827]">
     <a href="{{ route('employe.accueil') }}" class="op-button-secondary">Retour à l’accueil employé</a>
 
     <header class="op-banner">
@@ -81,7 +81,7 @@
                 </ul>
             </x-card>
 
-            <x-card class="p-5 border-l-4 border-yellow-400" aria-labelledby="restitution-aujourdhui-titre">
+            <x-card class="p-5 border-l-4 border-[#2563EB]" aria-labelledby="restitution-aujourdhui-titre">
                 <h2 id="restitution-aujourdhui-titre" class="text-lg font-semibold">Commandes prêtes à restituer aujourd’hui</h2>
                 <ul class="mt-4 space-y-3">
                     @forelse ($commandesRestitutionAujourdhui as $commande)

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.connecte')
 
 @section('title', 'Scanner un QR code — OceaPress')
 @section('navigation')

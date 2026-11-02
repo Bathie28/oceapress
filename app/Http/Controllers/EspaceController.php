@@ -51,8 +51,25 @@ class EspaceController extends Controller
     {
         $utilisateur = $request->user();
         $pressingActif = $utilisateur->employe->pressingActif();
+        $statuts = [
+            Commande::STATUT_EN_ATTENTE,
+            Commande::STATUT_EN_TRAITEMENT,
+            Commande::STATUT_PRETE,
+        ];
+        $compteurs = array_fill_keys($statuts, 0);
+        $compteurs = array_replace($compteurs, Commande::query()
+            ->where('idPressing', $pressingActif)
+            ->whereIn('statut', $statuts)
+            ->selectRaw('statut, COUNT(*) AS total')
+            ->groupBy('statut')
+            ->pluck('total', 'statut')
+            ->all());
+        $compteurs[Commande::STATUT_RECUPEREE] = Commande::query()
+            ->where('idPressing', $pressingActif)
+            ->where('statut', Commande::STATUT_PRETE)
+            ->count();
 
-        return view('employe.accueil', compact('utilisateur', 'pressingActif'));
+        return view('employe.accueil', compact('utilisateur', 'pressingActif', 'compteurs'));
     }
 
     public function tableauDeBordEmploye(Request $request): View
