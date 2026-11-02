@@ -36,6 +36,16 @@ class Pressing extends Model
         return $this->hasMany(Tarif::class, 'idPressing');
     }
 
+    public function administrateurs()
+    {
+        return $this->belongsToMany(
+            Administrateur::class,
+            'gestion_pressing',
+            'idPressing',
+            'idAdministrateur'
+        );
+    }
+
     public function typesPourFormule(string $formule): array
     {
         return $this->tarifs()

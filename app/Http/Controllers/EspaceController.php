@@ -156,7 +156,7 @@ class EspaceController extends Controller
     public function adminAccueil(Request $request): View
     {
         $utilisateur = $request->user();
-        $pressings = Pressing::query()
+        $pressings = $utilisateur->administrateur->pressings()
             ->withCount([
                 'employes as employesActifs' => fn ($query) => $query->where('actif', true),
                 'employes as employesInactifs' => fn ($query) => $query->where('actif', false),

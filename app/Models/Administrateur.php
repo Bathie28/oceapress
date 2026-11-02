@@ -11,4 +11,14 @@ class Administrateur extends Model
     public $incrementing = false;
     protected $keyType = 'int';
     public $timestamps = false;
+
+    public function pressings()
+    {
+        return $this->belongsToMany(
+            Pressing::class,
+            'gestion_pressing',
+            'idAdministrateur',
+            'idPressing'
+        );
+    }
 }

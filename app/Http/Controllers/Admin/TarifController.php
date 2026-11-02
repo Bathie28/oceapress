@@ -18,10 +18,13 @@ use RuntimeException;
 
 class TarifController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         return view('admin.pressings.index', [
-            'pressings' => Pressing::with('tarifs')->orderBy('nom')->get(),
+            'pressings' => $request->user()->administrateur->pressings()
+                ->with('tarifs')
+                ->orderBy('nom')
+                ->get(),
         ]);
     }
 
@@ -35,16 +38,18 @@ class TarifController extends Controller
         $validated = $this->validerDonneesPressing($request);
 
         try {
-            $creerPressing->executer($validated);
+            $pressing = $creerPressing->executer($validated);
         } catch (InvalidArgumentException $exception) {
             return back()->withErrors(['nom' => $exception->getMessage()])->withInput();
         }
+        $request->user()->administrateur->pressings()->attach($pressing->idPressing);
 
         return redirect()->route('admin.pressings.index');
     }
 
-    public function edit(Pressing $pressing): View
+    public function edit(Request $request, Pressing $pressing): View
     {
+        $this->assurerPressingGere($request, $pressing);
         $pressing->load(['employes.utilisateur']);
 
         return view('admin.pressings.formulaire', ['pressing' => $pressing]);
@@ -52,6 +57,7 @@ class TarifController extends Controller
 
     public function storeEmploye(Request $request, Pressing $pressing, CreerEmploye $creerEmploye): RedirectResponse
     {
+        $this->assurerPressingGere($request, $pressing);
         $validated = $request->validate([
             'nom' => ['required', 'string', 'max:100'],
             'prenom' => ['required', 'string', 'max:100'],
@@ -72,9 +78,10 @@ class TarifController extends Controller
             ->with('motDePasseProvisoire', $compte['motDePasseProvisoire']);
     }
 
-    public function desactiverEmploye(Pressing $pressing, Employe $employe): RedirectResponse
+    public function desactiverEmploye(Request $request, Pressing $pressing, Employe $employe): RedirectResponse
     {
-        abort_unless((int) $employe->idPressing === (int) $pressing->idPressing, 404);
+        $this->assurerPressingGere($request, $pressing);
+        abort_unless((int) $employe->idPressing === (int) $pressing->idPressing, 403);
 
         $employe->update(['actif' => false]);
 
@@ -82,9 +89,10 @@ class TarifController extends Controller
             ->with('statut', 'Employé désactivé.');
     }
 
-    public function reactiverEmploye(Pressing $pressing, Employe $employe): RedirectResponse
+    public function reactiverEmploye(Request $request, Pressing $pressing, Employe $employe): RedirectResponse
     {
-        abort_unless((int) $employe->idPressing === (int) $pressing->idPressing, 404);
+        $this->assurerPressingGere($request, $pressing);
+        abort_unless((int) $employe->idPressing === (int) $pressing->idPressing, 403);
 
         $employe->update(['actif' => true]);
 
@@ -94,6 +102,7 @@ class TarifController extends Controller
 
     public function updatePressing(Request $request, Pressing $pressing): RedirectResponse
     {
+        $this->assurerPressingGere($request, $pressing);
         $validated = $this->validerDonneesPressing($request);
         $validated['pesee'] = (bool) ($validated['pesee'] ?? false);
         $pressing->update($validated);
@@ -101,8 +110,9 @@ class TarifController extends Controller
         return redirect()->route('admin.pressings.index');
     }
 
-    public function show(Pressing $pressing): View
+    public function show(Request $request, Pressing $pressing): View
     {
+        $this->assurerPressingGere($request, $pressing);
         return view('admin.pressings.tarifs', [
             'pressing' => $pressing->load(['tarifs' => fn ($query) => $query->orderBy('formule')->orderBy('unite')->orderBy('typeArticle')]),
         ]);
@@ -110,6 +120,7 @@ class TarifController extends Controller
 
     public function store(Request $request, Pressing $pressing, EnregistrerTarif $enregistrerTarif): RedirectResponse
     {
+        $this->assurerPressingGere($request, $pressing);
         $validated = $request->validate([
             'typeArticle' => ['nullable', 'required_if:unite,PIECE', 'string', 'max:100'],
             'formule' => ['required', 'string', 'in:'.implode(',', Tarif::FORMULES_PAR_MODE[$request->input('unite') === 'KG' ? 'POIDS' : 'PIECE'])],
@@ -139,7 +150,11 @@ class TarifController extends Controller
             'idPressing' => ['required', 'integer', 'exists:pressing,idPressing'],
             'prix' => ['required', 'integer', 'min:0'],
         ]);
-        abort_unless((int) $validated['idPressing'] === (int) $enregistre->idPressing, 404);
+        if ((int) $validated['idPressing'] !== (int) $enregistre->idPressing) {
+            abort(403);
+        }
+        $pressing = Pressing::findOrFail($enregistre->idPressing);
+        $this->assurerPressingGere($request, $pressing);
 
         try {
             $modifierTarif->executer($enregistre->idTarif, (float) $validated['prix']);
@@ -152,6 +167,7 @@ class TarifController extends Controller
 
     public function updateMode(Request $request, Pressing $pressing): RedirectResponse
     {
+        $this->assurerPressingGere($request, $pressing);
         $validated = $request->validate(['pesee' => ['nullable', 'boolean']]);
         $pressing->pesee = (bool) ($validated['pesee'] ?? false);
         $pressing->save();
@@ -168,5 +184,14 @@ class TarifController extends Controller
             'email' => ['nullable', 'email', 'max:190'],
             'pesee' => ['nullable', 'boolean'],
         ]);
+    }
+
+    private function assurerPressingGere(Request $request, Pressing $pressing): void
+    {
+        $gere = $request->user()->administrateur->pressings()
+            ->whereKey($pressing->idPressing)
+            ->exists();
+
+        abort_unless($gere, 403);
     }
 }

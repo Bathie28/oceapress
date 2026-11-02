@@ -122,6 +122,10 @@ class InterfaceAccueilTest extends TestCase
             'dateCreation' => now()->toDateString(),
             'statut' => Pressing::STATUT_ACTIF,
         ]);
+        DB::table('gestion_pressing')->insert([
+            'idAdministrateur' => $administrateur->idUtilisateur,
+            'idPressing' => $pressing->idPressing,
+        ]);
         $actif = $this->creerEmploye($pressing);
         DB::table('employe')->where('idEmploye', $actif->idEmploye)->update(['actif' => true]);
         $inactif = $this->creerEmploye($pressing);

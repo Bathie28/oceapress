@@ -197,7 +197,7 @@ class AdminEmployesTest extends TestCase
         $employe->update(['actif' => false]);
 
         $this->post(route('admin.pressings.employes.reactiver', [$pressing->idPressing, $employe->idEmploye]))
-            ->assertNotFound();
+            ->assertForbidden();
         $this->assertFalse((bool) $employe->fresh()->actif);
     }
 
@@ -249,7 +249,7 @@ class AdminEmployesTest extends TestCase
         $employe = $this->creerEmploye($autrePressing);
 
         $this->post(route('admin.pressings.employes.desactiver', [$pressing->idPressing, $employe->idEmploye]))
-            ->assertNotFound();
+            ->assertForbidden();
         $this->assertDatabaseHas('employe', ['idEmploye' => $employe->idEmploye, 'actif' => true]);
     }
 

@@ -14,10 +14,19 @@ trait CreeDonneesTest
 {
     protected function creerPressing(): Pressing
     {
-        return Pressing::create([
+        $pressing = Pressing::create([
             'nom' => 'Pressing Test', 'adresse' => '1 rue du Test',
             'dateCreation' => now()->toDateString(), 'statut' => 'ACTIF',
         ]);
+        $utilisateur = auth()->user();
+        if ($utilisateur !== null && $utilisateur->administrateur !== null) {
+            DB::table('gestion_pressing')->insertOrIgnore([
+                'idAdministrateur' => $utilisateur->idUtilisateur,
+                'idPressing' => $pressing->idPressing,
+            ]);
+        }
+
+        return $pressing;
     }
 
     protected function creerUtilisateur(array $attributs = []): Utilisateur

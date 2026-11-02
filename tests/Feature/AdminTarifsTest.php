@@ -121,7 +121,7 @@ class AdminTarifsTest extends TestCase
         $this->post('/admin/tarifs/'.$idTarif, [
             'idPressing' => $pressingAffiche->idPressing,
             'prix' => '2000',
-        ])->assertNotFound();
+        ])->assertForbidden();
 
         $this->assertSame('1000', DB::table('tarif')->where('idTarif', $idTarif)->value('prix'));
     }
