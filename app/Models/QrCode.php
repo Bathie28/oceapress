@@ -11,4 +11,5 @@ class QrCode extends Model
     public $timestamps = false;
 
     protected $fillable = ['token', 'dateCreation', 'actif', 'idCommande'];
+    protected $hidden = ['token'];
 }

@@ -12,6 +12,19 @@ class QrCodeClientTest extends TestCase
 {
     use RefreshDatabase, CreeDonneesTest;
 
+    public function test_la_serialisation_qr_ne_contient_pas_le_token(): void
+    {
+        $client = $this->creerClient();
+        $commande = $this->creerCommande($client);
+        $qrCode = QrCode::create([
+            'token' => 'token-secret-'.bin2hex(random_bytes(8)),
+            'actif' => true,
+            'idCommande' => $commande->idCommande,
+        ]);
+
+        $this->assertArrayNotHasKey('token', $qrCode->toArray());
+    }
+
     public function test_le_client_voit_le_qr_actif_de_sa_commande_et_pas_le_qr_inactif(): void
     {
         $client = $this->creerClient();
