@@ -87,7 +87,7 @@ class EspaceEmployeActionsTest extends TestCase
         $response->assertRedirect('/employe/commandes/nouvelle')
             ->assertSessionHasErrors('commande');
         $response->assertSessionHas('errors', fn ($errors) => str_contains(
-            $errors->first('commande'), 'Cet e-mail appartient',
+            $errors->first('commande'), 'Cette adresse e-mail ne peut pas être utilisée pour créer un compte client.',
         ));
         $this->assertSame($before, Commande::count());
 

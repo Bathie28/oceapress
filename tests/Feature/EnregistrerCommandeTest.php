@@ -272,7 +272,10 @@ class EnregistrerCommandeTest extends TestCase
             );
             $this->fail('Une exception devait être levée.');
         } catch (RuntimeException $exception) {
-            $this->assertStringContainsString('Cet e-mail appartient', $exception->getMessage());
+            $this->assertSame(
+                'Cette adresse e-mail ne peut pas être utilisée pour créer un compte client.',
+                $exception->getMessage(),
+            );
         }
         $this->assertSame($before, Commande::count());
     }

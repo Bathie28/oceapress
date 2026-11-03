@@ -98,7 +98,7 @@ class EnregistrerCommande
             if ($utilisateur === null) {
                 $compteAvecEmail = isset($client['email']) ? Utilisateur::where('email', $client['email'])->first() : null;
                 if ($compteAvecEmail !== null) {
-                    throw new \RuntimeException('Cet e-mail appartient à un compte qui n’est pas client.');
+                    throw new \RuntimeException('Cette adresse e-mail ne peut pas être utilisée pour créer un compte client.');
                 }
                 $compte = app(CreerCompteClient::class)->executer($client);
                 $utilisateur = $compte['utilisateur'];
@@ -113,7 +113,7 @@ class EnregistrerCommande
                     ->exists();
 
                 if ($estEmploye || $estAdministrateur) {
-                    throw new \RuntimeException('Cet e-mail appartient à un employé ou un administrateur');
+                    throw new \RuntimeException('Cette adresse e-mail ne peut pas être utilisée pour créer un compte client.');
                 }
 
                 $clientCree = Client::find($utilisateur->idUtilisateur);
