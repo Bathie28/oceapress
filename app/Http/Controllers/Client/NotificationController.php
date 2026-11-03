@@ -25,11 +25,20 @@ class NotificationController extends Controller
             ->whereKey($notification)
             ->firstOrFail();
 
+        return view('client.notifications.show', compact('notification'));
+    }
+
+    public function marquerCommeLue(Request $request, int $notification)
+    {
+        $notification = $request->user()->client->notifications()
+            ->whereKey($notification)
+            ->firstOrFail();
+
         if (! $notification->lu) {
             $notification->lu = true;
             $notification->save();
         }
 
-        return view('client.notifications.show', compact('notification'));
+        return redirect()->route('client.notifications.show', $notification->idNotification);
     }
 }

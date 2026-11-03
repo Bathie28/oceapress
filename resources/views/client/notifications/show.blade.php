@@ -13,6 +13,12 @@
             <h1 class="text-2xl font-bold">{{ $notification->titre }}</h1>
             <p class="mt-4 whitespace-pre-line">{{ $notification->message }}</p>
             <time class="mt-4 block text-sm text-slate-500">{{ $notification->dateEnvoi }}</time>
+            @unless ($notification->lu)
+                <form method="POST" action="{{ route('client.notifications.lue', $notification->idNotification) }}" class="mt-5">
+                    @csrf
+                    <x-primary-button type="submit">Marquer comme lu</x-primary-button>
+                </form>
+            @endunless
         </section>
     </article>
 @endsection

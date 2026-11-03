@@ -39,6 +39,7 @@ Route::prefix('client')->name('client.')->middleware(['role:client', 'mot-de-pas
     Route::get('/commandes/{commande}', [ClientCommandeController::class, 'show'])->name('commandes.show');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
+    Route::post('/notifications/{notification}/lue', [NotificationController::class, 'marquerCommeLue'])->name('notifications.lue');
     Route::post('/factures/{facture}/paiement', [ClientFactureController::class, 'storePaiement'])->name('factures.paiement');
     Route::get('/factures/{facture}/wave/succes', [ClientFactureController::class, 'retourWave'])->name('factures.wave.succes');
     Route::get('/factures/{facture}/wave/echec', [ClientFactureController::class, 'retourWave'])->name('factures.wave.echec');

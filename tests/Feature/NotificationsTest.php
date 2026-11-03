@@ -81,7 +81,7 @@ class NotificationsTest extends TestCase
         });
     }
 
-    public function test_un_client_ne_voit_que_ses_notifications_et_ouvrir_marque_comme_lu(): void
+    public function test_un_client_ne_voit_que_ses_notifications_et_un_get_ne_la_marque_pas_comme_lue(): void
     {
         $clientA = $this->creerClient(['email' => 'notification-a@example.test']);
         $clientB = $this->creerClient(['email' => 'notification-b@example.test']);
@@ -95,6 +95,9 @@ class NotificationsTest extends TestCase
             ->assertDontSee('Pour B');
 
         $this->get('/client/notifications/'.$notificationA->idNotification)->assertOk();
+        $this->assertDatabaseHas('notification', ['idNotification' => $notificationA->idNotification, 'lu' => false]);
+        $this->post(route('client.notifications.lue', $notificationA->idNotification))
+            ->assertRedirect(route('client.notifications.show', $notificationA->idNotification));
         $this->assertDatabaseHas('notification', ['idNotification' => $notificationA->idNotification, 'lu' => true]);
         $this->get('/client/notifications/'.$notificationB->idNotification)->assertNotFound();
     }
