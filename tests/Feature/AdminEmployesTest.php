@@ -156,7 +156,11 @@ class AdminEmployesTest extends TestCase
         $historiquesAvant = DB::table('historique_commande')->count();
 
         $this->post(route('admin.pressings.employes.desactiver', [$employe->pressing->idPressing, $employe->idEmploye]))
-            ->assertRedirect();
+            ->assertRedirect()
+            ->assertSessionHas('statut', 'Employé désactivé.');
+        $this->get(route('admin.pressings.edit', $employe->pressing->idPressing))
+            ->assertOk()
+            ->assertSee('Employé désactivé.');
 
         $this->assertDatabaseHas('employe', ['idEmploye' => $employe->idEmploye, 'actif' => false]);
         $this->assertSame($commandesAvant, DB::table('commande')->count());

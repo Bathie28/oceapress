@@ -10,6 +10,9 @@
     @if ($errors->any())
         <x-alert type="error"><ul>@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></x-alert>
     @endif
+    @if (session('statut'))
+        <x-alert type="success">{{ session('statut') }}</x-alert>
+    @endif
     @if ($pressing && session('motDePasseProvisoire'))
         <x-alert type="warning">
             Mot de passe provisoire de l’employé :
