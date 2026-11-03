@@ -135,6 +135,18 @@ class AuthTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_get_sur_deconnexion_ne_deconnecte_pas(): void
+    {
+        $utilisateur = $this->creerUtilisateurAvecMotDePasse('logout-get@example.test');
+        $this->creerClientAvecUtilisateur($utilisateur);
+
+        $this->actingAs($utilisateur)
+            ->get('/logout')
+            ->assertStatus(405);
+
+        $this->assertAuthenticatedAs($utilisateur);
+    }
+
     public function test_id_pressing_fourni_dans_la_requete_ne_change_pas_le_pressing_actif(): void
     {
         $utilisateur = $this->creerUtilisateurAvecMotDePasse('employe-pressing@example.test');

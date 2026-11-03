@@ -41,6 +41,8 @@ BLADE);
         ] as $libelle) {
             $this->assertStringContainsString($libelle, $html);
         }
+        $this->assertStringContainsString('Employé', $html);
+        $this->assertStringContainsString($employe->utilisateur->nom, $html);
     }
 
     public function test_un_client_ne_voit_pas_la_navigation_employe(): void
@@ -53,6 +55,8 @@ BLADE);
         $this->assertStringContainsString('Navigation client', $html);
         $this->assertStringContainsString('Mes commandes', $html);
         $this->assertStringContainsString('Mes notifications', $html);
+        $this->assertStringContainsString('Client', $html);
+        $this->assertStringContainsString($client->utilisateur->nom, $html);
         $this->assertStringNotContainsString('Scanner un QR code', $html);
         $this->assertStringNotContainsString('Nouvelle commande', $html);
     }
@@ -68,6 +72,8 @@ BLADE);
         $this->assertStringContainsString('Navigation administrateur', $html);
         $this->assertStringContainsString('Accueil administrateur', $html);
         $this->assertStringContainsString('Gérer les pressings et tarifs', $html);
+        $this->assertStringContainsString('Administrateur', $html);
+        $this->assertStringContainsString($administrateur->nom, $html);
     }
 
     public function test_tableau_de_bord_employe_utilise_la_barre_laterale_sans_navigation_du_haut(): void
@@ -83,6 +89,28 @@ BLADE);
             ->assertSee('Menu')
             ->assertSee('Retour à l’accueil employé')
             ->assertDontSee('data-layout="oceapress"', false);
+    }
+
+    public function test_la_deconnexion_est_un_formulaire_post_sans_dupliquer_l_utilisateur_dans_le_header(): void
+    {
+        $client = $this->creerClient(['nom' => 'Dupont', 'prenom' => 'Alice']);
+        $this->actingAs($client->utilisateur);
+
+        $html = $this->rendreGabarit();
+
+        $this->assertStringContainsString('<aside id="sidebar-connecte"', $html);
+        $this->assertStringContainsString('Alice Dupont', $html);
+        $this->assertMatchesRegularExpression(
+            '/<form[^>]*method="POST"[^>]*action="[^"]*\/logout"[^>]*>.*?<input[^>]*type="hidden"[^>]*name="_token"/s',
+            $html,
+        );
+        $this->assertStringContainsString('Se déconnecter', $html);
+        $this->assertSame(1, substr_count($html, '/logout'));
+        $headerStart = strpos($html, '<header');
+        $headerEnd = strpos($html, '</header>', $headerStart);
+        $header = substr($html, $headerStart, $headerEnd - $headerStart);
+        $this->assertStringNotContainsString('Alice Dupont', $header);
+        $this->assertStringNotContainsString('Se déconnecter', $header);
     }
 
     public function test_menu_mobile_et_lien_actif_sont_accessibles(): void
@@ -104,5 +132,10 @@ BLADE);
         $this->assertStringContainsString('aria-expanded="false"', $html);
         $this->assertStringContainsString('Tableau de bord', $html);
         $this->assertStringContainsString("bg-[#2563EB] !text-white", $html);
+        $this->assertStringContainsString('lg:sticky', $html);
+        $this->assertStringContainsString('lg:flex', $html);
+        $this->assertStringContainsString('lg:hidden', $html);
+        $this->assertStringContainsString('sidebar.querySelector', $html);
+        $this->assertStringContainsString('openButton.focus()', $html);
     }
 }
