@@ -22,7 +22,10 @@
             </div>
             <div class="mb-4">
                 <x-form-label for="password">Mot de passe</x-form-label>
-                <x-form-input id="password" name="password" type="password" required />
+                <div class="relative">
+                    <x-form-input id="password" name="password" type="password" required class="pr-20" />
+                    <button type="button" data-password-toggle data-password-target="password" aria-label="Afficher le mot de passe" class="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-sm font-semibold text-[#2563EB]">Afficher</button>
+                </div>
             </div>
             <x-primary-button class="mt-2 w-full">Se connecter</x-primary-button>
         </form>

@@ -106,5 +106,17 @@
     <footer class="op-footer">© {{ date('Y') }} OceaPress</footer>
 </div>
 @yield('scripts')
+<script>
+document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+    button.addEventListener('click', () => {
+        const input = document.getElementById(button.dataset.passwordTarget);
+        if (!input) return;
+        const visible = input.type === 'text';
+        input.type = visible ? 'password' : 'text';
+        button.textContent = visible ? 'Afficher' : 'Masquer';
+        button.setAttribute('aria-label', visible ? 'Afficher le mot de passe' : 'Masquer le mot de passe');
+    });
+});
+</script>
 </body>
 </html>

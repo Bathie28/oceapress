@@ -20,11 +20,17 @@
             </div>
             <div>
                 <x-form-label for="password">Nouveau mot de passe</x-form-label>
-                <x-form-input id="password" name="password" type="password" required />
+                <div class="relative">
+                    <x-form-input id="password" name="password" type="password" required class="pr-20" />
+                    <button type="button" data-password-toggle data-password-target="password" aria-label="Afficher le mot de passe" class="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-sm font-semibold text-[#2563EB]">Afficher</button>
+                </div>
             </div>
             <div>
                 <x-form-label for="password_confirmation">Confirmation</x-form-label>
-                <x-form-input id="password_confirmation" name="password_confirmation" type="password" required />
+                <div class="relative">
+                    <x-form-input id="password_confirmation" name="password_confirmation" type="password" required class="pr-20" />
+                    <button type="button" data-password-toggle data-password-target="password_confirmation" aria-label="Afficher le mot de passe" class="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-sm font-semibold text-[#2563EB]">Afficher</button>
+                </div>
             </div>
             <x-primary-button class="mt-2 w-full">Changer le mot de passe</x-primary-button>
         </form>
