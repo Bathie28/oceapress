@@ -24,7 +24,7 @@ class GabaritCommunTest extends TestCase
     {
         $this->get('/login')->assertOk()
             ->assertSee('class="block mb-1 text-sm font-medium text-[#64748B]"', false)
-            ->assertSee('class="block w-full rounded-xl border border-[#CBD5E1] px-3 py-2 text-[#0F172A] focus:border-[#2563EB] focus:outline-none"', false);
+            ->assertSee('class="block w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-[#0F172A] focus:border-[#2563EB] focus:outline-none"', false);
     }
 
     public function test_accueil_employe_utilise_le_gabarit_et_sa_navigation(): void
