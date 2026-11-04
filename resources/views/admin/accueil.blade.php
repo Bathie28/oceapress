@@ -12,7 +12,7 @@
     <x-card aria-labelledby="pressings-titre">
         <div class="flex flex-wrap items-center justify-between gap-4">
             <h2 id="pressings-titre" class="text-xl font-semibold">Pressings</h2>
-            <a href="{{ route('admin.pressings.index') }}" class="rounded-xl bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white">Gérer les pressings et tarifs</a>
+            <x-primary-button :href="route('admin.pressings.index')">Gérer les pressings et tarifs</x-primary-button>
         </div>
         <div class="mt-4 overflow-x-auto">
             <table class="w-full text-left">

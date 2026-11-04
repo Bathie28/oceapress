@@ -16,7 +16,7 @@
                     <span class="text-sm text-slate-600">Pesée : {{ $pressing->pesee ? 'Oui' : 'Non' }}</span>
                     @php($nombreTarifsAffiches = $pressing->tarifsAffiches()->count())
                     <span class="op-badge">{{ $nombreTarifsAffiches }} {{ $nombreTarifsAffiches === 1 ? 'tarif' : 'tarifs' }}</span>
-                    <a href="{{ route('admin.pressings.edit', $pressing->idPressing) }}" class="font-semibold text-blue-700">Modifier</a>
+                    <x-secondary-button :href="route('admin.pressings.edit', $pressing->idPressing)">Modifier</x-secondary-button>
                 </li>
             @endforeach
         </ul>

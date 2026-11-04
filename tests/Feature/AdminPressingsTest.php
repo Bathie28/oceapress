@@ -49,6 +49,35 @@ class AdminPressingsTest extends TestCase
             ->assertSee('0 tarif');
     }
 
+    public function test_la_page_create_utilise_un_bouton_primaire_pour_creer_un_pressing(): void
+    {
+        $this->connecterAdministrateur();
+
+        $html = $this->get(route('admin.pressings.create'))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertMatchesRegularExpression(
+            '/<button[^>]*type="submit"[^>]*class="[^"]*op-button-primary[^"]*"[^>]*>\s*Créer le pressing\s*<\/button>/',
+            $html,
+        );
+    }
+
+    public function test_la_liste_utilise_un_lien_primaire_avec_contraste_blanc_pour_ajouter(): void
+    {
+        $this->connecterAdministrateur();
+
+        $html = $this->get(route('admin.pressings.index'))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('bg-[#2563EB]', $html);
+        $this->assertMatchesRegularExpression(
+            '/<a[^>]*href="[^"]*\/admin\/pressings\/create"[^>]*class="[^"]*op-button-primary[^"]*bg-\[#2563EB\][^"]*text-white[^"]*"[^>]*>\s*Ajouter un pressing\s*<\/a>/',
+            $html,
+        );
+    }
+
     public function test_nom_vide_est_refuse_sans_creer_de_ligne(): void
     {
         $this->connecterAdministrateur();

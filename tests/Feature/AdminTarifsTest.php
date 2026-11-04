@@ -47,17 +47,14 @@ class AdminTarifsTest extends TestCase
         preg_match_all('/<button\b[^>]*>Modifier le prix<\/button>/', $htmlTarifs, $boutonsModifierPrix);
         $this->assertNotEmpty($boutonsModifierPrix[0]);
 
-        $classesModifierAttendues = 'mt-2 w-fit self-center !px-4 !py-2 !text-sm';
         foreach ($boutonsModifierPrix[0] as $bouton) {
-            preg_match('/<button\b[^>]*class="([^"]*)"[^>]*>Modifier le prix<\/button>/', $bouton, $classesBouton);
-            $this->assertSame($classesModifierAttendues, $classesBouton[1] ?? null);
+            $this->assertStringContainsString('op-button-secondary', $bouton);
             $this->assertStringNotContainsString('w-full', $bouton);
             $this->assertStringNotContainsString('block', $bouton);
         }
 
-        $classesAjouterAttendues = 'mt-2 w-fit !px-4 !py-2 !text-sm';
         preg_match('/<button\b[^>]*class="([^"]*)"[^>]*>Ajouter le tarif<\/button>/', $htmlTarifs, $boutonAjouter);
-        $this->assertSame($classesAjouterAttendues, $boutonAjouter[1] ?? null);
+        $this->assertStringContainsString('op-button-primary', $boutonAjouter[0] ?? '');
         $this->assertStringNotContainsString('self-start', $boutonAjouter[0]);
 
         $this->post('/admin/pressings/'.$pressing->idPressing.'/tarifs', [

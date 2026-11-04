@@ -243,6 +243,10 @@ class AdminEmployesTest extends TestCase
         $html = $page->getContent();
         $this->assertStringContainsString(route('admin.pressings.employes.desactiver', [$pressing->idPressing, $actif->idEmploye]), $html);
         $this->assertStringContainsString(route('admin.pressings.employes.reactiver', [$pressing->idPressing, $inactif->idEmploye]), $html);
+        $this->assertMatchesRegularExpression(
+            '/<button[^>]*type="submit"[^>]*class="[^"]*op-button-primary[^"]*"[^>]*>\s*Créer l.employé\s*<\/button>/u',
+            $html,
+        );
     }
 
     public function test_administrateur_ne_peut_pas_desactiver_employe_d_un_autre_pressing(): void

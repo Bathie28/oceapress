@@ -83,7 +83,7 @@
                 <input id="pesee" name="pesee" type="checkbox" value="1" @checked(old('pesee', $pressing?->pesee ?? false))>
             </div>
 
-            <button type="submit" class="mt-2">{{ $pressing ? 'Enregistrer les modifications' : 'Créer le pressing' }}</button>
+            <x-primary-button class="mt-2">{{ $pressing ? 'Enregistrer les modifications' : 'Créer le pressing' }}</x-primary-button>
         </form>
     </section>
 
@@ -135,7 +135,7 @@
                     <div><x-form-label for="employe-telephone">Téléphone</x-form-label><x-form-input id="employe-telephone" name="telephone" value="{{ old('telephone') }}" maxlength="30" /></div>
                     <div class="sm:col-span-2"><x-form-label for="employe-fonction">Fonction</x-form-label><x-form-input id="employe-fonction" name="fonction" value="{{ old('fonction') }}" maxlength="100" required /></div>
                 </div>
-                <button type="submit" class="mt-4">Créer l’employé</button>
+                <x-primary-button class="mt-4">Créer l’employé</x-primary-button>
             </form>
         </details>
     </section>
