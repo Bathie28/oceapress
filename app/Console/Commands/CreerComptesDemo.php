@@ -79,6 +79,10 @@ class CreerComptesDemo extends Command
             DB::table('administrateur')->insert([
                 'idAdministrateur' => $administrateur->idUtilisateur,
             ]);
+            DB::table('gestion_pressing')->insertOrIgnore([
+                'idAdministrateur' => $administrateur->idUtilisateur,
+                'idPressing' => $pressing->idPressing,
+            ]);
 
             $donneesClient = [
                 'nom' => 'Démo',

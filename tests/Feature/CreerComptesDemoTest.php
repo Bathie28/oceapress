@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Facture;
 use App\Models\Pressing;
+use App\Models\Utilisateur;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -55,5 +56,27 @@ class CreerComptesDemoTest extends TestCase
         $this->assertSame($tarifs, DB::table('tarif')->count());
         $this->assertSame($commandes, DB::table('commande')->count());
         $this->assertStringContainsString('Comptes déjà présents', Artisan::output());
+    }
+
+    public function test_le_pressing_demo_est_rattache_a_l_administrateur_demo(): void
+    {
+        $this->assertSame('oceapress_test', config('database.connections.mysql.database'));
+
+        Artisan::call('demo:creer-comptes');
+
+        $this->assertTrue(DB::table('gestion_pressing')->exists());
+
+        $administrateur = Utilisateur::where('email', 'admin@demo.test')->firstOrFail();
+        $pressing = Pressing::where('nom', 'Pressing Démo')->firstOrFail();
+
+        $this->assertDatabaseHas('gestion_pressing', [
+            'idAdministrateur' => $administrateur->idUtilisateur,
+            'idPressing' => $pressing->idPressing,
+        ]);
+
+        $this->actingAs($administrateur)
+            ->get(route('admin.accueil'))
+            ->assertOk()
+            ->assertSee('Pressing Démo');
     }
 }
