@@ -164,10 +164,16 @@
                     }
                 });
             });
+            row.querySelectorAll('input:not([type="hidden"])').forEach(input => {
+                input.disabled = false;
+                input.readOnly = false;
+                input.hidden = false;
+                input.classList.add('text-[#0F172A]');
+            });
             row.querySelector('input[type="hidden"]').value = type;
-            row.querySelector('input[name$="[couleur]"]').value = escapeHtml(state.color);
-            row.querySelector('input[name$="[description]"]').value = escapeHtml(state.description);
-            row.querySelector('[data-quantity]').value = escapeHtml(state.quantity);
+            row.querySelector('input[name$="[couleur]"]').value = state.color;
+            row.querySelector('input[name$="[description]"]').value = state.description;
+            row.querySelector('[data-quantity]').value = state.quantity;
             list.append(fragment);
             index++;
         });
