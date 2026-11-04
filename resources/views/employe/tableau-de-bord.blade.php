@@ -4,7 +4,10 @@
 
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6 text-[#111827]">
-    <x-secondary-button :href="route('employe.accueil')">Retour à l’accueil employé</x-secondary-button>
+    <a href="{{ route('employe.accueil') }}" class="inline-flex items-center gap-2 text-[#2563EB] hover:underline">
+        <span aria-hidden="true">←</span>
+        <span>Retour à l’accueil employé</span>
+    </a>
 
     <header class="op-banner">
         <h1 class="text-3xl font-bold">Tableau de bord du pressing</h1>

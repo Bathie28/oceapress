@@ -80,7 +80,7 @@ BLADE);
     {
         $employe = $this->creerEmploye();
 
-        $this->actingAs($employe->utilisateur)
+        $reponse = $this->actingAs($employe->utilisateur)
             ->get(route('employe.tableau-de-bord'))
             ->assertOk()
             ->assertSee('data-layout="connecte"', false)
@@ -89,6 +89,11 @@ BLADE);
             ->assertSee('Menu')
             ->assertSee('Retour à l’accueil employé')
             ->assertDontSee('data-layout="oceapress"', false);
+
+        $this->assertStringContainsString('<span aria-hidden="true">←</span>', $reponse->getContent());
+        $this->assertStringContainsString('text-[#2563EB]', $reponse->getContent());
+        $this->assertStringContainsString('hover:underline', $reponse->getContent());
+        $this->assertStringNotContainsString('<x-secondary-button', $reponse->getContent());
     }
 
     public function test_la_deconnexion_est_un_formulaire_post_sans_dupliquer_l_utilisateur_dans_le_header(): void
