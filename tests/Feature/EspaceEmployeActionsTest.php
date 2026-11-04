@@ -228,6 +228,19 @@ class EspaceEmployeActionsTest extends TestCase
             ->assertSee('Chemise')->assertSee('Pantalon')->assertSee('quantite');
     }
 
+    public function test_champs_articles_have_form_input_classes(): void
+    {
+        $employe = $this->connecterEmploye();
+        $this->ajouterTarifPiece($employe, 'Chemise', '1500');
+
+        $html = $this->get('/employe/commandes/nouvelle')->assertOk()->getContent();
+
+        $this->assertStringContainsString('block w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-[#0F172A]', $html);
+        foreach (['couleur', 'description', 'quantite'] as $champ) {
+            $this->assertStringContainsString('articles[0]['.$champ.']', $html);
+        }
+    }
+
     public function test_formulaire_filtre_les_types_selon_la_formule_choisie(): void
     {
         $employe = $this->connecterEmploye();
