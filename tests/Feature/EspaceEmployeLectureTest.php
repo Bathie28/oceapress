@@ -93,4 +93,22 @@ class EspaceEmployeLectureTest extends TestCase
             ->assertSee('Nouvelle commande')
             ->assertSee('href="'.route('employe.commandes.create').'"', false);
     }
+
+    public function test_acces_rapides_employe_utilisent_des_liens_boutons_secondaires(): void
+    {
+        $this->connexionEmploye();
+
+        $html = $this->get('/employe')->assertOk()->getContent();
+
+        foreach ([
+            route('employe.commandes.create'),
+            route('employe.scan'),
+            route('employe.tableau-de-bord'),
+        ] as $url) {
+            $this->assertMatchesRegularExpression(
+                '/<a[^>]*href="'.preg_quote($url, '/').'[^"]*"[^>]*class="[^"]*inline-flex[^"]*rounded-xl[^"]*border[^"]*#CBD5E1[^"]*bg-white[^"]*px-4[^"]*py-3[^"]*text-\[#0F172A\][^"]*"[^>]*>/',
+                $html,
+            );
+        }
+    }
 }

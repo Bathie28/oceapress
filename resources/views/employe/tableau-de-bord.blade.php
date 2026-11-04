@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6 text-[#111827]">
-    <a href="{{ route('employe.accueil') }}" class="op-button-secondary">Retour à l’accueil employé</a>
+    <x-secondary-button :href="route('employe.accueil')">Retour à l’accueil employé</x-secondary-button>
 
     <header class="op-banner">
         <h1 class="text-3xl font-bold">Tableau de bord du pressing</h1>

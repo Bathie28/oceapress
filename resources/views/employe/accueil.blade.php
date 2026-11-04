@@ -22,9 +22,9 @@
     <x-card aria-labelledby="acces-rapides-titre">
         <h2 id="acces-rapides-titre" class="text-xl font-semibold">Accès rapides</h2>
         <nav aria-label="Accès rapides" class="mt-4 grid gap-3 sm:grid-cols-3">
-            <x-secondary-button :href="route('employe.commandes.create')">Nouvelle commande</x-secondary-button>
-            <x-secondary-button :href="route('employe.scan')">Scanner un QR code</x-secondary-button>
-            <x-secondary-button :href="route('employe.tableau-de-bord')">Tableau de bord</x-secondary-button>
+            <x-secondary-button :href="route('employe.commandes.create')" class="inline-flex items-center justify-center rounded-xl border border-[#CBD5E1] bg-white px-4 py-3 font-semibold text-[#0F172A] hover:bg-[#DBEAFE]">Nouvelle commande</x-secondary-button>
+            <x-secondary-button :href="route('employe.scan')" class="inline-flex items-center justify-center rounded-xl border border-[#CBD5E1] bg-white px-4 py-3 font-semibold text-[#0F172A] hover:bg-[#DBEAFE]">Scanner un QR code</x-secondary-button>
+            <x-secondary-button :href="route('employe.tableau-de-bord')" class="inline-flex items-center justify-center rounded-xl border border-[#CBD5E1] bg-white px-4 py-3 font-semibold text-[#0F172A] hover:bg-[#DBEAFE]">Tableau de bord</x-secondary-button>
         </nav>
     </x-card>
 </div>
