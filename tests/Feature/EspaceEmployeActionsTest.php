@@ -241,6 +241,16 @@ class EspaceEmployeActionsTest extends TestCase
         }
     }
 
+    public function test_modele_article_contient_des_champs_classes_form_input(): void
+    {
+        $employe = $this->connecterEmploye();
+        $this->ajouterTarifPiece($employe, 'Chemise', '1500');
+
+        $html = $this->get('/employe/commandes/nouvelle')->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/<template[^>]+id="article-template"[^>]*>.*?<input[^>]+class="[^"]*w-full[^"]*rounded-xl[^"]*border[^"]*border-\[#CBD5E1\][^"]*"[^>]*>.*?<\\/template>/s', $html);
+    }
+
     public function test_formulaire_filtre_les_types_selon_la_formule_choisie(): void
     {
         $employe = $this->connecterEmploye();

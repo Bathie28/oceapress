@@ -50,6 +50,15 @@
                     <p class="text-slate-500" data-empty>Aucun type disponible pour cette formule.</p>
                 @endforelse
             </div>
+            <template id="article-template">
+                <fieldset class="mb-4 grid gap-3 rounded-lg border border-slate-200 p-4 sm:grid-cols-2" data-type-row>
+                    <legend></legend>
+                    <input type="hidden" name="articles[__INDEX__][type]" value="">
+                    <div class="mb-4"><x-form-label for="couleur__INDEX__">Couleur</x-form-label><x-form-input id="couleur__INDEX__" name="articles[__INDEX__][couleur]" value="" /></div>
+                    <div class="mb-4"><x-form-label for="description__INDEX__">Description</x-form-label><x-form-input id="description__INDEX__" name="articles[__INDEX__][description]" value="" /></div>
+                    <div class="mb-4"><x-form-label for="quantite__INDEX__">Quantité</x-form-label><x-form-input id="quantite__INDEX__" data-quantity type="number" min="0" step="1" name="articles[__INDEX__][quantite]" value="0" /></div>
+                </fieldset>
+            </template>
         </section>
         <button class="mt-2 rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white">Créer la commande</button>
     </form>
@@ -116,6 +125,7 @@
     const poidsWrap = document.getElementById('poids-wrap');
     const poids = document.getElementById('poids');
     const list = document.getElementById('articles-list');
+    const articleTemplate = document.getElementById('article-template');
     const formulesParMode = @json(\App\Models\Tarif::FORMULES_PAR_MODE);
     const rowsState = new Map();
     let requestNumber = 0;
@@ -143,7 +153,22 @@
         let index = 0;
         types.forEach(type => {
             const state = rowsState.get(type) || {quantity: '0', color: '', description: ''};
-            list.insertAdjacentHTML('beforeend', `<fieldset class="mb-4 grid gap-3 rounded-lg border border-slate-200 p-4 sm:grid-cols-2" data-type-row data-type="${escapeHtml(type)}"><legend>${escapeHtml(type)}</legend><input type="hidden" name="articles[${index}][type]" value="${escapeHtml(type)}"><div class="mb-4"><label class="block mb-1 text-sm font-medium text-[#64748B]" for="couleur${index}">Couleur</label><input class="block w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-[#0F172A] focus:border-[#2563EB] focus:outline-none" id="couleur${index}" name="articles[${index}][couleur]" value="${escapeHtml(state.color)}"></div><div class="mb-4"><label class="block mb-1 text-sm font-medium text-[#64748B]" for="description${index}">Description</label><input class="block w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-[#0F172A] focus:border-[#2563EB] focus:outline-none" id="description${index}" name="articles[${index}][description]" value="${escapeHtml(state.description)}"></div><div class="mb-4"><label class="block mb-1 text-sm font-medium text-[#64748B]" for="quantite${index}">Quantité</label><input class="block w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-[#0F172A] focus:border-[#2563EB] focus:outline-none" id="quantite${index}" data-quantity type="number" min="0" step="1" name="articles[${index}][quantite]" value="${escapeHtml(state.quantity)}"></div></fieldset>`);
+            const fragment = articleTemplate.content.cloneNode(true);
+            const row = fragment.querySelector('[data-type-row]');
+            row.dataset.type = type;
+            row.querySelector('legend').textContent = type;
+            fragment.querySelectorAll('[id], [name], [for]').forEach(element => {
+                ['id', 'name', 'for'].forEach(attribute => {
+                    if (element.hasAttribute(attribute)) {
+                        element.setAttribute(attribute, element.getAttribute(attribute).replaceAll('__INDEX__', String(index)));
+                    }
+                });
+            });
+            row.querySelector('input[type="hidden"]').value = type;
+            row.querySelector('input[name$="[couleur]"]').value = escapeHtml(state.color);
+            row.querySelector('input[name$="[description]"]').value = escapeHtml(state.description);
+            row.querySelector('[data-quantity]').value = escapeHtml(state.quantity);
+            list.append(fragment);
             index++;
         });
         previousTypes.filter(type => !types.includes(type)).forEach(type => {
