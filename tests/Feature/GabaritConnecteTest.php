@@ -96,6 +96,24 @@ BLADE);
         $this->assertStringNotContainsString('<x-secondary-button', $reponse->getContent());
     }
 
+    public function test_bouton_filtrer_utilise_la_taille_standard(): void
+    {
+        $employe = $this->creerEmploye();
+
+        $html = $this->actingAs($employe->utilisateur)
+            ->get(route('employe.commandes.index'))
+            ->assertOk()
+            ->getContent();
+
+        preg_match('/<button[^>]*>Filtrer<\\/button>/', $html, $bouton);
+        $this->assertNotEmpty($bouton);
+        foreach (['inline-flex', 'items-center', 'justify-center', 'rounded-xl', 'px-4', 'py-2', 'text-sm', 'font-semibold'] as $classe) {
+            $this->assertStringContainsString($classe, $bouton[0]);
+        }
+        $this->assertStringNotContainsString('h-full', $bouton[0]);
+        $this->assertStringNotContainsString('w-full', $bouton[0]);
+    }
+
     public function test_la_deconnexion_est_un_formulaire_post_sans_dupliquer_l_utilisateur_dans_le_header(): void
     {
         $client = $this->creerClient(['nom' => 'Dupont', 'prenom' => 'Alice']);

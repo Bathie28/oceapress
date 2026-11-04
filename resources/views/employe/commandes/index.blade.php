@@ -23,7 +23,7 @@
                     @endforeach
                 </select>
             </div>
-            <button class="mt-2 w-fit rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white">Filtrer</button>
+            <button type="submit" class="inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold bg-blue-700 text-white">Filtrer</button>
         </form>
 
         <div class="mb-6 overflow-hidden rounded-xl bg-white border border-gray-200 p-6 shadow">
