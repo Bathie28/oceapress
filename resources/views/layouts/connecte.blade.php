@@ -141,8 +141,8 @@ document.querySelectorAll('[data-password-toggle]').forEach((button) => {
         if (!input) return;
         const visible = input.type === 'text';
         input.type = visible ? 'password' : 'text';
-        button.textContent = visible ? 'Afficher' : 'Masquer';
         button.setAttribute('aria-label', visible ? 'Afficher le mot de passe' : 'Masquer le mot de passe');
+        button.setAttribute('aria-pressed', visible ? 'false' : 'true');
     });
 });
 </script>
