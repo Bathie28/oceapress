@@ -23,8 +23,8 @@
             <div class="mb-4">
                 <x-form-label for="password">Mot de passe</x-form-label>
                 <div class="relative">
-                    <x-form-input id="password" name="password" type="password" required class="pr-20" />
-                    <button type="button" data-password-toggle data-password-target="password" aria-label="Afficher le mot de passe" aria-pressed="false" class="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-[#2563EB]">
+                    <x-form-input id="password" name="password" type="password" required class="pr-11" />
+                    <button type="button" data-password-toggle data-password-target="password" aria-label="Afficher le mot de passe" aria-pressed="false" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2 text-[#2563EB]">
                         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2.5 12s3.5-5 9.5-5 9.5 5 9.5 5-3.5 5-9.5 5-9.5-5-9.5-5Z"/><circle cx="12" cy="12" r="2.5"/></svg>
                     </button>
                 </div>
