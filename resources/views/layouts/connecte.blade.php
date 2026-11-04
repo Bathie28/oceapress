@@ -67,7 +67,7 @@
                 <a href="{{ route($lien['route']) }}" @if ($actif) aria-current="page" @endif class="block rounded-xl px-4 py-3 text-sm font-semibold {{ $actif ? 'bg-[#2563EB] !text-white' : 'text-[#64748B] hover:bg-[#DBEAFE] hover:text-[#1E40AF]' }}">{{ $lien['label'] }}</a>
             @endforeach
         </nav>
-        <div class="mt-auto border-t border-[#E2E8F0] pt-5">
+        <div class="mt-auto flex w-full flex-col items-center text-center border-t border-[#E2E8F0] pt-5">
             @if ($nomUtilisateur !== '')
                 <p class="font-semibold text-[#0F172A]">{{ $nomUtilisateur }}</p>
             @endif

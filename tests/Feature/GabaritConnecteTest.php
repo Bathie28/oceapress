@@ -101,6 +101,10 @@ BLADE);
         $this->assertStringContainsString('<aside id="sidebar-connecte"', $html);
         $this->assertStringContainsString('Alice Dupont', $html);
         $this->assertMatchesRegularExpression(
+            '/<div class="[^"]*mt-auto[^"]*flex[^"]*flex-col[^"]*items-center[^"]*text-center[^"]*border-t/',
+            $html,
+        );
+        $this->assertMatchesRegularExpression(
             '/<form[^>]*method="POST"[^>]*action="[^"]*\/logout"[^>]*>.*?<input[^>]*type="hidden"[^>]*name="_token"/s',
             $html,
         );
