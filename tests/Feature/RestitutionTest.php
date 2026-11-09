@@ -6,9 +6,11 @@ use App\Models\Anomalie;
 use App\Models\Article;
 use App\Models\Commande;
 use App\Models\HistoriqueCommande;
+use App\Models\QrCode;
 use App\Models\Restitution;
 use App\Services\ChangerStatutCommande;
 use App\Services\EnregistrerRestitution;
+use App\Services\VerifierQrCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Database\QueryException;
 use RuntimeException;
@@ -55,6 +57,55 @@ class RestitutionTest extends TestCase
         $this->assertSame($avant + 1, HistoriqueCommande::where('idCommande', $commande->idCommande)->count());
         $this->expectException(RuntimeException::class);
         app(EnregistrerRestitution::class)->executer($commande->idCommande, $employe->idEmploye, $quantites);
+    }
+
+    public function test_restitution_conforme_desactive_le_qr_et_le_rend_inaccessible(): void
+    {
+        [$commande, $employe, $articles] = $this->commandePrete();
+        $qrCode = QrCode::create([
+            'token' => 'qr-restitution-conforme',
+            'actif' => true,
+            'idCommande' => $commande->idCommande,
+        ]);
+        $quantites = $articles->mapWithKeys(fn (Article $article) => [$article->idArticle => $article->quantite])->all();
+
+        app(EnregistrerRestitution::class)->executer($commande->idCommande, $employe->idEmploye, $quantites);
+
+        $this->assertFalse((bool) $qrCode->fresh()->actif);
+        try {
+            app(VerifierQrCode::class)->executer($qrCode->token, $commande->idPressing);
+            $this->fail('Le token d’une commande récupérée devait être invalide.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('QR invalide ou commande introuvable', $exception->getMessage());
+        }
+
+        $this->actingAs($commande->client->utilisateur)
+            ->get('/client/commandes/'.$commande->idCommande)
+            ->assertOk()
+            ->assertSee('QR Code indisponible, contactez le pressing')
+            ->assertDontSee($qrCode->token);
+    }
+
+    public function test_restitution_desactive_un_qr_actif_et_preserve_ceux_des_commandes_non_recuperees(): void
+    {
+        [$commande, $employe, $articles] = $this->commandePrete();
+        $qrRecupere = QrCode::create([
+            'token' => 'qr-recupere',
+            'actif' => true,
+            'idCommande' => $commande->idCommande,
+        ]);
+        $commandeNonRecuperee = $this->creerCommande(null, $commande->pressing, Commande::STATUT_PRETE);
+        $qrNonRecupere = QrCode::create([
+            'token' => 'qr-non-recupere',
+            'actif' => true,
+            'idCommande' => $commandeNonRecuperee->idCommande,
+        ]);
+        $quantites = $articles->mapWithKeys(fn (Article $article) => [$article->idArticle => $article->quantite])->all();
+
+        app(EnregistrerRestitution::class)->executer($commande->idCommande, $employe->idEmploye, $quantites);
+
+        $this->assertFalse((bool) $qrRecupere->fresh()->actif);
+        $this->assertTrue((bool) $qrNonRecupere->fresh()->actif);
     }
 
     public function test_quantite_manquante_cree_anomalie_sans_restitution_et_garde_commande_prete(): void

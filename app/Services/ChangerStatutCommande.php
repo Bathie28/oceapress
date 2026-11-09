@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Commande;
 use App\Models\HistoriqueCommande;
+use App\Models\QrCode;
 use App\Services\EnvoyerNotification;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -47,6 +48,13 @@ class ChangerStatutCommande
             }
 
             $commande->save();
+
+            if ($nouveauStatut === Commande::STATUT_RECUPEREE) {
+                QrCode::query()
+                    ->where('idCommande', $commande->idCommande)
+                    ->where('actif', true)
+                    ->update(['actif' => false]);
+            }
 
             HistoriqueCommande::create([
                 'ancienStatut' => $ancienStatut,
