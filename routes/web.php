@@ -55,6 +55,7 @@ Route::prefix('employe')->name('employe.')->middleware(['role:employe', 'mot-de-
     Route::get('/tableau-de-bord', [EspaceController::class, 'tableauDeBordEmploye'])->name('tableau-de-bord');
     Route::get('/scan', [ScanController::class, 'create'])->name('scan');
     Route::post('/scan', [ScanController::class, 'store'])->middleware('throttle:30,1')->name('scan.store');
+    Route::post('/scan/rechercher', [ScanController::class, 'rechercherParReference'])->middleware('throttle:30,1')->name('scan.rechercher');
     Route::get('/commandes', [CommandeController::class, 'index'])->name('commandes.index');
     Route::get('/commandes/nouvelle', [CommandeController::class, 'create'])->name('commandes.create');
     Route::get('/commandes/types', [CommandeController::class, 'types'])->name('commandes.types');

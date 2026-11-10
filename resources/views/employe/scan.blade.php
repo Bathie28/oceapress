@@ -13,6 +13,9 @@
     @if ($errors->has('token'))
         <p class="rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ $errors->first('token') }}</p>
     @endif
+    @if ($errors->has('reference'))
+        <p class="rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ $errors->first('reference') }}</p>
+    @endif
     <div id="qrcode-reader" class="max-w-md overflow-hidden rounded-xl bg-white p-3 shadow" aria-label="Lecteur de QR code"></div>
     <p id="camera-error" class="rounded-lg bg-amber-50 p-4 text-amber-900" role="status" hidden>Caméra indisponible : saisissez le code</p>
 
@@ -24,6 +27,15 @@
             <input id="token-manuel" name="token-manuel" type="text" maxlength="255" value="{{ old('token') }}" autocomplete="off" class="w-full rounded border border-slate-300 p-3">
         </div>
         <button type="submit" class="mt-3 block rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white">Rechercher la commande</button>
+    </form>
+
+    <form method="POST" action="{{ route('employe.scan.rechercher') }}" class="rounded-xl bg-white p-6 shadow">
+        @csrf
+        <div>
+            <label for="reference" class="mb-2 block font-medium">Référence de secours (CMD-…)</label>
+            <input id="reference" name="reference" type="text" maxlength="30" value="{{ old('reference') }}" autocomplete="off" class="w-full rounded border border-slate-300 p-3">
+        </div>
+        <button type="submit" class="mt-3 block rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white">Rechercher par référence</button>
     </form>
 </div>
 
