@@ -12,12 +12,13 @@ use App\Services\EnregistrerCommande;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
+use Tests\Support\ConstruitCodeQrTest;
 use Tests\Support\CreeDonneesTest;
 use Tests\TestCase;
 
 class EnregistrerCommandeTest extends TestCase
 {
-    use RefreshDatabase, CreeDonneesTest;
+    use RefreshDatabase, ConstruitCodeQrTest, CreeDonneesTest;
 
     private function donneesClient(string $email): array
     {
@@ -37,6 +38,7 @@ class EnregistrerCommandeTest extends TestCase
 
     public function test_cree_commande_articles_qr_historique_et_facture_avec_le_total_calcule(): void
     {
+        config(['services.qr.secret' => 'cle-secrete-test-qr']);
         $pressing = $this->creerPressing();
         $employe = $this->creerEmploye($pressing);
         $this->ajouterTarifPiece($pressing, 'Chemise', '1001');
@@ -56,6 +58,7 @@ class EnregistrerCommandeTest extends TestCase
         $this->assertSame(2, Article::where('idCommande', $commande->idCommande)->count());
         $this->assertSame([3, 2], Article::where('idCommande', $commande->idCommande)->orderBy('idArticle')->pluck('quantite')->all());
         $this->assertTrue($commande->qrCodeActif()->exists());
+        $this->assertSame($this->codeQr($commande->idCommande), $commande->qrCodeActif()->value('token'));
         $this->assertSame(1, HistoriqueCommande::where('idCommande', $commande->idCommande)->count());
         $this->assertSame(Commande::STATUT_EN_ATTENTE, $commande->statut);
         $this->assertSame('REPASSAGE', $commande->fresh()->formule);

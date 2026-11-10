@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\Commande;
+use App\Services\GenererCodeQr;
 use App\Services\GenererImageQrCode;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -33,7 +34,9 @@ class CommandeController extends Controller
 
         $qrCodeSvg = $commande->qrCodeActif === null
             ? null
-            : app(GenererImageQrCode::class)->executer($commande->qrCodeActif->token);
+            : app(GenererImageQrCode::class)->executer(
+                app(GenererCodeQr::class)->executer($commande->idCommande),
+            );
 
         return view('client.commandes.show', compact('commande', 'qrCodeSvg'));
     }

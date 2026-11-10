@@ -4,12 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\QrCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\ConstruitCodeQrTest;
 use Tests\Support\CreeDonneesTest;
 use Tests\TestCase;
 
 class EspaceEmployeScanTest extends TestCase
 {
-    use RefreshDatabase, CreeDonneesTest;
+    use RefreshDatabase, ConstruitCodeQrTest, CreeDonneesTest;
 
     private const MESSAGE_REFUS = 'QR invalide ou commande introuvable';
 
@@ -18,7 +19,7 @@ class EspaceEmployeScanTest extends TestCase
         $employe = $this->creerEmploye();
         $this->actingAs($employe->utilisateur);
         $commande = $this->creerCommande(null, $employe->pressing);
-        $token = 'token-prive-'.bin2hex(random_bytes(8));
+        $token = $this->codeQr($commande->idCommande);
         QrCode::create(['token' => $token, 'actif' => true, 'idCommande' => $commande->idCommande]);
 
         $this->post('/employe/scan', ['token' => $token])
@@ -31,7 +32,7 @@ class EspaceEmployeScanTest extends TestCase
         $this->actingAs($employe->utilisateur);
         $autrePressing = $this->creerPressing();
         $commande = $this->creerCommande(null, $autrePressing);
-        $token = 'token-autre-pressing-'.bin2hex(random_bytes(8));
+        $token = $this->codeQr($commande->idCommande);
         QrCode::create(['token' => $token, 'actif' => true, 'idCommande' => $commande->idCommande]);
 
         $response = $this->from('/employe/scan')->post('/employe/scan', ['token' => $token]);
@@ -64,7 +65,7 @@ class EspaceEmployeScanTest extends TestCase
         $employe = $this->creerEmploye();
         $this->actingAs($employe->utilisateur);
         $commande = $this->creerCommande(null, $employe->pressing);
-        $token = 'token-ne-doit-pas-etre-dans-url-'.bin2hex(random_bytes(8));
+        $token = $this->codeQr($commande->idCommande);
         QrCode::create(['token' => $token, 'actif' => true, 'idCommande' => $commande->idCommande]);
 
         $response = $this->post('/employe/scan', ['token' => $token]);

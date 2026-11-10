@@ -13,7 +13,6 @@ use App\Models\QrCode;
 use App\Models\Utilisateur;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 class EnregistrerCommande
@@ -153,7 +152,7 @@ class EnregistrerCommande
             }
 
             QrCode::create([
-                'token' => $this->genererTokenQrCode(),
+                'token' => app(GenererCodeQr::class)->executer($commande->idCommande),
                 'dateCreation' => now(),
                 'actif' => true,
                 'idCommande' => $commande->idCommande,
@@ -196,15 +195,6 @@ class EnregistrerCommande
         } while (Commande::where('referenceCommande', $reference)->exists());
 
         return $reference;
-    }
-
-    private function genererTokenQrCode(): string
-    {
-        do {
-            $token = Str::random(32);
-        } while (QrCode::where('token', $token)->exists());
-
-        return $token;
     }
 
     private function genererNumeroFacture(): string

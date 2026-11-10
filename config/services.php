@@ -43,4 +43,8 @@ return [
         'api_url' => env('WAVE_API_URL'),
     ],
 
+    'qr' => [
+        'secret' => env('QR_SECRET'),
+    ],
+
 ];

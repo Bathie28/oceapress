@@ -5,19 +5,21 @@ namespace Tests\Feature;
 use App\Models\QrCode;
 use App\Services\GenererImageQrCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\ConstruitCodeQrTest;
 use Tests\Support\CreeDonneesTest;
 use Tests\TestCase;
 
 class QrCodeClientTest extends TestCase
 {
-    use RefreshDatabase, CreeDonneesTest;
+    use RefreshDatabase, ConstruitCodeQrTest, CreeDonneesTest;
 
     public function test_la_serialisation_qr_ne_contient_pas_le_token(): void
     {
         $client = $this->creerClient();
         $commande = $this->creerCommande($client);
+        $token = $this->codeQr($commande->idCommande);
         $qrCode = QrCode::create([
-            'token' => 'token-secret-'.bin2hex(random_bytes(8)),
+            'token' => $token,
             'actif' => true,
             'idCommande' => $commande->idCommande,
         ]);
@@ -29,8 +31,8 @@ class QrCodeClientTest extends TestCase
     {
         $client = $this->creerClient();
         $commande = $this->creerCommande($client);
-        $tokenInactif = 'ancien-token-inactif-'.bin2hex(random_bytes(6));
-        $tokenActif = 'token-actif-'.bin2hex(random_bytes(6));
+        $tokenInactif = $this->codeQr($commande->idCommande, now()->subMinutes(2));
+        $tokenActif = $this->codeQr($commande->idCommande);
         QrCode::create(['token' => $tokenInactif, 'actif' => false, 'idCommande' => $commande->idCommande]);
         QrCode::create(['token' => $tokenActif, 'actif' => true, 'idCommande' => $commande->idCommande]);
 
@@ -58,7 +60,7 @@ class QrCodeClientTest extends TestCase
         $clientA = $this->creerClient();
         $clientB = $this->creerClient();
         $commandeB = $this->creerCommande($clientB);
-        QrCode::create(['token' => 'token-prive-'.bin2hex(random_bytes(6)), 'actif' => true, 'idCommande' => $commandeB->idCommande]);
+        QrCode::create(['token' => $this->codeQr($commandeB->idCommande), 'actif' => true, 'idCommande' => $commandeB->idCommande]);
 
         $this->actingAs($clientA->utilisateur)
             ->get('/client/commandes/'.$commandeB->idCommande)
@@ -69,7 +71,7 @@ class QrCodeClientTest extends TestCase
     {
         $client = $this->creerClient();
         $commande = $this->creerCommande($client);
-        $token = 'secret-qr-token-'.bin2hex(random_bytes(8));
+        $token = $this->codeQr($commande->idCommande);
         QrCode::create(['token' => $token, 'actif' => true, 'idCommande' => $commande->idCommande]);
 
         $html = $this->actingAs($client->utilisateur)

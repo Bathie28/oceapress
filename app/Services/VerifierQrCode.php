@@ -10,10 +10,19 @@ class VerifierQrCode
 {
     private const MESSAGE_REFUS = 'QR invalide ou commande introuvable';
 
+    public function __construct(private readonly GenererCodeQr $genererCodeQr)
+    {
+    }
+
     public function executer(string $token, int $idPressing): Commande
     {
+        if (! preg_match('/\AQR-([1-9][0-9]{0,9})-[0-9]+-[A-F0-9]{16}\z/', $token, $correspondance)) {
+            throw new RuntimeException(self::MESSAGE_REFUS);
+        }
+
+        $idCommande = (int) $correspondance[1];
         $qrCode = QrCode::query()
-            ->where('token', $token)
+            ->where('idCommande', $idCommande)
             ->where('actif', true)
             ->first();
 
@@ -22,11 +31,11 @@ class VerifierQrCode
         }
 
         $commande = Commande::query()
-            ->whereKey($qrCode->idCommande)
+            ->whereKey($idCommande)
             ->where('idPressing', $idPressing)
             ->first();
 
-        if ($commande === null) {
+        if ($commande === null || ! $this->genererCodeQr->estValide($token, $idCommande)) {
             throw new RuntimeException(self::MESSAGE_REFUS);
         }
 
