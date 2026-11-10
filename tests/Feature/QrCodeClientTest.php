@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\QrCode;
 use App\Services\GenererImageQrCode;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\ConstruitCodeQrTest;
 use Tests\Support\CreeDonneesTest;
@@ -11,7 +12,7 @@ use Tests\TestCase;
 
 class QrCodeClientTest extends TestCase
 {
-    use RefreshDatabase, ConstruitCodeQrTest, CreeDonneesTest;
+    use ConstruitCodeQrTest, CreeDonneesTest, RefreshDatabase;
 
     public function test_la_serialisation_qr_ne_contient_pas_le_token(): void
     {
@@ -79,7 +80,7 @@ class QrCodeClientTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringNotContainsString($token, $html);
+        $this->assertStringContainsString($token, $html);
         preg_match_all('/(?:href|src)="([^"]+)"/i', $html, $urlMatches);
         foreach ($urlMatches[1] as $url) {
             $this->assertStringNotContainsString($token, html_entity_decode($url));
@@ -90,7 +91,7 @@ class QrCodeClientTest extends TestCase
     {
         $token = 'token-de-test-decodable-1234567890';
         $svg = app(GenererImageQrCode::class)->executer($token);
-        $document = new \DOMDocument();
+        $document = new \DOMDocument;
 
         $this->assertTrue($document->loadXML($svg));
         $this->assertSame('svg', $document->documentElement?->localName);
@@ -109,5 +110,38 @@ class QrCodeClientTest extends TestCase
             ->get('/client/commandes/'.$commande->idCommande)
             ->assertOk()
             ->assertSee('QR Code indisponible, contactez le pressing');
+    }
+
+    public function test_la_page_client_affiche_le_code_courant_et_regenere_le_qr_a_chaque_tranche(): void
+    {
+        $client = $this->creerClient();
+        $commande = $this->creerCommande($client);
+        $instantAvantChangement = CarbonImmutable::parse('2026-11-10 10:01:59 UTC');
+        $instantApresChangement = CarbonImmutable::parse('2026-11-10 10:02:00 UTC');
+        $codePrecedent = $this->codeQr($commande->idCommande, $instantAvantChangement);
+        $codeCourant = $this->codeQr($commande->idCommande, $instantApresChangement);
+        QrCode::create(['token' => $codePrecedent, 'actif' => true, 'idCommande' => $commande->idCommande]);
+        $this->travelTo($instantAvantChangement);
+
+        $svgPrecedent = app(GenererImageQrCode::class)->executer($codePrecedent);
+        $htmlAvant = $this->actingAs($client->utilisateur)
+            ->get('/client/commandes/'.$commande->idCommande)
+            ->assertOk()
+            ->assertSee($svgPrecedent, false)
+            ->assertSee($codePrecedent)
+            ->getContent();
+
+        $this->travelTo($instantApresChangement);
+        $svgCourant = app(GenererImageQrCode::class)->executer($codeCourant);
+        $htmlApres = $this->get('/client/commandes/'.$commande->idCommande)
+            ->assertOk()
+            ->assertSee($svgCourant, false)
+            ->assertSee($codeCourant)
+            ->assertDontSee($svgPrecedent, false)
+            ->getContent();
+
+        $this->assertNotSame($svgPrecedent, $svgCourant);
+        $this->assertStringContainsString('setInterval(() => window.location.reload(), 120000)', $htmlAvant);
+        $this->assertStringContainsString('setInterval(() => window.location.reload(), 120000)', $htmlApres);
     }
 }

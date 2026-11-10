@@ -76,6 +76,7 @@
                     </button>
                 </div>
                 <p class="mt-3 text-center text-sm text-slate-600">Commande {{ $commande->referenceCommande }}</p>
+                <p class="mt-2 text-center text-sm text-slate-600">Code actuel : <code>{{ $qrCodeToken }}</code></p>
                 <dialog id="qr-plein-ecran" aria-label="QR Code agrandi" class="h-screen w-screen max-h-none max-w-none bg-slate-950/95 p-6 text-white backdrop:bg-slate-950/90">
                     <div class="flex h-full flex-col items-center justify-center gap-6">
                         <form method="dialog" class="absolute right-5 top-5"><button class="rounded-lg !bg-white px-4 py-2 font-semibold !text-slate-900 hover:!bg-white">Fermer</button></form>
@@ -112,4 +113,7 @@
             </ol>
         </section>
     </div>
+    <script>
+        window.setInterval(() => window.location.reload(), 120000);
+    </script>
 @endsection

@@ -32,12 +32,13 @@ class CommandeController extends Controller
             ->whereKey($commande)
             ->firstOrFail();
 
-        $qrCodeSvg = $commande->qrCodeActif === null
+        $qrCodeToken = $commande->qrCodeActif === null
             ? null
-            : app(GenererImageQrCode::class)->executer(
-                app(GenererCodeQr::class)->executer($commande->idCommande),
-            );
+            : app(GenererCodeQr::class)->executer($commande->idCommande);
+        $qrCodeSvg = $qrCodeToken === null
+            ? null
+            : app(GenererImageQrCode::class)->executer($qrCodeToken);
 
-        return view('client.commandes.show', compact('commande', 'qrCodeSvg'));
+        return view('client.commandes.show', compact('commande', 'qrCodeSvg', 'qrCodeToken'));
     }
 }
