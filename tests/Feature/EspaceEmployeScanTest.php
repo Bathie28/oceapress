@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\QrCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\Support\ConstruitCodeQrTest;
 use Tests\Support\CreeDonneesTest;
 use Tests\TestCase;
 
