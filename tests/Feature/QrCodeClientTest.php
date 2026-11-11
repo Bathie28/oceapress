@@ -4,23 +4,20 @@ namespace Tests\Feature;
 
 use App\Models\QrCode;
 use App\Services\GenererImageQrCode;
-use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\Support\ConstruitCodeQrTest;
 use Tests\Support\CreeDonneesTest;
 use Tests\TestCase;
 
 class QrCodeClientTest extends TestCase
 {
-    use ConstruitCodeQrTest, CreeDonneesTest, RefreshDatabase;
+    use RefreshDatabase, CreeDonneesTest;
 
     public function test_la_serialisation_qr_ne_contient_pas_le_token(): void
     {
         $client = $this->creerClient();
         $commande = $this->creerCommande($client);
-        $token = $this->codeQr($commande->idCommande);
         $qrCode = QrCode::create([
-            'token' => $token,
+            'token' => 'token-secret-'.bin2hex(random_bytes(8)),
             'actif' => true,
             'idCommande' => $commande->idCommande,
         ]);
@@ -32,8 +29,8 @@ class QrCodeClientTest extends TestCase
     {
         $client = $this->creerClient();
         $commande = $this->creerCommande($client);
-        $tokenInactif = $this->codeQr($commande->idCommande, now()->subMinutes(2));
-        $tokenActif = $this->codeQr($commande->idCommande);
+        $tokenInactif = 'ancien-token-inactif-'.bin2hex(random_bytes(6));
+        $tokenActif = 'token-actif-'.bin2hex(random_bytes(6));
         QrCode::create(['token' => $tokenInactif, 'actif' => false, 'idCommande' => $commande->idCommande]);
         QrCode::create(['token' => $tokenActif, 'actif' => true, 'idCommande' => $commande->idCommande]);
 
@@ -61,7 +58,7 @@ class QrCodeClientTest extends TestCase
         $clientA = $this->creerClient();
         $clientB = $this->creerClient();
         $commandeB = $this->creerCommande($clientB);
-        QrCode::create(['token' => $this->codeQr($commandeB->idCommande), 'actif' => true, 'idCommande' => $commandeB->idCommande]);
+        QrCode::create(['token' => 'token-prive-'.bin2hex(random_bytes(6)), 'actif' => true, 'idCommande' => $commandeB->idCommande]);
 
         $this->actingAs($clientA->utilisateur)
             ->get('/client/commandes/'.$commandeB->idCommande)
@@ -72,7 +69,7 @@ class QrCodeClientTest extends TestCase
     {
         $client = $this->creerClient();
         $commande = $this->creerCommande($client);
-        $token = $this->codeQr($commande->idCommande);
+        $token = 'secret-qr-token-'.bin2hex(random_bytes(8));
         QrCode::create(['token' => $token, 'actif' => true, 'idCommande' => $commande->idCommande]);
 
         $html = $this->actingAs($client->utilisateur)
@@ -80,7 +77,7 @@ class QrCodeClientTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringContainsString($token, $html);
+        $this->assertStringNotContainsString($token, $html);
         preg_match_all('/(?:href|src)="([^"]+)"/i', $html, $urlMatches);
         foreach ($urlMatches[1] as $url) {
             $this->assertStringNotContainsString($token, html_entity_decode($url));
@@ -91,7 +88,7 @@ class QrCodeClientTest extends TestCase
     {
         $token = 'token-de-test-decodable-1234567890';
         $svg = app(GenererImageQrCode::class)->executer($token);
-        $document = new \DOMDocument;
+        $document = new \DOMDocument();
 
         $this->assertTrue($document->loadXML($svg));
         $this->assertSame('svg', $document->documentElement?->localName);
@@ -112,36 +109,30 @@ class QrCodeClientTest extends TestCase
             ->assertSee('QR Code indisponible, contactez le pressing');
     }
 
-    public function test_la_page_client_affiche_le_code_courant_et_regenere_le_qr_a_chaque_tranche(): void
+    public function test_la_page_client_affiche_le_meme_qr_fixe_dans_le_temps_sans_rechargement_automatique(): void
     {
         $client = $this->creerClient();
         $commande = $this->creerCommande($client);
-        $instantAvantChangement = CarbonImmutable::parse('2026-11-10 10:01:59 UTC');
-        $instantApresChangement = CarbonImmutable::parse('2026-11-10 10:02:00 UTC');
-        $codePrecedent = $this->codeQr($commande->idCommande, $instantAvantChangement);
-        $codeCourant = $this->codeQr($commande->idCommande, $instantApresChangement);
-        QrCode::create(['token' => $codePrecedent, 'actif' => true, 'idCommande' => $commande->idCommande]);
-        $this->travelTo($instantAvantChangement);
+        $token = 'token-fixe-'.bin2hex(random_bytes(8));
+        QrCode::create(['token' => $token, 'actif' => true, 'idCommande' => $commande->idCommande]);
+        $svgAttendu = app(GenererImageQrCode::class)->executer($token);
 
-        $svgPrecedent = app(GenererImageQrCode::class)->executer($codePrecedent);
         $htmlAvant = $this->actingAs($client->utilisateur)
             ->get('/client/commandes/'.$commande->idCommande)
             ->assertOk()
-            ->assertSee($svgPrecedent, false)
-            ->assertSee($codePrecedent)
+            ->assertSee($svgAttendu, false)
             ->getContent();
 
-        $this->travelTo($instantApresChangement);
-        $svgCourant = app(GenererImageQrCode::class)->executer($codeCourant);
+        $this->travelTo(now()->addMinutes(10));
         $htmlApres = $this->get('/client/commandes/'.$commande->idCommande)
             ->assertOk()
-            ->assertSee($svgCourant, false)
-            ->assertSee($codeCourant)
-            ->assertDontSee($svgPrecedent, false)
+            ->assertSee($svgAttendu, false)
             ->getContent();
 
-        $this->assertNotSame($svgPrecedent, $svgCourant);
-        $this->assertStringContainsString('setInterval(() => window.location.reload(), 120000)', $htmlAvant);
-        $this->assertStringContainsString('setInterval(() => window.location.reload(), 120000)', $htmlApres);
+        foreach ([$htmlAvant, $htmlApres] as $html) {
+            $this->assertStringNotContainsString('location.reload', $html);
+            $this->assertStringNotContainsString('Code actuel', $html);
+        }
+        $this->assertSame($token, QrCode::where('idCommande', $commande->idCommande)->where('actif', true)->value('token'));
     }
 }

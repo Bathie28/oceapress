@@ -12,13 +12,12 @@ use App\Services\EnregistrerCommande;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
-use Tests\Support\ConstruitCodeQrTest;
 use Tests\Support\CreeDonneesTest;
 use Tests\TestCase;
 
 class EnregistrerCommandeTest extends TestCase
 {
-    use RefreshDatabase, ConstruitCodeQrTest, CreeDonneesTest;
+    use RefreshDatabase, CreeDonneesTest;
 
     private function donneesClient(string $email): array
     {
@@ -36,9 +35,29 @@ class EnregistrerCommandeTest extends TestCase
         ]);
     }
 
+    public function test_deux_commandes_recoivent_des_tokens_qr_aleatoires_distincts_sans_cle_secrete(): void
+    {
+        $this->assertNull(config('services.qr'));
+        $pressing = $this->creerPressing();
+        $employe = $this->creerEmploye($pressing);
+        $this->ajouterTarifPiece($pressing, 'Chemise', '1000');
+        $creer = fn () => app(EnregistrerCommande::class)->executer(
+            $this->donneesClient('qr-fixe@example.test'),
+            [['typeArticle' => 'Chemise', 'quantite' => 1]],
+            $employe->idEmploye,
+            $pressing->idPressing,
+            'PIECE', 'REPASSAGE',
+        );
+
+        $premier = $creer()->qrCodeActif()->value('token');
+        $second = $creer()->qrCodeActif()->value('token');
+
+        $this->assertNotSame($premier, $second);
+        $this->assertStringStartsNotWith('QR-', $premier);
+    }
+
     public function test_cree_commande_articles_qr_historique_et_facture_avec_le_total_calcule(): void
     {
-        config(['services.qr.secret' => 'cle-secrete-test-qr']);
         $pressing = $this->creerPressing();
         $employe = $this->creerEmploye($pressing);
         $this->ajouterTarifPiece($pressing, 'Chemise', '1001');
@@ -58,7 +77,7 @@ class EnregistrerCommandeTest extends TestCase
         $this->assertSame(2, Article::where('idCommande', $commande->idCommande)->count());
         $this->assertSame([3, 2], Article::where('idCommande', $commande->idCommande)->orderBy('idArticle')->pluck('quantite')->all());
         $this->assertTrue($commande->qrCodeActif()->exists());
-        $this->assertSame($this->codeQr($commande->idCommande), $commande->qrCodeActif()->value('token'));
+        $this->assertMatchesRegularExpression('/\A[A-Za-z0-9]{32}\z/', $commande->qrCodeActif()->value('token'));
         $this->assertSame(1, HistoriqueCommande::where('idCommande', $commande->idCommande)->count());
         $this->assertSame(Commande::STATUT_EN_ATTENTE, $commande->statut);
         $this->assertSame('REPASSAGE', $commande->fresh()->formule);
