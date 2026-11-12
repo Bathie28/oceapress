@@ -95,7 +95,7 @@
             <h2>Employés</h2>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full divide-y">
+            <table class="w-full divide-y [&_td]:py-2 [&_th]:py-2">
                 <thead><tr><th>Nom</th><th>Prénom</th><th>E-mail</th><th>Fonction</th><th>Statut</th><th>Action</th></tr></thead>
                 <tbody>
                 @forelse ($pressing->employes as $employe)
