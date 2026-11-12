@@ -17,8 +17,8 @@
         a { color: #2563EB; text-underline-offset: 3px; }
         a:hover { color: #1E40AF; }
         button, input, select, textarea { font: inherit; }
-        button, .op-button-primary { border: 0; border-radius: 9999px !important; background: #2563EB !important; color: #fff !important; padding: .7rem 1.15rem; font-weight: 650; cursor: pointer; }
-        button:hover, .op-button-primary:hover { background: #1E40AF !important; }
+        button:not([class]), .op-button-primary { border: 0; border-radius: 9999px; background: #2563EB; color: #fff !important; padding: .7rem 1.15rem; font-weight: 650; cursor: pointer; }
+        button:not([class]):hover, .op-button-primary:hover { background: #1E40AF !important; }
         .op-button-secondary { display: inline-flex; align-items: center; justify-content: center; border: 1px solid #CBD5E1; border-radius: 9999px; background: #fff; color: #0F172A; padding: .65rem 1rem; font-weight: 600; text-decoration: none; }
         input:not([type=checkbox]):not([type=radio]):not([type=file]), select, textarea { border: 1px solid #CBD5E1; border-radius: .7rem; background: #fff; color: #0F172A; padding: .6rem .75rem; }
         input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible { outline: 3px solid #93C5FD; outline-offset: 2px; }

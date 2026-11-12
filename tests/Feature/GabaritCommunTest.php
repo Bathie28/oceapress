@@ -27,6 +27,13 @@ class GabaritCommunTest extends TestCase
             ->assertSee('class="block w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-[#0F172A] focus:border-[#2563EB] focus:outline-none"', false);
     }
 
+    public function test_regle_globale_des_boutons_ne_surgreffe_plus_les_classes(): void
+    {
+        $this->get('/login')->assertOk()
+            ->assertSee('button:not([class]), .op-button-primary { border: 0; border-radius: 9999px; background: #2563EB; color: #fff !important; padding: .7rem 1.15rem; font-weight: 650; cursor: pointer; }', false)
+            ->assertDontSee('border-radius: 9999px !important', false);
+    }
+
     public function test_accueil_employe_utilise_le_gabarit_et_sa_navigation(): void
     {
         $employe = $this->creerEmploye();
