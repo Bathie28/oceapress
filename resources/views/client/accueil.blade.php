@@ -1,84 +1,66 @@
 @extends('layouts.connecte')
 
 @section('title', 'Espace client — OceaPress')
+@section('pageTitle', 'Espace client')
 
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
-    <header>
-        <h1 class="text-3xl font-bold text-[#0F172A]">Bonjour {{ $utilisateur->prenom }}</h1>
-        <p class="mt-2 text-[#64748B]">Voici l’état actuel de vos commandes.</p>
-    </header>
+    <p class="text-op-muted">Bonjour {{ $utilisateur->prenom }}. Voici l’état actuel de vos commandes.</p>
 
     <section aria-label="Synthèse du compte">
-        <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <li>
-                <x-card class="h-full">
-                    <strong class="block text-4xl font-bold text-[#2563EB]" data-commandes-en-cours>{{ $nombreCommandesEnCours }}</strong>
-                    <span class="mt-2 block text-sm font-semibold text-[#64748B]">Commandes en cours</span>
-                </x-card>
-            </li>
-            <li>
-                <x-card class="h-full">
-                    <strong class="block text-2xl font-bold">{{ $commandesPretes->count() }}</strong>
-                    <span class="mt-2 block text-sm font-semibold text-[#64748B]">Commandes prêtes à récupérer</span>
-                </x-card>
-            </li>
-            <li>
-                <x-card class="h-full">
-                    <strong class="block text-2xl font-bold">{{ $notificationsNonLues->count() }}</strong>
-                    <span class="mt-2 block text-sm font-semibold text-[#64748B]">Notifications non lues</span>
-                </x-card>
-            </li>
+        <ul class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <li><x-stat-card name="commandes-en-cours" title="Commandes en cours" :value="$nombreCommandesEnCours" icon="bag" tint="blue" /></li>
+            <li><x-stat-card name="commandes-pretes" title="Prêtes à récupérer" :value="$commandesPretes->count()" icon="check" tint="green" /></li>
+            <li><x-stat-card name="notifications-non-lues" title="Notifications non lues" :value="$nombreNotificationsNonLues" icon="bell" tint="orange" /></li>
         </ul>
     </section>
 
-    <div class="grid gap-6 lg:grid-cols-2">
-        <x-card aria-labelledby="commandes-pretes-titre">
-            <h2 id="commandes-pretes-titre" class="text-xl font-semibold">Commandes prêtes à récupérer</h2>
-            <ul class="mt-4 space-y-3">
-                @forelse ($commandesPretes as $commande)
-                    <li class="flex items-center justify-between gap-4 rounded-xl border border-[#E2E8F0] p-4">
-                        <div>
-                            <a href="{{ route('client.commandes.show', $commande->idCommande) }}" class="font-semibold text-[#2563EB] hover:underline">{{ $commande->referenceCommande }}</a>
-                            <div class="mt-2"><x-status-badge status="PRETE" /></div>
-                        </div>
-                    </li>
-                @empty
-                    <li class="rounded-xl bg-[#F8FAFC] p-4 text-[#64748B]">Aucune commande prête à récupérer.</li>
-                @endforelse
-            </ul>
-        </x-card>
-
-        <x-card aria-labelledby="notifications-titre">
-            <div class="flex items-center justify-between gap-4">
-                <h2 id="notifications-titre" class="text-xl font-semibold">Dernières notifications non lues</h2>
-                <a href="{{ route('client.notifications.index') }}" class="text-sm font-semibold text-[#2563EB] hover:underline">Voir tout</a>
-            </div>
-            <ul class="mt-4 space-y-3">
-                @forelse ($notificationsNonLues as $notification)
-                    <li class="rounded-xl border border-[#E2E8F0] p-4">
-                        <a href="{{ route('client.notifications.show', $notification->idNotification) }}" class="font-semibold text-[#2563EB] hover:underline">{{ $notification->titre }}</a>
-                        <p class="mt-1 text-sm text-[#64748B]">{{ $notification->message }}</p>
-                    </li>
-                @empty
-                    <li class="rounded-xl bg-[#F8FAFC] p-4 text-[#64748B]">Aucune notification non lue.</li>
-                @endforelse
-            </ul>
-        </x-card>
-    </div>
-
     @if ($nombreCommandesEnCours === 0 && $commandesPretes->isEmpty())
-        <p class="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-[#64748B]">Aucune commande en cours</p>
+        <p class="op-card p-4 text-op-muted">Aucune commande en cours</p>
     @endif
 
-    @if ($commandeAvecQrCode)
-        <x-card>
-            <h2 class="text-xl font-semibold">Accès au QR code</h2>
-            <p class="mt-2 text-sm text-[#64748B]">Commande la plus récente avec QR code : {{ $commandeAvecQrCode->referenceCommande }}</p>
-            <a href="{{ route('client.commandes.show', $commandeAvecQrCode->idCommande) }}" class="mt-4 inline-flex rounded-xl bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white">Afficher le QR code</a>
-        </x-card>
-    @endif
+    <x-section-card title="Accès au QR code" id="qr-code-titre">
+        @if ($commandeAvecQrCode)
+            <x-slot:action><a href="{{ route('client.commandes.show', $commandeAvecQrCode->idCommande) }}" class="op-button-primary !px-4 !py-2 !text-sm">Afficher le QR code</a></x-slot:action>
+        @endif
+        <div class="flex items-center gap-4">
+            <span class="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-op-tint-cyan text-op-icon-cyan"><x-icon name="qr" class="h-6 w-6 shrink-0" /></span>
+            @if ($commandeAvecQrCode)
+                <p class="text-sm text-op-muted">Commande la plus récente avec QR code : <span class="font-semibold text-op-ink">{{ $commandeAvecQrCode->referenceCommande }}</span>. Présentez-le au pressing pour récupérer vos vêtements.</p>
+            @else
+                <p class="text-sm text-op-muted">Aucune commande avec un QR code actif pour le moment.</p>
+            @endif
+        </div>
+    </x-section-card>
 
-    <x-secondary-button :href="route('client.commandes.index')">Consulter mes commandes</x-secondary-button>
+    <div class="grid gap-6 lg:grid-cols-2">
+        <x-section-card title="Commandes prêtes à récupérer" id="commandes-pretes-titre">
+            <x-slot:action><a href="{{ route('client.commandes.index') }}" class="text-op-accent hover:underline">Consulter mes commandes</a></x-slot:action>
+            <ul class="space-y-3">
+                @forelse ($commandesPretes as $commande)
+                    <li class="flex items-center justify-between gap-4 rounded-xl border border-op-line p-4">
+                        <a href="{{ route('client.commandes.show', $commande->idCommande) }}" class="font-semibold text-op-accent hover:underline">{{ $commande->referenceCommande }}</a>
+                        <x-status-badge status="PRETE" />
+                    </li>
+                @empty
+                    <li class="rounded-xl bg-op-page p-4 text-op-muted">Aucune commande prête à récupérer.</li>
+                @endforelse
+            </ul>
+        </x-section-card>
+
+        <x-section-card title="Dernières notifications non lues" id="notifications-titre">
+            <x-slot:action><a href="{{ route('client.notifications.index') }}" class="text-op-accent hover:underline">Voir tout</a></x-slot:action>
+            <ul class="space-y-3">
+                @forelse ($notificationsNonLues as $notification)
+                    <li class="rounded-xl border border-op-line p-4">
+                        <a href="{{ route('client.notifications.show', $notification->idNotification) }}" class="font-semibold text-op-accent hover:underline">{{ $notification->titre }}</a>
+                        <p class="mt-1 text-sm text-op-muted">{{ $notification->message }}</p>
+                    </li>
+                @empty
+                    <li class="rounded-xl bg-op-page p-4 text-op-muted">Aucune notification non lue.</li>
+                @endforelse
+            </ul>
+        </x-section-card>
+    </div>
 </div>
 @endsection

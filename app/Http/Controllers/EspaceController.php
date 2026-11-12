@@ -30,6 +30,10 @@ class EspaceController extends Controller
         $commandesPretes = $commandes->where('statut', Commande::STATUT_PRETE)->values();
         $commandeRecente = $commandes->first();
         $commandeAvecQrCode = $commandes->first(fn (Commande $commande) => $commande->qrCodeActif !== null);
+        $nombreNotificationsNonLues = Notification::query()
+            ->where('idClient', $client->idClient)
+            ->where('lu', false)
+            ->count();
         $notificationsNonLues = Notification::query()
             ->where('idClient', $client->idClient)
             ->where('lu', false)
@@ -43,6 +47,7 @@ class EspaceController extends Controller
             'nombreCommandesEnCours',
             'commandesPretes',
             'notificationsNonLues',
+            'nombreNotificationsNonLues',
             'commandeRecente',
             'commandeAvecQrCode',
         ));
@@ -70,7 +75,10 @@ class EspaceController extends Controller
             ->where('statut', Commande::STATUT_PRETE)
             ->count();
 
-        return view('employe.accueil', compact('utilisateur', 'pressingActif', 'compteurs'));
+        return view('employe.accueil', [
+            ...compact('utilisateur', 'pressingActif', 'compteurs'),
+            ...$this->activiteDuPressing($pressingActif),
+        ]);
     }
 
     public function tableauDeBordEmploye(Request $request): View
@@ -91,6 +99,37 @@ class EspaceController extends Controller
             ->pluck('total', 'statut')
             ->all());
 
+        ['commandesNonRecuperees' => $commandesNonRecuperees, 'commandesParJour' => $commandesParJour, 'commandesRestitutionAujourdhui' => $commandesRestitutionAujourdhui] = $this->activiteDuPressing($idPressing);
+
+        return view('employe.tableau-de-bord', compact(
+            'compteurs',
+            'commandesNonRecuperees',
+            'commandesParJour',
+            'commandesRestitutionAujourdhui',
+        ));
+    }
+
+    public function adminAccueil(Request $request): View
+    {
+        $utilisateur = $request->user();
+        $pressings = $utilisateur->administrateur->pressings()
+            ->withCount([
+                'employes as employesActifs' => fn ($query) => $query->where('actif', true),
+                'employes as employesInactifs' => fn ($query) => $query->where('actif', false),
+            ])
+            ->orderBy('nom')
+            ->get();
+
+        return view('admin.accueil', compact('utilisateur', 'pressings'));
+    }
+
+    /**
+     * Graphique sur sept jours et listes d'action d'un pressing.
+     *
+     * @return array{commandesNonRecuperees: \Illuminate\Support\Collection, commandesParJour: \Illuminate\Support\Collection, commandesRestitutionAujourdhui: \Illuminate\Support\Collection}
+     */
+    private function activiteDuPressing(int $idPressing): array
+    {
         $commandesNonRecuperees = Commande::query()
             ->where('idPressing', $idPressing)
             ->where('statut', Commande::STATUT_PRETE)
@@ -145,25 +184,6 @@ class EspaceController extends Controller
             ->orderBy('referenceCommande')
             ->get();
 
-        return view('employe.tableau-de-bord', compact(
-            'compteurs',
-            'commandesNonRecuperees',
-            'commandesParJour',
-            'commandesRestitutionAujourdhui',
-        ));
-    }
-
-    public function adminAccueil(Request $request): View
-    {
-        $utilisateur = $request->user();
-        $pressings = $utilisateur->administrateur->pressings()
-            ->withCount([
-                'employes as employesActifs' => fn ($query) => $query->where('actif', true),
-                'employes as employesInactifs' => fn ($query) => $query->where('actif', false),
-            ])
-            ->orderBy('nom')
-            ->get();
-
-        return view('admin.accueil', compact('utilisateur', 'pressings'));
+        return compact('commandesNonRecuperees', 'commandesParJour', 'commandesRestitutionAujourdhui');
     }
 }

@@ -14,7 +14,6 @@
         :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
         body { margin: 0; background: #F5F6FA; color: #111827; }
         * { box-sizing: border-box; }
-        a { color: inherit; text-decoration: none; }
         button, input, select, textarea { font: inherit; }
         button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid #93C5FD; outline-offset: 3px; }
         .op-button-primary { display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 9999px; background: #2563EB; color: #fff !important; padding: .7rem 1.15rem; font-weight: 650; cursor: pointer; text-decoration: none; }

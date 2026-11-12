@@ -2,6 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Commande;
+use App\Models\Notification;
+use App\Models\Pressing;
+use App\Models\QrCode;
 use App\Models\Utilisateur;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Blade;
@@ -73,6 +77,109 @@ class DesignEspacesConnectesTest extends TestCase
         $this->assertStringContainsString('Opérations', $html);
         $this->assertMatchesRegularExpression('/<a href="[^"]*\/employe"\s+aria-current="page"\s+class="[^"]*bg-\[#2563EB\] !text-white[^"]*">/', $html);
         $this->assertSame(1, substr_count($html, 'aria-current="page"'));
+    }
+
+    private function valeurIndicateur(string $html, string $nom): string
+    {
+        $this->assertMatchesRegularExpression('/data-stat="'.preg_quote($nom, '/').'".*?data-stat-value>([^<]*)</s', $html, "Indicateur {$nom} absent.");
+        preg_match('/data-stat="'.preg_quote($nom, '/').'".*?data-stat-value>([^<]*)</s', $html, $resultat);
+
+        return trim($resultat[1]);
+    }
+
+    public function test_accueil_employe_affiche_les_compteurs_issus_de_la_base(): void
+    {
+        $pressing = $this->creerPressing();
+        $employe = $this->creerEmploye($pressing);
+        $autrePressing = $this->creerPressing();
+        foreach (range(1, 3) as $i) {
+            $this->creerCommande(null, $pressing, Commande::STATUT_EN_ATTENTE);
+        }
+        $this->creerCommande(null, $pressing, Commande::STATUT_EN_TRAITEMENT);
+        $this->creerCommande(null, $pressing, Commande::STATUT_PRETE);
+        $this->creerCommande(null, $pressing, Commande::STATUT_PRETE);
+        $this->creerCommande(null, $autrePressing, Commande::STATUT_EN_ATTENTE);
+
+        $html = $this->actingAs($employe->utilisateur)->get(route('employe.accueil'))->assertOk()->getContent();
+
+        $this->assertSame('3', $this->valeurIndicateur($html, 'en-attente'));
+        $this->assertSame('1', $this->valeurIndicateur($html, 'en-traitement'));
+        $this->assertSame('2', $this->valeurIndicateur($html, 'pretes'));
+        $this->assertSame('2', $this->valeurIndicateur($html, 'non-recuperees'));
+        $this->assertStringContainsString('Commandes enregistrées sur 7 jours', $html);
+        $this->assertStringContainsString('data-day="'.now()->toDateString().'" data-commandes-jour="6"', $html);
+        $this->assertStringContainsString('Commandes prêtes à relancer', $html);
+    }
+
+    public function test_accueil_client_affiche_les_compteurs_issus_de_la_base(): void
+    {
+        $client = $this->creerClient();
+        $pressing = $this->creerPressing();
+        $this->creerCommande($client, $pressing, Commande::STATUT_EN_ATTENTE);
+        $enTraitement = $this->creerCommande($client, $pressing, Commande::STATUT_EN_TRAITEMENT);
+        $this->creerCommande($client, $pressing, Commande::STATUT_PRETE);
+        $this->creerCommande($this->creerClient(), $pressing, Commande::STATUT_EN_ATTENTE);
+        QrCode::create(['token' => 'qr-design-client', 'actif' => true, 'idCommande' => $enTraitement->idCommande]);
+        foreach (range(1, 7) as $i) {
+            Notification::create([
+                'titre' => "Notification {$i}", 'message' => 'Message', 'type' => 'STATUT', 'canal' => 'IN_APP',
+                'dateEnvoi' => now(), 'lu' => $i === 7, 'idClient' => $client->idClient,
+            ]);
+        }
+
+        $html = $this->actingAs($client->utilisateur)->get(route('client.accueil'))->assertOk()->getContent();
+
+        $this->assertSame('2', $this->valeurIndicateur($html, 'commandes-en-cours'));
+        $this->assertSame('1', $this->valeurIndicateur($html, 'commandes-pretes'));
+        $this->assertSame('6', $this->valeurIndicateur($html, 'notifications-non-lues'));
+        $this->assertStringContainsString('Accès au QR code', $html);
+        $this->assertStringContainsString($enTraitement->referenceCommande, $html);
+        $this->assertStringContainsString('href="'.route('client.commandes.show', $enTraitement->idCommande).'"', $html);
+    }
+
+    public function test_accueil_administrateur_affiche_les_compteurs_issus_de_la_base(): void
+    {
+        $administrateur = $this->creerAdministrateur();
+        $this->actingAs($administrateur);
+        $premier = $this->creerPressing();
+        $second = $this->creerPressing();
+        $this->creerEmploye($premier);
+        $this->creerEmploye($premier);
+        $this->creerEmploye($second);
+        $this->creerEmploye($second)->update(['actif' => false]);
+        Pressing::create(['nom' => 'Pressing non géré', 'adresse' => 'Ailleurs', 'dateCreation' => now()->toDateString(), 'statut' => 'ACTIF']);
+
+        $html = $this->get(route('admin.accueil'))->assertOk()->getContent();
+
+        $this->assertSame('2', $this->valeurIndicateur($html, 'pressings-geres'));
+        $this->assertSame('3', $this->valeurIndicateur($html, 'employes-actifs'));
+        $this->assertSame('1', $this->valeurIndicateur($html, 'employes-inactifs'));
+        $this->assertStringContainsString('Pressing Test', $html);
+        $this->assertStringNotContainsString('Pressing non géré', $html);
+    }
+
+    public function test_aucune_page_connectee_ne_contient_de_texte_d_exemple_ni_de_montant_fictif(): void
+    {
+        $pages = [
+            [$this->creerClient()->utilisateur, ['client.accueil', 'client.commandes.index', 'client.notifications.index', 'client.mot-de-passe.edit']],
+            [$this->creerEmploye()->utilisateur, ['employe.accueil', 'employe.tableau-de-bord', 'employe.commandes.index', 'employe.commandes.create', 'employe.scan', 'employe.mot-de-passe.edit']],
+            [$this->creerAdministrateur(), ['admin.accueil', 'admin.pressings.index', 'admin.pressings.create']],
+        ];
+
+        foreach ($pages as [$utilisateur, $routes]) {
+            foreach ($routes as $nomRoute) {
+                $html = $this->actingAs($utilisateur)->get(route($nomRoute))->assertOk()->getContent();
+                $texte = html_entity_decode(strip_tags(preg_replace('/<(script|style)\b.*?<\/\1>/s', '', $html)));
+
+                $this->assertDoesNotMatchRegularExpression('/lorem ipsum|john doe|jane doe|texte d.exemple|donn[ée]es? fictives?|example\.com/iu', $texte, "Texte d’exemple sur {$nomRoute}.");
+                $this->assertDoesNotMatchRegularExpression('/\d[\d\s.,]*\s?(€|\$|F\s?CFA|FCFA|XOF|EUR|USD)/u', $texte, "Montant affiché sans donnée sur {$nomRoute}.");
+
+                preg_match_all('/data-stat-value>([^<]*)</', $html, $valeurs);
+                foreach ($valeurs[1] as $valeur) {
+                    $this->assertSame('0', trim($valeur), "Indicateur non nul sans donnée sur {$nomRoute}.");
+                }
+            }
+        }
     }
 
     public function test_la_carte_d_indicateur_affiche_titre_valeur_et_icone_dans_un_carre_teinte(): void
