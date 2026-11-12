@@ -78,14 +78,14 @@
                 <h2 class="mb-4 text-xl font-semibold">Changer le statut</h2>
                 <form method="POST" action="{{ route('employe.commandes.statut', $commande->idCommande) }}" class="flex flex-wrap items-end gap-3">
                     @csrf
-                    <div class="mb-4"><x-form-label for="nouveauStatut">Nouveau statut</x-form-label><select id="nouveauStatut" name="nouveauStatut" required class="block w-full rounded-xl border border-gray-300 px-3 py-2 focus:border-blue-600 focus:outline-none">
+                    <div><x-form-label for="nouveauStatut">Nouveau statut</x-form-label><select id="nouveauStatut" name="nouveauStatut" required class="block h-[42px] w-full rounded-xl border border-gray-300 bg-white px-3 py-2 focus:border-blue-600 focus:outline-none">
                         <option value="" selected disabled>Choisir un statut</option>
                         @foreach ($statutsAccessibles as $statut)
                             <option value="{{ $statut }}">{{ ['EN_ATTENTE' => 'En attente', 'EN_TRAITEMENT' => 'En traitement', 'PRETE' => 'Prête', 'RECUPEREE' => 'Récupérée', 'ANNULEE' => 'Annulée'][$statut] }}</option>
                         @endforeach
                     </select></div>
-                    <div class="mb-4"><x-form-label for="commentaire">Commentaire</x-form-label><x-form-input id="commentaire" name="commentaire" /></div>
-                    <button class="mt-2 rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white">Enregistrer le statut</button>
+                    <div><x-form-label for="commentaire">Commentaire</x-form-label><x-form-input id="commentaire" name="commentaire" class="h-[42px]" /></div>
+                    <button class="inline-flex h-[42px] items-center justify-center rounded-lg bg-blue-700 px-4 font-semibold text-white">Enregistrer le statut</button>
                 </form>
             </section>
         @endif
