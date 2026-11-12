@@ -75,5 +75,16 @@ Les erreurs de formulaire s'affichent en anglais dans une interface française (
 ## Remarques
 
 - Le build front (`public/build`, non versionné) datait du 7 novembre et ne contenait pas les classes Tailwind ajoutées depuis. Je l'ai reconstruit avec `npm run build`. À refaire après chaque changement de classes si vous n'utilisez pas `npm run dev`.
-- `.claude/launch.json` a été ajouté pour lancer le serveur local de vérification (port 8123, base `oceapress_test`, e-mails envoyés dans le journal). Vous pouvez le supprimer.
-- Vos modifications en cours (non commitées) dans `create.blade.php`, `layouts/app.blade.php` et les tests n'ont pas été modifiées. Rien n'a été commité.
+- `.claude/launch.json` (non versionné) sert à lancer le serveur local de vérification (port 8123, base `oceapress_test`, e-mails envoyés dans le journal).
+- Les modifications en cours dans `create.blade.php`, `layouts/app.blade.php`, `AdminPressingsTest.php`, `EspaceEmployeActionsTest.php`, `GabaritCommunTest.php` et `ReproductionSessionEmployeTest.php` n'ont pas été modifiées et ne sont pas commitées.
+
+## Commits
+
+| Commit | Contenu |
+|---|---|
+| `6cf0f94` | Corrections 1, 2, 5 et 6, avec leurs tests |
+| `c0d236f` | Corrections 3 et 4 (interface du gabarit connecté), avec leurs tests |
+| `c68f28e`, `83c3fb7` | Retour au QR Code fixe par commande ; la rotation toutes les 2 minutes est reportée aux perspectives |
+| `87c2478` | Retrait de la recherche de commande par référence, reportée aux perspectives |
+
+État de la suite après ces commits : **277 tests au vert, 1144 assertions**. Le total a changé depuis le chiffre donné plus haut : les tests de rotation ont été réécrits pour le QR fixe et les deux tests de recherche par référence ont été retirés avec la fonctionnalité.
