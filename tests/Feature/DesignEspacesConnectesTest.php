@@ -41,7 +41,7 @@ class DesignEspacesConnectesTest extends TestCase
             $html = $this->actingAs($utilisateur)->get($url)->assertOk()->getContent();
 
             $this->assertMatchesRegularExpression('/<aside id="sidebar-connecte"[^>]*class="[^"]*bg-op-sidebar[^"]*"[^>]*aria-label="Navigation latérale"/u', $html, "Barre latérale absente ({$role}).");
-            $this->assertMatchesRegularExpression('/<header[^>]*>.*?<button id="ouvrir-menu-connecte"[^>]*aria-expanded="false"[^>]*>Menu<\/button>.*?<\/header>/su', $html, "En-tête ou bouton Menu absent ({$role}).");
+            $this->assertMatchesRegularExpression('/<header[^>]*>.*?<button id="ouvrir-menu-connecte"[^>]*aria-expanded="false"[^>]*>.*?<span class="sr-only">Menu<\/span><\/button>.*?<\/header>/su', $html, "En-tête ou bouton Menu absent ({$role}).");
             $this->assertStringContainsString('id="recherche-rapide-champ"', $html, "Champ de recherche absent ({$role}).");
             $this->assertStringContainsString('aria-label="Fil d’Ariane"', $html, "Fil d’Ariane absent ({$role}).");
             $this->assertMatchesRegularExpression('/data-avatar><span aria-hidden="true">UT<\/span>/', $html, "Initiales absentes ({$role}).");
@@ -106,6 +106,8 @@ class DesignEspacesConnectesTest extends TestCase
         $this->assertSame('1', $this->valeurIndicateur($html, 'en-traitement'));
         $this->assertSame('2', $this->valeurIndicateur($html, 'pretes'));
         $this->assertSame('2', $this->valeurIndicateur($html, 'non-recuperees'));
+        $this->assertMatchesRegularExpression('/data-stat="en-attente".*?data-stat-progress="50".*?50 % des commandes en cours/s', $html);
+        $this->assertMatchesRegularExpression('/data-stat="en-traitement".*?data-stat-progress="17"/s', $html);
         $this->assertStringContainsString('Commandes enregistrées sur 7 jours', $html);
         $this->assertStringContainsString('data-day="'.now()->toDateString().'" data-commandes-jour="6"', $html);
         $this->assertStringContainsString('Commandes prêtes à relancer', $html);
@@ -132,6 +134,8 @@ class DesignEspacesConnectesTest extends TestCase
         $this->assertSame('2', $this->valeurIndicateur($html, 'commandes-en-cours'));
         $this->assertSame('1', $this->valeurIndicateur($html, 'commandes-pretes'));
         $this->assertSame('6', $this->valeurIndicateur($html, 'notifications-non-lues'));
+        $this->assertMatchesRegularExpression('/data-compteur-notifications[^>]*>6<\/span>/', $html);
+        $this->assertMatchesRegularExpression('/data-stat="commandes-en-cours".*?data-stat-progress="67".*?67 % de vos commandes/s', $html);
         $this->assertStringContainsString('Accès au QR code', $html);
         $this->assertStringContainsString($enTraitement->referenceCommande, $html);
         $this->assertStringContainsString('href="'.route('client.commandes.show', $enTraitement->idCommande).'"', $html);

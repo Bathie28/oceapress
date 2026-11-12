@@ -3,15 +3,19 @@
 @section('title', 'Espace client — OceaPress')
 @section('pageTitle', 'Espace client')
 
+@php
+    $part = fn (int $nombre): int => $nombreCommandes > 0 ? (int) round($nombre / $nombreCommandes * 100) : 0;
+@endphp
+
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
     <p class="text-op-muted">Bonjour {{ $utilisateur->prenom }}. Voici l’état actuel de vos commandes.</p>
 
     <section aria-label="Synthèse du compte">
         <ul class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <li><x-stat-card name="commandes-en-cours" title="Commandes en cours" :value="$nombreCommandesEnCours" icon="bag" tint="blue" /></li>
-            <li><x-stat-card name="commandes-pretes" title="Prêtes à récupérer" :value="$commandesPretes->count()" icon="check" tint="green" /></li>
-            <li><x-stat-card name="notifications-non-lues" title="Notifications non lues" :value="$nombreNotificationsNonLues" icon="bell" tint="orange" /></li>
+            <li><x-stat-card name="commandes-en-cours" title="Commandes en cours" :value="$nombreCommandesEnCours" icon="bag" tint="blue" subtitle="En attente ou en traitement" :progress="$part($nombreCommandesEnCours)" :caption="$part($nombreCommandesEnCours).' % de vos commandes'" /></li>
+            <li><x-stat-card name="commandes-pretes" title="Prêtes à récupérer" :value="$commandesPretes->count()" icon="check" tint="green" subtitle="À retirer au pressing" :progress="$part($commandesPretes->count())" :caption="$part($commandesPretes->count()).' % de vos commandes'" /></li>
+            <li><x-stat-card name="notifications-non-lues" title="Notifications non lues" :value="$nombreNotificationsNonLues" icon="bell" tint="orange" subtitle="À consulter" /></li>
         </ul>
     </section>
 

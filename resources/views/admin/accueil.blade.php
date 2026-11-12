@@ -3,15 +3,22 @@
 @section('title', 'Espace administrateur — OceaPress')
 @section('pageTitle', 'Espace administrateur')
 
+@php
+    $employesActifs = (int) $pressings->sum('employesActifs');
+    $employesInactifs = (int) $pressings->sum('employesInactifs');
+    $totalEmployes = $employesActifs + $employesInactifs;
+    $part = fn (int $nombre): int => $totalEmployes > 0 ? (int) round($nombre / $totalEmployes * 100) : 0;
+@endphp
+
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
     <p class="text-op-muted">Bonjour {{ $utilisateur->prenom }}. Gérez les pressings et leurs équipes.</p>
 
     <section aria-label="Synthèse des pressings">
         <ul class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <li><x-stat-card name="pressings-geres" title="Pressings gérés" :value="$pressings->count()" icon="building" tint="blue" /></li>
-            <li><x-stat-card name="employes-actifs" title="Employés actifs" :value="$pressings->sum('employesActifs')" icon="users" tint="green" /></li>
-            <li><x-stat-card name="employes-inactifs" title="Employés inactifs" :value="$pressings->sum('employesInactifs')" icon="user-off" tint="orange" /></li>
+            <li><x-stat-card name="pressings-geres" title="Pressings gérés" :value="$pressings->count()" icon="building" tint="blue" subtitle="Sous votre responsabilité" /></li>
+            <li><x-stat-card name="employes-actifs" title="Employés actifs" :value="$employesActifs" icon="users" tint="green" subtitle="Peuvent se connecter" :progress="$part($employesActifs)" :caption="$part($employesActifs).' % des employés'" /></li>
+            <li><x-stat-card name="employes-inactifs" title="Employés inactifs" :value="$employesInactifs" icon="user-off" tint="orange" subtitle="Comptes désactivés" :progress="$part($employesInactifs)" :caption="$part($employesInactifs).' % des employés'" /></li>
         </ul>
     </section>
 

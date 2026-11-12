@@ -17,5 +17,7 @@
     @case('bag')<path d="M6 8h12l1 12H5z"/><path d="M9 8V7a3 3 0 0 1 6 0v1"/>@break
     @case('search')<circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/>@break
     @case('logout')<path d="M10 5H5v14h5"/><path d="M14 8l4 4-4 4M18 12H9"/>@break
+    @case('menu')<path d="M4 6h16M4 12h10M4 18h16"/>@break
+    @case('fullscreen')<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>@break
 @endswitch
 </svg>

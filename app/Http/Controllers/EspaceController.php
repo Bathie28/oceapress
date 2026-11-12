@@ -28,6 +28,7 @@ class EspaceController extends Controller
             ->whereIn('statut', [Commande::STATUT_EN_ATTENTE, Commande::STATUT_EN_TRAITEMENT])
             ->count();
         $commandesPretes = $commandes->where('statut', Commande::STATUT_PRETE)->values();
+        $nombreCommandes = $commandes->count();
         $commandeRecente = $commandes->first();
         $commandeAvecQrCode = $commandes->first(fn (Commande $commande) => $commande->qrCodeActif !== null);
         $nombreNotificationsNonLues = Notification::query()
@@ -44,6 +45,7 @@ class EspaceController extends Controller
 
         return view('client.accueil', compact(
             'utilisateur',
+            'nombreCommandes',
             'nombreCommandesEnCours',
             'commandesPretes',
             'notificationsNonLues',
