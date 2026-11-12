@@ -17,8 +17,8 @@
     <section aria-label="Synthèse des pressings">
         <ul class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <li><x-stat-card name="pressings-geres" title="Pressings gérés" :value="$pressings->count()" icon="building" tint="blue" subtitle="Sous votre responsabilité" /></li>
-            <li><x-stat-card name="employes-actifs" title="Employés actifs" :value="$employesActifs" icon="users" tint="green" subtitle="Peuvent se connecter" :progress="$part($employesActifs)" :caption="$part($employesActifs).' % des employés'" /></li>
-            <li><x-stat-card name="employes-inactifs" title="Employés inactifs" :value="$employesInactifs" icon="user-off" tint="orange" subtitle="Comptes désactivés" :progress="$part($employesInactifs)" :caption="$part($employesInactifs).' % des employés'" /></li>
+            <li><x-stat-card name="employes-actifs" title="Employés actifs" :value="$employesActifs" icon="users" tint="green" subtitle="Peuvent se connecter" :caption="$part($employesActifs).' % des employés'" /></li>
+            <li><x-stat-card name="employes-inactifs" title="Employés inactifs" :value="$employesInactifs" icon="user-off" tint="orange" subtitle="Comptes désactivés" :caption="$part($employesInactifs).' % des employés'" /></li>
         </ul>
     </section>
 

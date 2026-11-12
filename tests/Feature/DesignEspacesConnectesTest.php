@@ -157,6 +157,10 @@ class DesignEspacesConnectesTest extends TestCase
         $this->assertSame('2', $this->valeurIndicateur($html, 'pressings-geres'));
         $this->assertSame('3', $this->valeurIndicateur($html, 'employes-actifs'));
         $this->assertSame('1', $this->valeurIndicateur($html, 'employes-inactifs'));
+        $this->assertStringNotContainsString('data-stat-progress', $html, 'Aucune barre de progression attendue sur l’accueil administrateur.');
+        $this->assertStringNotContainsString('role="progressbar"', $html);
+        $this->assertMatchesRegularExpression('/data-stat="employes-actifs".*?75 % des employés/s', $html);
+        $this->assertMatchesRegularExpression('/data-stat="employes-inactifs".*?25 % des employés/s', $html);
         $this->assertStringContainsString('Pressing Test', $html);
         $this->assertStringNotContainsString('Pressing non géré', $html);
     }
