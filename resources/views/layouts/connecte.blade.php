@@ -12,15 +12,15 @@
     @endif
     <style>
         :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-        body { margin: 0; background: #FFFFFF; color: #0F172A; }
+        body { margin: 0; background: #F5F6FA; color: #111827; }
         * { box-sizing: border-box; }
         a { color: inherit; text-decoration: none; }
         button, input, select, textarea { font: inherit; }
-        button:focus-visible, a:focus-visible { outline: 3px solid #93C5FD; outline-offset: 3px; }
+        button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid #93C5FD; outline-offset: 3px; }
         .op-button-primary { display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 9999px; background: #2563EB; color: #fff !important; padding: .7rem 1.15rem; font-weight: 650; cursor: pointer; text-decoration: none; }
         .op-button-primary:hover { background: #1E40AF; }
         .op-button-secondary { display: inline-flex; align-items: center; justify-content: center; border: 1px solid #CBD5E1; border-radius: 9999px; background: #fff; color: #0F172A; padding: .65rem 1rem; font-weight: 600; text-decoration: none; }
-        .op-card { border: 1px solid #E2E8F0; border-radius: 1rem; background: #fff; box-shadow: 0 8px 28px rgb(15 23 42 / 5%); }
+        .op-card { border: 1px solid #E5E7EB; border-radius: 1rem; background: #fff; box-shadow: 0 8px 28px rgb(15 23 42 / 5%); }
         .op-banner { border-radius: .9rem; background: #DBEAFE; padding: 1rem 1.25rem; color: #1E40AF; }
         .op-badge { display: inline-flex; align-items: center; border-radius: 9999px; background: #DBEAFE; padding: .25rem .7rem; color: #2563EB; font-size: .85rem; font-weight: 650; }
     </style>
@@ -28,59 +28,99 @@
 </head>
 <body>
 @auth
-@php($utilisateurCourant = auth()->user())
-@php($estEmploye = (bool) $utilisateurCourant->employe)
-@php($estClient = (bool) $utilisateurCourant->client)
-@php($estAdministrateur = (bool) $utilisateurCourant->administrateur)
-@php($accueilRole = $estClient ? route('client.accueil') : ($estEmploye ? route('employe.accueil') : ($estAdministrateur ? route('admin.accueil') : route('login'))))
-@php($nomUtilisateur = trim(($utilisateurCourant->prenom ?? '').' '.($utilisateurCourant->nom ?? '')))
+@php
+    $utilisateurCourant = auth()->user();
+    $estEmploye = (bool) $utilisateurCourant->employe;
+    $estClient = (bool) $utilisateurCourant->client;
+    $estAdministrateur = (bool) $utilisateurCourant->administrateur;
+    $accueilRole = $estClient ? route('client.accueil') : ($estEmploye ? route('employe.accueil') : ($estAdministrateur ? route('admin.accueil') : route('login')));
+    $nomUtilisateur = trim(($utilisateurCourant->prenom ?? '').' '.($utilisateurCourant->nom ?? ''));
+    $initiales = mb_strtoupper(mb_substr((string) $utilisateurCourant->prenom, 0, 1).mb_substr((string) $utilisateurCourant->nom, 0, 1));
+    $roleLibelle = $estClient ? 'Client' : ($estEmploye ? 'Employé' : ($estAdministrateur ? 'Administrateur' : 'Utilisateur'));
+
+    if ($estEmploye) {
+        $groupes = [
+            ['titre' => 'Vue d’ensemble', 'liens' => [
+                ['label' => 'Accueil employé', 'route' => 'employe.accueil', 'icone' => 'home'],
+                ['label' => 'Tableau de bord', 'route' => 'employe.tableau-de-bord', 'icone' => 'chart'],
+            ]],
+            ['titre' => 'Opérations', 'liens' => [
+                ['label' => 'Commandes', 'route' => 'employe.commandes.index', 'icone' => 'list'],
+                ['label' => 'Nouvelle commande', 'route' => 'employe.commandes.create', 'icone' => 'plus'],
+                ['label' => 'Scanner un QR code', 'route' => 'employe.scan', 'icone' => 'scan'],
+            ]],
+        ];
+        $raccourcis = [
+            ['label' => 'Nouvelle commande', 'route' => 'employe.commandes.create', 'icone' => 'plus'],
+            ['label' => 'Scanner un QR code', 'route' => 'employe.scan', 'icone' => 'scan'],
+        ];
+    } elseif ($estClient && ! $utilisateurCourant->doitChangerMotDePasse) {
+        $groupes = [
+            ['titre' => 'Mon espace', 'liens' => [
+                ['label' => 'Accueil client', 'route' => 'client.accueil', 'icone' => 'home'],
+                ['label' => 'Mes commandes', 'route' => 'client.commandes.index', 'icone' => 'list'],
+                ['label' => 'Mes notifications', 'route' => 'client.notifications.index', 'icone' => 'bell'],
+            ]],
+        ];
+        $raccourcis = [
+            ['label' => 'Mes commandes', 'route' => 'client.commandes.index', 'icone' => 'list'],
+            ['label' => 'Mes notifications', 'route' => 'client.notifications.index', 'icone' => 'bell'],
+        ];
+    } elseif ($estAdministrateur) {
+        $groupes = [
+            ['titre' => 'Administration', 'liens' => [
+                ['label' => 'Accueil administrateur', 'route' => 'admin.accueil', 'icone' => 'home'],
+                ['label' => 'Gérer les pressings et tarifs', 'route' => 'admin.pressings.index', 'icone' => 'building'],
+            ]],
+        ];
+        $raccourcis = [
+            ['label' => 'Gérer les pressings et tarifs', 'route' => 'admin.pressings.index', 'icone' => 'building'],
+        ];
+    } else {
+        $groupes = [];
+        $raccourcis = [];
+    }
+
+    $titrePage = trim($__env->yieldContent('pageTitle'));
+    $titreDeclare = $titrePage !== '';
+    if (! $titreDeclare) {
+        $titrePage = preg_replace('/\s+—\s+OceaPress$/u', '', trim($__env->yieldContent('title'))) ?: 'OceaPress';
+    }
+@endphp
 <div class="min-h-screen lg:flex" data-layout="connecte">
-    <aside id="sidebar-connecte" class="fixed inset-y-0 left-0 z-50 hidden w-72 flex-col border-r border-[#E2E8F0] bg-white px-5 py-6 shadow-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-72 lg:flex-none lg:shadow-none" aria-label="Navigation latérale">
-        <div class="flex items-center justify-between">
-            <a href="{{ $accueilRole }}" class="flex items-center gap-3 text-[#0F172A] font-bold">
-                <span class="grid h-11 w-11 place-items-center rounded-2xl bg-[#2563EB] text-base font-extrabold text-white" aria-hidden="true">OP</span>
-                <span class="text-lg">OceaPress</span>
+    <aside id="sidebar-connecte" class="fixed inset-y-0 left-0 z-50 hidden w-72 flex-col bg-op-sidebar px-4 py-6 text-op-sidebar-text shadow-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-72 lg:flex-none lg:shadow-none" aria-label="Navigation latérale">
+        <div class="flex items-center justify-between px-2">
+            <a href="{{ $accueilRole }}" class="flex items-center gap-3 font-bold text-white">
+                <span class="grid h-10 w-10 place-items-center rounded-xl bg-[#2563EB] text-sm font-extrabold text-white" aria-hidden="true">OP</span>
+                <span class="text-lg text-white">OceaPress</span>
             </a>
-            <button id="fermer-menu-connecte" type="button" class="rounded-lg p-2 text-[#0F172A] lg:hidden" aria-label="Fermer le menu">✕</button>
+            <button id="fermer-menu-connecte" type="button" class="rounded-lg p-2 text-white lg:hidden" aria-label="Fermer le menu">✕</button>
         </div>
 
-        <nav class="mt-8 space-y-2" aria-label="Navigation {{ $estEmploye ? 'employé' : ($estClient ? 'client' : ($estAdministrateur ? 'administrateur' : 'connectée')) }}">
-            @if ($estEmploye)
-                @php($liens = [
-                    ['label' => 'Accueil employé', 'route' => 'employe.accueil'],
-                    ['label' => 'Tableau de bord', 'route' => 'employe.tableau-de-bord'],
-                    ['label' => 'Commandes', 'route' => 'employe.commandes.index'],
-                    ['label' => 'Nouvelle commande', 'route' => 'employe.commandes.create'],
-                    ['label' => 'Scanner un QR code', 'route' => 'employe.scan'],
-                ])
-            @elseif ($estClient && ! $utilisateurCourant->doitChangerMotDePasse)
-                @php($liens = [
-                    ['label' => 'Accueil client', 'route' => 'client.accueil'],
-                    ['label' => 'Mes commandes', 'route' => 'client.commandes.index'],
-                    ['label' => 'Mes notifications', 'route' => 'client.notifications.index'],
-                ])
-            @elseif ($estAdministrateur)
-                @php($liens = [
-                    ['label' => 'Accueil administrateur', 'route' => 'admin.accueil'],
-                    ['label' => 'Gérer les pressings et tarifs', 'route' => 'admin.pressings.index'],
-                ])
-            @else
-                @php($liens = [])
-            @endif
-
-            @foreach ($liens as $lien)
-                @php($actif = request()->routeIs($lien['route']))
-                <a href="{{ route($lien['route']) }}" @if ($actif) aria-current="page" @endif class="block rounded-xl px-4 py-3 text-sm font-semibold {{ $actif ? 'bg-[#2563EB] !text-white' : 'text-[#64748B] hover:bg-[#DBEAFE] hover:text-[#1E40AF]' }}">{{ $lien['label'] }}</a>
+        <nav class="mt-8 flex-1 space-y-6 overflow-y-auto" aria-label="Navigation {{ $estEmploye ? 'employé' : ($estClient ? 'client' : ($estAdministrateur ? 'administrateur' : 'connectée')) }}">
+            @foreach ($groupes as $groupe)
+                <div>
+                    <p class="px-3 text-xs font-semibold uppercase tracking-wider text-op-sidebar-text">{{ $groupe['titre'] }}</p>
+                    <ul class="mt-2 space-y-1">
+                        @foreach ($groupe['liens'] as $lien)
+                            @php($actif = request()->routeIs($lien['route']))
+                            <li>
+                                <a href="{{ route($lien['route']) }}" @if ($actif) aria-current="page" @endif class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold {{ $actif ? 'bg-[#2563EB] !text-white' : 'text-op-sidebar-text hover:bg-op-sidebar-line hover:text-white' }}"><x-icon :name="$lien['icone']" /><span>{{ $lien['label'] }}</span></a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
             @endforeach
         </nav>
-        <div class="mt-auto flex w-full flex-col items-center text-center border-t border-[#E2E8F0] pt-5">
+
+        <div class="mt-auto flex w-full flex-col items-center text-center border-t border-op-sidebar-line pt-5">
             @if ($nomUtilisateur !== '')
-                <p class="font-semibold text-[#0F172A]">{{ $nomUtilisateur }}</p>
+                <p class="font-semibold text-white">{{ $nomUtilisateur }}</p>
             @endif
-            <p class="mt-1 text-sm text-[#64748B]">{{ $estClient ? 'Client' : ($estEmploye ? 'Employé' : ($estAdministrateur ? 'Administrateur' : 'Utilisateur')) }}</p>
+            <p class="mt-1 text-sm text-op-sidebar-text">{{ $roleLibelle }}</p>
             <form method="POST" action="{{ route('logout') }}" class="mt-4">
                 @csrf
-                <button type="submit" class="w-full rounded-xl bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white">Se déconnecter</button>
+                <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-xl border border-op-sidebar-line px-4 py-2 text-sm font-semibold text-white hover:bg-op-sidebar-line"><x-icon name="logout" class="h-4 w-4 shrink-0" /><span>Se déconnecter</span></button>
             </form>
         </div>
     </aside>
@@ -88,13 +128,50 @@
     <button id="fond-menu-connecte" type="button" class="fixed inset-0 z-40 hidden bg-black/40 lg:hidden" aria-label="Fermer le menu"></button>
 
     <div class="min-w-0 flex-1">
-        <header class="flex min-h-20 items-center justify-between gap-4 border-b border-[#E2E8F0] bg-white px-4 py-3 md:px-8">
-            <div class="flex items-center gap-3">
-                <button id="ouvrir-menu-connecte" type="button" class="rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 font-semibold text-[#0F172A] lg:hidden" aria-label="Ouvrir le menu" aria-controls="sidebar-connecte" aria-expanded="false">Menu</button>
-                <p class="text-lg font-bold text-[#0F172A] md:text-xl">@yield('pageTitle', View::hasSection('title') ? trim($__env->yieldContent('title')) : 'OceaPress')</p>
+        <header class="sticky top-0 z-30 flex min-h-16 items-center gap-3 border-b border-op-line bg-white px-4 py-3 md:px-8">
+            <button id="ouvrir-menu-connecte" type="button" class="rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-sm font-semibold text-op-ink lg:hidden" aria-label="Ouvrir le menu" aria-controls="sidebar-connecte" aria-expanded="false">Menu</button>
+
+            @if ($groupes !== [])
+                <form id="recherche-rapide" role="search" class="relative min-w-0 flex-1 md:max-w-md" autocomplete="off">
+                    <label for="recherche-rapide-champ" class="sr-only">Aller à une page</label>
+                    <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-op-muted"><x-icon name="search" class="h-4 w-4 shrink-0" /></span>
+                    <input id="recherche-rapide-champ" type="search" list="recherche-rapide-pages" placeholder="Aller à une page…" class="block w-full rounded-xl border border-op-line bg-op-page py-2 pl-9 pr-3 text-sm text-op-ink placeholder:text-op-muted">
+                    <datalist id="recherche-rapide-pages">
+                        @foreach ($groupes as $groupe)
+                            @foreach ($groupe['liens'] as $lien)
+                                <option value="{{ $lien['label'] }}"></option>
+                            @endforeach
+                        @endforeach
+                    </datalist>
+                    <p id="recherche-rapide-message" class="absolute left-0 top-full mt-1 rounded-lg bg-white px-2 text-xs text-op-muted empty:hidden" role="status" aria-live="polite"></p>
+                </form>
+            @else
+                <div class="flex-1"></div>
+            @endif
+
+            <div class="ml-auto flex items-center gap-2">
+                @foreach ($raccourcis as $raccourci)
+                    <a href="{{ route($raccourci['route']) }}" class="hidden h-10 w-10 place-items-center rounded-xl border border-op-line text-op-muted hover:bg-op-page hover:text-op-accent sm:grid" aria-label="{{ $raccourci['label'] }}" title="{{ $raccourci['label'] }}"><x-icon :name="$raccourci['icone']" /></a>
+                @endforeach
+                <span class="grid h-10 w-10 place-items-center rounded-xl bg-op-tint-blue text-sm font-bold text-op-icon-blue" data-avatar><span aria-hidden="true">{{ $initiales }}</span><span class="sr-only">{{ $roleLibelle }} connecté</span></span>
             </div>
         </header>
-        <main class="min-h-[calc(100vh-5rem)] p-4 md:p-8">@yield('content')</main>
+
+        <main class="min-h-[calc(100vh-4rem)] bg-op-page p-4 md:p-8">
+            <div class="mx-auto mb-6 max-w-7xl" data-entete-page>
+                <nav aria-label="Fil d’Ariane" class="text-sm text-op-muted">
+                    <ol class="flex flex-wrap items-center gap-2">
+                        <li><a href="{{ $accueilRole }}" class="hover:text-op-accent hover:underline">Accueil</a></li>
+                        <li aria-hidden="true">/</li>
+                        <li class="font-medium text-op-ink">{{ $titrePage }}</li>
+                    </ol>
+                </nav>
+                @if ($titreDeclare)
+                    <h1 class="mt-1 text-2xl font-bold text-op-ink md:text-3xl">{{ $titrePage }}</h1>
+                @endif
+            </div>
+            @yield('content')
+        </main>
     </div>
 </div>
 @endauth
@@ -138,6 +215,28 @@
         if (event.key === 'Escape' && openButton.getAttribute('aria-expanded') === 'true') {
             setMenu(false);
             openButton.focus();
+        }
+    });
+})();
+(() => {
+    const form = document.getElementById('recherche-rapide');
+    const champ = document.getElementById('recherche-rapide-champ');
+    const message = document.getElementById('recherche-rapide-message');
+    if (!form || !champ || !message) return;
+
+    const pages = [...document.querySelectorAll('#sidebar-connecte nav a[href]')]
+        .map((lien) => ({ libelle: lien.textContent.trim().toLowerCase(), href: lien.href }));
+
+    champ.addEventListener('input', () => { message.textContent = ''; });
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const saisie = champ.value.trim().toLowerCase();
+        if (saisie === '') return;
+        const cible = pages.find((page) => page.libelle === saisie) || pages.find((page) => page.libelle.includes(saisie));
+        if (cible) {
+            window.location.href = cible.href;
+        } else {
+            message.textContent = 'Aucune page ne correspond à « ' + champ.value.trim() + ' ».';
         }
     });
 })();
