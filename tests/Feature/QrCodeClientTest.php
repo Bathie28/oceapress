@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Commande;
 use App\Models\QrCode;
+use App\Services\ChangerStatutCommande;
 use App\Services\GenererImageQrCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\CreeDonneesTest;
@@ -77,7 +79,7 @@ class QrCodeClientTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringNotContainsString($token, $html);
+        $this->assertSame(1, substr_count($html, $token), 'Le token ne figure que dans la ligne « Code de secours ».');
         preg_match_all('/(?:href|src)="([^"]+)"/i', $html, $urlMatches);
         foreach ($urlMatches[1] as $url) {
             $this->assertStringNotContainsString($token, html_entity_decode($url));
@@ -134,5 +136,81 @@ class QrCodeClientTest extends TestCase
             $this->assertStringNotContainsString('Code actuel', $html);
         }
         $this->assertSame($token, QrCode::where('idCommande', $commande->idCommande)->where('actif', true)->value('token'));
+    }
+
+    public function test_commande_active_affiche_le_code_de_secours_sous_le_qr_code(): void
+    {
+        $client = $this->creerClient();
+        $commande = $this->creerCommande($client);
+        $token = 'code-secours-'.bin2hex(random_bytes(8));
+        QrCode::create(['token' => $token, 'actif' => true, 'idCommande' => $commande->idCommande]);
+
+        $html = $this->actingAs($client->utilisateur)
+            ->get('/client/commandes/'.$commande->idCommande)
+            ->assertOk()
+            ->assertSee('Code de secours (saisie manuelle au comptoir)')
+            ->getContent();
+
+        $this->assertMatchesRegularExpression(
+            '/<p[^>]*class="[^"]*text-xs[^"]*"[^>]*>\s*Code de secours \(saisie manuelle au comptoir\)\s*:\s*<code[^>]*data-code-secours[^>]*>'.preg_quote($token, '/').'<\/code>\s*<\/p>/',
+            $html,
+        );
+        $this->assertSame(1, substr_count($html, $token), 'Le token ne doit apparaître qu’une fois, dans la ligne de secours.');
+        $this->assertGreaterThan(strpos($html, 'id="agrandir-qr"'), strpos($html, 'data-code-secours'), 'La ligne doit se trouver sous le QR Code.');
+    }
+
+    public function test_commande_recuperee_n_affiche_plus_le_code_de_secours(): void
+    {
+        $client = $this->creerClient();
+        $pressing = $this->creerPressing();
+        $employe = $this->creerEmploye($pressing);
+        $commande = $this->creerCommande($client, $pressing, Commande::STATUT_PRETE);
+        $token = 'code-secours-'.bin2hex(random_bytes(8));
+        QrCode::create(['token' => $token, 'actif' => true, 'idCommande' => $commande->idCommande]);
+        $url = '/client/commandes/'.$commande->idCommande;
+
+        $this->actingAs($client->utilisateur)->get($url)->assertOk()->assertSee($token);
+
+        app(ChangerStatutCommande::class)->executer($commande->idCommande, Commande::STATUT_RECUPEREE, $employe->idEmploye);
+
+        $html = $this->get($url)->assertOk()->getContent();
+
+        $this->assertStringNotContainsString($token, $html);
+        $this->assertStringNotContainsString('Code de secours', $html);
+        $this->assertStringNotContainsString('data-code-secours', $html);
+        $this->assertStringContainsString('QR Code indisponible, contactez le pressing', $html);
+    }
+
+    public function test_le_code_de_secours_n_apparait_dans_aucune_url_ni_redirection(): void
+    {
+        $client = $this->creerClient();
+        $commande = $this->creerCommande($client);
+        $token = 'code-secours-'.bin2hex(random_bytes(8));
+        QrCode::create(['token' => $token, 'actif' => true, 'idCommande' => $commande->idCommande]);
+
+        $reponse = $this->actingAs($client->utilisateur)->get('/client/commandes/'.$commande->idCommande)->assertOk();
+        $html = $reponse->getContent();
+
+        preg_match_all('/\b(?:href|src|action|formaction|poster|content|data-[a-z-]*url)\s*=\s*"([^"]*)"/i', $html, $attributs);
+        $this->assertNotEmpty($attributs[1]);
+        foreach ($attributs[1] as $valeur) {
+            $this->assertStringNotContainsString($token, html_entity_decode($valeur), 'Le token ne doit figurer dans aucune URL de la page.');
+        }
+
+        preg_match_all('/<a\b[^>]*>.*?<\/a>/s', $html, $liens);
+        foreach ($liens[0] as $lien) {
+            $this->assertStringNotContainsString($token, $lien, 'Le token ne doit figurer dans aucun lien.');
+        }
+
+        preg_match_all('/<script\b[^>]*>.*?<\/script>/s', $html, $scripts);
+        foreach ($scripts[0] as $script) {
+            $this->assertStringNotContainsString($token, $script, 'Le token ne doit figurer dans aucun script.');
+        }
+
+        foreach ($reponse->headers->all() as $valeurs) {
+            foreach ($valeurs as $valeur) {
+                $this->assertStringNotContainsString($token, (string) $valeur, 'Le token ne doit figurer dans aucun en-tête de réponse.');
+            }
+        }
     }
 }
