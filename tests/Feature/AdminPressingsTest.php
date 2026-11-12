@@ -49,6 +49,25 @@ class AdminPressingsTest extends TestCase
             ->assertSee('0 tarif');
     }
 
+    public function test_creation_pressing_suivie_de_son_redirection_affiche_la_liste(): void
+    {
+        $this->connecterAdministrateur();
+
+        $response = $this->post(route('admin.pressings.store'), [
+            'nom' => 'Pressing suivi',
+            'adresse' => '7 rue du Suivi',
+            'telephone' => '0102030405',
+            'email' => 'suivi@example.test',
+            'pesee' => '1',
+        ]);
+        $response->assertRedirect(route('admin.pressings.index'));
+
+        $this->get($response->headers->get('Location'))->assertOk();
+
+        $pressing = Pressing::query()->where('nom', 'Pressing suivi')->firstOrFail();
+        $this->get(route('admin.pressings.edit', $pressing->idPressing))->assertOk();
+    }
+
     public function test_la_page_create_utilise_un_bouton_primaire_pour_creer_un_pressing(): void
     {
         $this->connecterAdministrateur();
