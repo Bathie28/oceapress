@@ -3,6 +3,8 @@
 @section('title', ($pressing ? 'Modifier' : 'Ajouter').' un pressing — OceaPress')
 
 @section('content')
+@php($saisiePressing = array_key_exists('adresse', old()))
+@php($saisieEmploye = array_key_exists('fonction', old()))
 <div class="px-4 py-8 mx-auto max-w-3xl space-y-6">
     <p><a href="{{ route('admin.pressings.index') }}">Pressings</a></p>
     <h1 class="text-3xl font-bold">{{ $pressing ? 'Modifier un pressing' : 'Ajouter un pressing' }}</h1>
@@ -64,23 +66,23 @@
 
             <div class="mb-4">
                 <x-form-label for="nom">Nom</x-form-label>
-                <x-form-input id="nom" name="nom" value="{{ old('nom', $pressing?->nom) }}" maxlength="150" required />
+                <x-form-input id="nom" name="nom" value="{{ $saisiePressing ? old('nom') : $pressing?->nom }}" maxlength="150" required />
             </div>
             <div class="mb-4">
                 <x-form-label for="adresse">Adresse</x-form-label>
-                <x-form-input id="adresse" name="adresse" value="{{ old('adresse', $pressing?->adresse) }}" maxlength="255" required />
+                <x-form-input id="adresse" name="adresse" value="{{ $saisiePressing ? old('adresse') : $pressing?->adresse }}" maxlength="255" required />
             </div>
             <div class="mb-4">
                 <x-form-label for="telephone">Téléphone</x-form-label>
-                <x-form-input id="telephone" name="telephone" type="tel" value="{{ old('telephone', $pressing?->telephone) }}" maxlength="30" />
+                <x-form-input id="telephone" name="telephone" type="tel" value="{{ $saisiePressing ? old('telephone') : $pressing?->telephone }}" maxlength="30" />
             </div>
             <div class="mb-4">
                 <x-form-label for="email">E-mail</x-form-label>
-                <x-form-input id="email" name="email" type="email" value="{{ old('email', $pressing?->email) }}" maxlength="190" />
+                <x-form-input id="email" name="email" type="email" value="{{ $saisiePressing ? old('email') : $pressing?->email }}" maxlength="190" />
             </div>
             <div class="mb-4">
                 <x-form-label for="pesee">Pesée</x-form-label>
-                <input id="pesee" name="pesee" type="checkbox" value="1" @checked(old('pesee', $pressing?->pesee ?? false))>
+                <input id="pesee" name="pesee" type="checkbox" value="1" @checked($saisiePressing ? old('pesee') : ($pressing?->pesee ?? false))>
             </div>
 
             <x-primary-button class="mt-2">{{ $pressing ? 'Enregistrer les modifications' : 'Créer le pressing' }}</x-primary-button>
@@ -129,10 +131,10 @@
             <form method="POST" action="{{ route('admin.pressings.employes.store', $pressing->idPressing) }}" class="mt-4">
                 @csrf
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <div><x-form-label for="employe-nom">Nom</x-form-label><x-form-input id="employe-nom" name="nom" value="{{ old('nom') }}" maxlength="100" required /></div>
-                    <div><x-form-label for="employe-prenom">Prénom</x-form-label><x-form-input id="employe-prenom" name="prenom" value="{{ old('prenom') }}" maxlength="100" required /></div>
-                    <div><x-form-label for="employe-email">E-mail</x-form-label><x-form-input id="employe-email" name="email" type="email" value="{{ old('email') }}" maxlength="190" required /></div>
-                    <div><x-form-label for="employe-telephone">Téléphone</x-form-label><x-form-input id="employe-telephone" name="telephone" value="{{ old('telephone') }}" maxlength="30" /></div>
+                    <div><x-form-label for="employe-nom">Nom</x-form-label><x-form-input id="employe-nom" name="nom" value="{{ $saisieEmploye ? old('nom') : '' }}" maxlength="100" required /></div>
+                    <div><x-form-label for="employe-prenom">Prénom</x-form-label><x-form-input id="employe-prenom" name="prenom" value="{{ $saisieEmploye ? old('prenom') : '' }}" maxlength="100" required /></div>
+                    <div><x-form-label for="employe-email">E-mail</x-form-label><x-form-input id="employe-email" name="email" type="email" value="{{ $saisieEmploye ? old('email') : '' }}" maxlength="190" required /></div>
+                    <div><x-form-label for="employe-telephone">Téléphone</x-form-label><x-form-input id="employe-telephone" name="telephone" value="{{ $saisieEmploye ? old('telephone') : '' }}" maxlength="30" /></div>
                     <div class="sm:col-span-2"><x-form-label for="employe-fonction">Fonction</x-form-label><x-form-input id="employe-fonction" name="fonction" value="{{ old('fonction') }}" maxlength="100" required /></div>
                 </div>
                 <x-primary-button class="mt-4">Créer l’employé</x-primary-button>

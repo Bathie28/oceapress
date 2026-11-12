@@ -60,10 +60,11 @@ class CommandeController extends Controller
     {
         $pressing = Pressing::findOrFail($this->pressingActif($request));
         $mode = old('modeFacturation', $request->query('modeFacturation', Commande::MODE_FACTURATION_PIECE));
-        if (! $pressing->pesee && $mode === Commande::MODE_FACTURATION_POIDS) {
+        if (! is_string($mode) || ! isset(Tarif::FORMULES_PAR_MODE[$mode])
+            || (! $pressing->pesee && $mode === Commande::MODE_FACTURATION_POIDS)) {
             $mode = Commande::MODE_FACTURATION_PIECE;
         }
-        $formules = Tarif::FORMULES_PAR_MODE[$mode] ?? Tarif::FORMULES_PAR_MODE[Commande::MODE_FACTURATION_PIECE];
+        $formules = Tarif::FORMULES_PAR_MODE[$mode];
         $formule = old('formule', $request->query('formule', $formules[0]));
         if (! in_array($formule, $formules, true)) {
             $formule = $formules[0];
@@ -141,6 +142,8 @@ class CommandeController extends Controller
 
     public function store(Request $request, EnregistrerCommande $enregistrerCommande): RedirectResponse
     {
+        $modeDemande = $request->input('modeFacturation');
+        $formulesAutorisees = is_string($modeDemande) ? (Tarif::FORMULES_PAR_MODE[$modeDemande] ?? []) : [];
         $validated = $request->validate([
             'client.email' => ['required', 'email', 'max:190'],
             'client.nom' => ['required', 'string', 'max:100'],
@@ -152,7 +155,7 @@ class CommandeController extends Controller
             'articles.*.description' => ['nullable', 'string'],
             'articles.*.quantite' => ['nullable', 'integer', 'min:0'],
             'modeFacturation' => ['required', 'string', 'in:PIECE,POIDS'],
-            'formule' => ['required', 'string', 'in:'.implode(',', Tarif::FORMULES_PAR_MODE[$request->input('modeFacturation')] ?? [])],
+            'formule' => ['required', 'string', 'in:'.implode(',', $formulesAutorisees)],
             'poids' => ['required_if:modeFacturation,POIDS', 'nullable', 'numeric', 'gt:0', 'regex:/^\\d+(?:\\.\\d)?$/'],
         ]);
 
