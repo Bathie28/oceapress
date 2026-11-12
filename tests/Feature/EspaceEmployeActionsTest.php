@@ -164,6 +164,19 @@ class EspaceEmployeActionsTest extends TestCase
         $this->assertCreationHttpAvecQuantitesEtPrix(1, 1, '480');
     }
 
+    public function test_creation_http_puis_suivi_de_la_redirection_reste_accessible_a_l_employe(): void
+    {
+        $employe = $this->connecterEmploye();
+        $this->ajouterTarifPiece($employe, 'Chemise', '240');
+        $donnees = $this->formulaireCommande('client-suivi-commande@example.test');
+        $donnees['articles'] = [['type' => 'Chemise', 'quantite' => 1]];
+
+        $response = $this->post(route('employe.commandes.store'), $donnees);
+        $response->assertRedirect();
+
+        $this->get($response->headers->get('Location'))->assertOk();
+    }
+
     private function assertCreationHttpAvecQuantitesEtPrix(int $chemises, int $pantalons, string $montantAttendu): void
     {
         $employe = $this->connecterEmploye();
@@ -249,6 +262,21 @@ class EspaceEmployeActionsTest extends TestCase
         $html = $this->get('/employe/commandes/nouvelle')->assertOk()->getContent();
 
         $this->assertMatchesRegularExpression('/<template[^>]+id="article-template"[^>]*>.*?<input[^>]+class="[^"]*w-full[^"]*rounded-xl[^"]*border[^"]*border-\[#CBD5E1\][^"]*"[^>]*>.*?<\\/template>/s', $html);
+    }
+
+    public function test_modele_article_contient_des_inputs_et_labels_html_reels(): void
+    {
+        $employe = $this->connecterEmploye();
+        $this->ajouterTarifPiece($employe, 'Chemise', '1500');
+
+        $html = $this->get('/employe/commandes/nouvelle')->assertOk()->getContent();
+
+        $this->assertStringNotContainsString('<x-form-input', $html);
+        $this->assertStringNotContainsString('<x-form-label', $html);
+        foreach (['couleur', 'description', 'quantite'] as $champ) {
+            $this->assertMatchesRegularExpression('/<(input|label)[^>]+(?:name="articles\[__INDEX__\]\['.$champ.'\]"|for="'.$champ.'__INDEX__")/', $html);
+        }
+        $this->assertMatchesRegularExpression('/<input[^>]+name="articles\[__INDEX__\]\[quantite\]"[^>]+type="number"[^>]+min="0"[^>]+step="1"/', $html);
     }
 
     public function test_formulaire_filtre_les_types_selon_la_formule_choisie(): void

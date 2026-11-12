@@ -33,7 +33,7 @@
                     <option value="{{ $formule }}" @selected($formuleInitiale === $formule)>{{ $formule }}</option>
                 @endforeach
             </select></div>
-            <div id="poids-wrap" class="mb-4" @if($modeInitial !== 'POIDS') hidden @endif><x-form-label for="poids">Poids (kg)</x-form-label><x-form-input id="poids" name="poids" type="number" min="0.1" step="0.1" value="{{ old('poids') }}" @if($modeInitial === 'POIDS') required @endif />@if($modeInitial === 'POIDS')<p id="poids-note" class="mt-2 text-sm text-slate-600">Le montant dépend du poids et de la formule seulement. Les quantités d’articles servent à la restitution.</p>@endif</div>
+            <div id="poids-wrap" class="mb-4" @if($modeInitial !== 'POIDS') hidden @endif><x-form-label for="poids">Poids (kg)</x-form-label><input id="poids" name="poids" type="number" min="0.1" step="0.1" value="{{ old('poids') }}" @if($modeInitial === 'POIDS') required @endif class="block w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-[#0F172A] focus:border-[#2563EB] focus:outline-none" />@if($modeInitial === 'POIDS')<p id="poids-note" class="mt-2 text-sm text-slate-600">Le montant dépend du poids et de la formule seulement. Les quantités d’articles servent à la restitution.</p>@endif</div>
         </section>
         <section class="space-y-4 rounded-xl bg-white border border-gray-200 p-6 mb-6 shadow">
             <h2 class="mb-4 text-xl font-semibold">Articles</h2>
@@ -42,9 +42,9 @@
                     <fieldset class="mb-4 grid gap-3 rounded-lg border border-slate-200 p-4 sm:grid-cols-2" data-type-row data-type="{{ $type }}">
                         <legend>{{ $type }}</legend>
                         <input type="hidden" name="articles[{{ $index }}][type]" value="{{ $type }}">
-                        <div class="mb-4"><x-form-label for="couleur{{ $index }}">Couleur</x-form-label><x-form-input id="couleur{{ $index }}" name="articles[{{ $index }}][couleur]" value="{{ old("articles.{$index}.couleur") }}" /></div>
-                        <div class="mb-4"><x-form-label for="description{{ $index }}">Description</x-form-label><x-form-input id="description{{ $index }}" name="articles[{{ $index }}][description]" value="{{ old("articles.{$index}.description") }}" /></div>
-                        <div class="mb-4"><x-form-label for="quantite{{ $index }}">Quantité</x-form-label><x-form-input id="quantite{{ $index }}" data-quantity type="number" min="0" step="1" name="articles[{{ $index }}][quantite]" value="{{ old("articles.{$index}.quantite", 0) }}" /></div>
+                        <div class="mb-4"><x-form-label for="couleur{{ $index }}">Couleur</x-form-label><input type="text" id="couleur{{ $index }}" name="articles[{{ $index }}][couleur]" value="{{ old("articles.{$index}.couleur") }}" class="block w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-[#0F172A] focus:border-[#2563EB] focus:outline-none" /></div>
+                        <div class="mb-4"><x-form-label for="description{{ $index }}">Description</x-form-label><input type="text" id="description{{ $index }}" name="articles[{{ $index }}][description]" value="{{ old("articles.{$index}.description") }}" class="block w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-[#0F172A] focus:border-[#2563EB] focus:outline-none" /></div>
+                        <div class="mb-4"><x-form-label for="quantite{{ $index }}">Quantité</x-form-label><input type="number" id="quantite{{ $index }}" data-quantity min="0" step="1" name="articles[{{ $index }}][quantite]" value="{{ old("articles.{$index}.quantite", 0) }}" class="block w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-[#0F172A] focus:border-[#2563EB] focus:outline-none" /></div>
                     </fieldset>
                 @empty
                     <p class="text-slate-500" data-empty>Aucun type disponible pour cette formule.</p>
@@ -54,9 +54,9 @@
                 <fieldset class="mb-4 grid gap-3 rounded-lg border border-slate-200 p-4 sm:grid-cols-2" data-type-row>
                     <legend></legend>
                     <input type="hidden" name="articles[__INDEX__][type]" value="">
-                    <div class="mb-4"><x-form-label for="couleur__INDEX__">Couleur</x-form-label><x-form-input id="couleur__INDEX__" name="articles[__INDEX__][couleur]" value="" /></div>
-                    <div class="mb-4"><x-form-label for="description__INDEX__">Description</x-form-label><x-form-input id="description__INDEX__" name="articles[__INDEX__][description]" value="" /></div>
-                    <div class="mb-4"><x-form-label for="quantite__INDEX__">Quantité</x-form-label><x-form-input id="quantite__INDEX__" data-quantity type="number" min="0" step="1" name="articles[__INDEX__][quantite]" value="0" /></div>
+                    <div class="mb-4"><label for="couleur__INDEX__" class="block mb-1 text-sm font-medium text-[#64748B]">Couleur</label><input type="text" id="couleur__INDEX__" name="articles[__INDEX__][couleur]" value="" class="block w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-[#0F172A] focus:border-[#2563EB] focus:outline-none" /></div>
+                    <div class="mb-4"><label for="description__INDEX__" class="block mb-1 text-sm font-medium text-[#64748B]">Description</label><input type="text" id="description__INDEX__" name="articles[__INDEX__][description]" value="" class="block w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-[#0F172A] focus:border-[#2563EB] focus:outline-none" /></div>
+                    <div class="mb-4"><label for="quantite__INDEX__" class="block mb-1 text-sm font-medium text-[#64748B]">Quantité</label><input id="quantite__INDEX__" name="articles[__INDEX__][quantite]" value="0" type="number" data-quantity min="0" step="1" class="block w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-[#0F172A] focus:border-[#2563EB] focus:outline-none" /></div>
                 </fieldset>
             </template>
         </section>
