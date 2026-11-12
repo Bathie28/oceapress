@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Utilisateur;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\CreeDonneesTest;
 use Tests\TestCase;
@@ -72,5 +73,30 @@ class DesignEspacesConnectesTest extends TestCase
         $this->assertStringContainsString('Opérations', $html);
         $this->assertMatchesRegularExpression('/<a href="[^"]*\/employe"\s+aria-current="page"\s+class="[^"]*bg-\[#2563EB\] !text-white[^"]*">/', $html);
         $this->assertSame(1, substr_count($html, 'aria-current="page"'));
+    }
+
+    public function test_la_carte_d_indicateur_affiche_titre_valeur_et_icone_dans_un_carre_teinte(): void
+    {
+        $html = Blade::render('<x-stat-card name="en-attente" title="En attente" :value="$nombre" icon="clock" tint="orange" />', ['nombre' => 7]);
+
+        $this->assertStringContainsString('data-stat="en-attente"', $html);
+        $this->assertStringContainsString('En attente', $html);
+        $this->assertMatchesRegularExpression('/<p[^>]*text-3xl[^>]*data-stat-value>7<\/p>/', $html);
+        $this->assertMatchesRegularExpression('/<span class="[^"]*h-12 w-12[^"]*rounded-xl bg-op-tint-orange text-op-icon-orange"[^>]*data-stat-icon><svg/', $html);
+    }
+
+    public function test_la_carte_de_section_affiche_titre_action_a_droite_et_contenu(): void
+    {
+        $html = Blade::render(<<<'BLADE'
+<x-section-card title="Pressings" id="pressings-titre">
+    <x-slot:action><a href="/admin/pressings">Tout voir</a></x-slot:action>
+    <p>Contenu de la section</p>
+</x-section-card>
+BLADE);
+
+        $this->assertMatchesRegularExpression('/<section[^>]*aria-labelledby="pressings-titre"/', $html);
+        $this->assertMatchesRegularExpression('/<h2[^>]*id="pressings-titre"[^>]*>Pressings<\/h2>\s*<div[^>]*data-section-action><a href="\/admin\/pressings">Tout voir<\/a><\/div>/', $html);
+        $this->assertStringContainsString('justify-between', $html);
+        $this->assertStringContainsString('<p>Contenu de la section</p>', $html);
     }
 }
