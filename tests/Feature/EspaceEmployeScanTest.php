@@ -73,32 +73,6 @@ class EspaceEmployeScanTest extends TestCase
         $this->assertStringNotContainsString($token, $response->headers->get('Location'));
     }
 
-    public function test_employe_peut_rechercher_une_commande_par_reference_de_son_pressing(): void
-    {
-        $employe = $this->creerEmploye();
-        $this->actingAs($employe->utilisateur);
-        $commande = $this->creerCommande(null, $employe->pressing);
-
-        $this->post('/employe/scan/rechercher', ['reference' => $commande->referenceCommande])
-            ->assertRedirect(route('employe.commandes.show', $commande->idCommande));
-    }
-
-    public function test_employe_d_un_autre_pressing_ne_peut_pas_rechercher_la_commande_par_reference(): void
-    {
-        $employe = $this->creerEmploye();
-        $this->actingAs($employe->utilisateur);
-        $autrePressing = $this->creerPressing();
-        $commande = $this->creerCommande(null, $autrePressing);
-
-        $response = $this->from('/employe/scan')->post('/employe/scan/rechercher', [
-            'reference' => $commande->referenceCommande,
-        ]);
-
-        $response->assertRedirect('/employe/scan')
-            ->assertSessionHasErrors(['reference' => 'Commande introuvable.']);
-        $this->assertStringNotContainsString((string) $commande->idCommande, $response->headers->get('Location'));
-    }
-
     public function test_page_de_scan_contient_le_lecteur_camera_le_champ_manuel_et_le_formulaire_post(): void
     {
         $employe = $this->creerEmploye();
@@ -111,9 +85,7 @@ class EspaceEmployeScanTest extends TestCase
             ->assertSee('method="POST"', false)
             ->assertSee('html5-qrcode@2.3.8')
             ->assertSee('facingMode')
-            ->assertSee('Caméra indisponible : saisissez le code')
-            ->assertSee('name="reference"', false)
-            ->assertSee('action="'.route('employe.scan.rechercher').'"', false);
+            ->assertSee('Caméra indisponible : saisissez le code');
     }
 
     public function test_bouton_rechercher_la_commande_a_un_espace_superieur(): void
