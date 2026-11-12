@@ -130,24 +130,6 @@
         <header class="sticky top-0 z-30 flex min-h-16 items-center gap-3 bg-white px-4 py-3 shadow-sm md:px-6">
             <button id="ouvrir-menu-connecte" type="button" class="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-op-muted hover:bg-op-page hover:text-op-ink lg:hidden" aria-label="Ouvrir le menu" aria-controls="sidebar-connecte" aria-expanded="false"><x-icon name="menu" class="h-6 w-6 shrink-0" /><span class="sr-only">Menu</span></button>
 
-            @if ($groupes !== [])
-                <form id="recherche-rapide" role="search" class="relative min-w-0 flex-1 md:max-w-md" autocomplete="off">
-                    <label for="recherche-rapide-champ" class="sr-only">Aller à une page</label>
-                    <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-op-muted"><x-icon name="search" class="h-4 w-4 shrink-0" /></span>
-                    <input id="recherche-rapide-champ" type="search" list="recherche-rapide-pages" placeholder="Aller à une page…" class="block w-full rounded-lg border-0 bg-op-page py-2.5 pl-9 pr-3 text-sm text-op-ink placeholder:text-op-muted">
-                    <datalist id="recherche-rapide-pages">
-                        @foreach ($groupes as $groupe)
-                            @foreach ($groupe['liens'] as $lien)
-                                <option value="{{ $lien['label'] }}"></option>
-                            @endforeach
-                        @endforeach
-                    </datalist>
-                    <p id="recherche-rapide-message" class="absolute left-0 top-full mt-1 rounded-lg bg-white px-2 text-xs text-op-muted empty:hidden" role="status" aria-live="polite"></p>
-                </form>
-            @else
-                <div class="flex-1"></div>
-            @endif
-
             <div class="ml-auto flex items-center gap-2">
                 @foreach ($raccourcis as $raccourci)
                     <a href="{{ route($raccourci['route']) }}" class="relative hidden h-10 w-10 place-items-center rounded-lg text-op-muted hover:bg-op-page hover:text-op-ink sm:grid" aria-label="{{ $raccourci['label'] }}{{ ($raccourci['compteur'] ?? 0) > 0 ? ' ('.$raccourci['compteur'].' non lues)' : '' }}" title="{{ $raccourci['label'] }}"><x-icon :name="$raccourci['icone']" class="h-6 w-6 shrink-0" />@if (($raccourci['compteur'] ?? 0) > 0)<span class="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-md bg-red-500 px-1 text-[11px] font-bold leading-none text-white" data-compteur-notifications aria-hidden="true">{{ $raccourci['compteur'] }}</span>@endif</a>
@@ -215,28 +197,6 @@
         if (event.key === 'Escape' && openButton.getAttribute('aria-expanded') === 'true') {
             setMenu(false);
             openButton.focus();
-        }
-    });
-})();
-(() => {
-    const form = document.getElementById('recherche-rapide');
-    const champ = document.getElementById('recherche-rapide-champ');
-    const message = document.getElementById('recherche-rapide-message');
-    if (!form || !champ || !message) return;
-
-    const pages = [...document.querySelectorAll('#sidebar-connecte nav a[href]')]
-        .map((lien) => ({ libelle: lien.textContent.trim().toLowerCase(), href: lien.href }));
-
-    champ.addEventListener('input', () => { message.textContent = ''; });
-    form.addEventListener('submit', (event) => {
-        event.preventDefault();
-        const saisie = champ.value.trim().toLowerCase();
-        if (saisie === '') return;
-        const cible = pages.find((page) => page.libelle === saisie) || pages.find((page) => page.libelle.includes(saisie));
-        if (cible) {
-            window.location.href = cible.href;
-        } else {
-            message.textContent = 'Aucune page ne correspond à « ' + champ.value.trim() + ' ».';
         }
     });
 })();

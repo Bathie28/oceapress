@@ -42,7 +42,6 @@ class DesignEspacesConnectesTest extends TestCase
 
             $this->assertMatchesRegularExpression('/<aside id="sidebar-connecte"[^>]*class="[^"]*bg-op-sidebar[^"]*"[^>]*aria-label="Navigation latérale"/u', $html, "Barre latérale absente ({$role}).");
             $this->assertMatchesRegularExpression('/<header[^>]*>.*?<button id="ouvrir-menu-connecte"[^>]*aria-expanded="false"[^>]*>.*?<span class="sr-only">Menu<\/span><\/button>.*?<\/header>/su', $html, "En-tête ou bouton Menu absent ({$role}).");
-            $this->assertStringContainsString('id="recherche-rapide-champ"', $html, "Champ de recherche absent ({$role}).");
             $this->assertStringContainsString('aria-label="Fil d’Ariane"', $html, "Fil d’Ariane absent ({$role}).");
             $this->assertMatchesRegularExpression('/data-avatar><span aria-hidden="true">UT<\/span>/', $html, "Initiales absentes ({$role}).");
             $this->assertStringNotContainsString('<img', $html, "Aucune image externe attendue ({$role}).");
