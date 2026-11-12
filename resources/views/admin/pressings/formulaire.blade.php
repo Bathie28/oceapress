@@ -109,12 +109,12 @@
                             @if ($employe->actif)
                                 <form method="POST" action="{{ route('admin.pressings.employes.desactiver', [$pressing->idPressing, $employe->idEmploye]) }}">
                                     @csrf
-                                    <button type="submit" class="!px-4 !py-2 !text-sm">Désactiver</button>
+                                    <button type="submit" class="op-button-primary !px-4 !py-2 !text-sm">Désactiver</button>
                                 </form>
                             @else
                                 <form method="POST" action="{{ route('admin.pressings.employes.reactiver', [$pressing->idPressing, $employe->idEmploye]) }}">
                                     @csrf
-                                    <button type="submit" class="!px-4 !py-2 !text-sm">Réactiver</button>
+                                    <button type="submit" class="op-button-primary !px-4 !py-2 !text-sm">Réactiver</button>
                                 </form>
                             @endif
                         </td>

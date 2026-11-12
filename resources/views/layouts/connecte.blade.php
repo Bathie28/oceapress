@@ -17,6 +17,12 @@
         a { color: inherit; text-decoration: none; }
         button, input, select, textarea { font: inherit; }
         button:focus-visible, a:focus-visible { outline: 3px solid #93C5FD; outline-offset: 3px; }
+        .op-button-primary { display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 9999px; background: #2563EB; color: #fff !important; padding: .7rem 1.15rem; font-weight: 650; cursor: pointer; text-decoration: none; }
+        .op-button-primary:hover { background: #1E40AF; }
+        .op-button-secondary { display: inline-flex; align-items: center; justify-content: center; border: 1px solid #CBD5E1; border-radius: 9999px; background: #fff; color: #0F172A; padding: .65rem 1rem; font-weight: 600; text-decoration: none; }
+        .op-card { border: 1px solid #E2E8F0; border-radius: 1rem; background: #fff; box-shadow: 0 8px 28px rgb(15 23 42 / 5%); }
+        .op-banner { border-radius: .9rem; background: #DBEAFE; padding: 1rem 1.25rem; color: #1E40AF; }
+        .op-badge { display: inline-flex; align-items: center; border-radius: 9999px; background: #DBEAFE; padding: .25rem .7rem; color: #2563EB; font-size: .85rem; font-weight: 650; }
     </style>
     @yield('head')
 </head>

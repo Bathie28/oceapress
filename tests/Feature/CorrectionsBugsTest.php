@@ -70,6 +70,30 @@ class CorrectionsBugsTest extends TestCase
         $this->assertMatchesRegularExpression('/<input[^>]*id="employe-email"[^>]*value=""/', $html);
     }
 
+    public function test_gabarit_connecte_definit_les_classes_op_utilisees_par_les_composants(): void
+    {
+        $this->connecterAdministrateur();
+
+        $html = $this->get(route('admin.pressings.index'))->assertOk()->getContent();
+
+        foreach (['.op-button-primary', '.op-button-secondary', '.op-card', '.op-banner', '.op-badge'] as $classe) {
+            $this->assertMatchesRegularExpression('/<style>.*'.preg_quote($classe, '/').'[^{]*\{.*<\/style>/s', $html, "{$classe} doit être définie dans le gabarit connecté.");
+        }
+    }
+
+    public function test_boutons_desactiver_et_reactiver_ont_le_style_de_bouton(): void
+    {
+        $this->connecterAdministrateur();
+        $pressing = $this->creerPressing();
+        $this->creerEmploye($pressing);
+        $this->creerEmploye($pressing)->update(['actif' => false]);
+
+        $html = $this->get(route('admin.pressings.edit', $pressing->idPressing))->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/<button[^>]*class="[^"]*op-button-primary[^"]*"[^>]*>Désactiver<\/button>/u', $html);
+        $this->assertMatchesRegularExpression('/<button[^>]*class="[^"]*op-button-primary[^"]*"[^>]*>Réactiver<\/button>/u', $html);
+    }
+
     public function test_mode_de_facturation_en_tableau_ne_provoque_pas_d_erreur_500(): void
     {
         $employe = $this->creerEmploye();
