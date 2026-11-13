@@ -18,12 +18,16 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/login', [AuthController::class, 'afficherConnexion'])->name('login');
-Route::post('/login', [AuthController::class, 'connecter'])->name('login.store');
-Route::get('/mot-de-passe-oublie', [\App\Http\Controllers\ResetMotDePasseController::class, 'afficherDemande'])->name('password.request');
-Route::post('/mot-de-passe-oublie', [\App\Http\Controllers\ResetMotDePasseController::class, 'envoyerLien'])->name('password.email');
-Route::get('/mot-de-passe-reinitialiser/{token}', [\App\Http\Controllers\ResetMotDePasseController::class, 'afficherReinitialisation'])->name('password.reset');
-Route::post('/mot-de-passe-reinitialiser', [\App\Http\Controllers\ResetMotDePasseController::class, 'reinitialiser'])->name('password.update');
+// Un navigateur n'a qu'une session par site : un utilisateur déjà connecté est renvoyé
+// vers son espace au lieu de pouvoir remplacer sa session par un autre compte.
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'afficherConnexion'])->name('login');
+    Route::post('/login', [AuthController::class, 'connecter'])->name('login.store');
+    Route::get('/mot-de-passe-oublie', [\App\Http\Controllers\ResetMotDePasseController::class, 'afficherDemande'])->name('password.request');
+    Route::post('/mot-de-passe-oublie', [\App\Http\Controllers\ResetMotDePasseController::class, 'envoyerLien'])->name('password.email');
+    Route::get('/mot-de-passe-reinitialiser/{token}', [\App\Http\Controllers\ResetMotDePasseController::class, 'afficherReinitialisation'])->name('password.reset');
+    Route::post('/mot-de-passe-reinitialiser', [\App\Http\Controllers\ResetMotDePasseController::class, 'reinitialiser'])->name('password.update');
+});
 Route::post('/logout', [AuthController::class, 'deconnecter'])->name('logout');
 Route::post('/webhooks/wave', WaveWebhookController::class)->name('webhooks.wave');
 Route::get('/photos/{photo}', [PhotoController::class, 'show'])->middleware('auth')->whereNumber('photo')->name('photos.show');
